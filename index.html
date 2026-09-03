@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nguni Homeware - Supplier Trade Ledger</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --bg-dark: #0b0c0e;
@@ -159,6 +160,12 @@
 
         .status-pending { background: #3a2e10; color: #ffca28; }
         .status-settled { background: #122415; color: #81c784; }
+
+        .chart-container {
+            position: relative;
+            height: 260px;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -190,7 +197,9 @@
     <div class="dashboard-layout">
         <div class="panel">
             <div class="panel-title">Weekly Unit Sales Velocity</div>
-            <p style="color: var(--text-muted); font-size: 13px;">Real-time dispatch synchronization active.</p>
+            <div class="chart-container">
+                <canvas id="salesChart"></canvas>
+            </div>
         </div>
 
         <div class="panel">
@@ -205,6 +214,8 @@
         const SUPABASE_URL = 'https://aivsmcdhxfdccsbqmejt.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_NDE9uLsqMD2QiIa6LMw-Lw_IBOmeebV';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let salesChartInstance = null;
 
         function formatDate(dateString) {
             if (!dateString) return 'Date Pending';
@@ -228,6 +239,7 @@
             }
 
             renderDashboard(orders);
+            renderChart(orders);
         }
 
         function renderDashboard(orders) {
@@ -263,6 +275,63 @@
 
             totalUnitsEl.innerText = `${totalUnits} Units`;
             totalPayoutEl.innerText = `R ${totalPayout.toLocaleString('en-ZA', { minimumFractionDigits: 0 })}`;
+        }
+
+        function renderChart(orders) {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+
+            // Aggregate order units per date
+            const dateCounts = {};
+            
+            // Sort ascending for chronological chart view
+            const sortedOrders = [...orders].reverse();
+
+            sortedOrders.forEach(order => {
+                const dateKey = formatDate(order.created_at);
+                dateCounts[dateKey] = (dateCounts[dateKey] || 0) + 1;
+            });
+
+            const labels = Object.keys(dateCounts).length > 0 ? Object.keys(dateCounts) : ['No Data'];
+            const dataPoints = Object.values(dateCounts).length > 0 ? Object.values(dateCounts) : [0];
+
+            if (salesChartInstance) {
+                salesChartInstance.destroy();
+            }
+
+            salesChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Units Dispatched',
+                        data: dataPoints,
+                        borderColor: '#d4af37',
+                        backgroundColor: 'rgba(212, 175, 55, 0.15)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#f3c649'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: '#1f2228' },
+                            ticks: { color: '#a0a5ad', font: { size: 10 } }
+                        },
+                        y: {
+                            grid: { color: '#1f2228' },
+                            ticks: { color: '#a0a5ad', stepSize: 1, precision: 0 },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
         }
 
         // Initialize and listen for real-time order updates
