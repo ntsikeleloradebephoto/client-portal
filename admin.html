@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nguni Homeware - Dispatch Order Logger</title>
+    <link rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <style>
         :root {
@@ -39,6 +40,17 @@
             box-shadow: 0 8px 32px rgba(0,0,0,0.6);
         }
 
+        .logo-wrapper {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .admin-logo {
+            height: 52px;
+            width: auto;
+            object-fit: contain;
+        }
+
         h1 {
             font-size: 16px;
             letter-spacing: 1.5px;
@@ -48,6 +60,7 @@
             margin-bottom: 20px;
             border-bottom: 1px solid #1f2228;
             padding-bottom: 10px;
+            text-align: center;
         }
 
         .form-group {
@@ -110,6 +123,10 @@
 <body>
 
     <div class="admin-card">
+        <div class="logo-wrapper">
+            <img src="logo.png" alt="Nguni Logo" class="admin-logo" onerror="this.style.display='none'">
+        </div>
+
         <h1>NGUNI HOT DESK <span>| LOG ORDER</span></h1>
         
         <form id="orderForm">
