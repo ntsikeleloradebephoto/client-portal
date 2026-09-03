@@ -124,6 +124,16 @@
             </div>
 
             <div class="form-group">
+                <label>Marketplace Channel</label>
+                <select id="marketplace">
+                    <option value="Amazon">Amazon</option>
+                    <option value="Makro">Makro</option>
+                    <option value="Bob Shop">Bob Shop</option>
+                    <option value="Direct B2B">Direct B2B</option>
+                </select>
+            </div>
+
+            <div class="form-group">
                 <label>Wholesale Floor Price (ZAR)</label>
                 <input type="number" step="0.01" id="wholesalePrice" placeholder="e.g. 520" required>
             </div>
@@ -159,6 +169,7 @@
 
             const item_name = document.getElementById('itemName').value;
             const order_number = document.getElementById('orderNum').value;
+            const marketplace = document.getElementById('marketplace').value;
             const wholesale_floor_zar = parseFloat(document.getElementById('wholesalePrice').value);
             const payout_status = document.getElementById('payoutStatus').value;
 
@@ -168,6 +179,7 @@
                     { 
                         item_name: item_name, 
                         order_number: order_number, 
+                        marketplace: marketplace,
                         wholesale_floor_zar: wholesale_floor_zar, 
                         payout_status: payout_status 
                     }
