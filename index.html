@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nguni Homeware - Supplier Trade Ledger</title>
+    <link rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -32,6 +33,18 @@
             border-bottom: 2px solid var(--border-gold);
             padding-bottom: 16px;
             margin-bottom: 24px;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .header-logo {
+            height: 40px;
+            width: auto;
+            object-fit: contain;
         }
 
         .header h1 {
@@ -171,7 +184,10 @@
 <body>
 
     <div class="header">
-        <h1>NGUNI HOMEWARE <span>| SUPPLIER TRADE LEDGER</span></h1>
+        <div class="header-brand">
+            <img src="logo.png" alt="Nguni Logo" class="header-logo" onerror="this.style.display='none'">
+            <h1>NGUNI HOMEWARE <span>| SUPPLIER TRADE LEDGER</span></h1>
+        </div>
         <div class="status-badge">🟢 Realtime Sync Active</div>
     </div>
 
@@ -280,10 +296,7 @@
         function renderChart(orders) {
             const ctx = document.getElementById('salesChart').getContext('2d');
 
-            // Aggregate order units per date
             const dateCounts = {};
-            
-            // Sort ascending for chronological chart view
             const sortedOrders = [...orders].reverse();
 
             sortedOrders.forEach(order => {
