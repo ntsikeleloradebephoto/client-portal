@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nguni Homeware - Partner Consignment Portal</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Nguni Homeware - Supplier Trade Ledger</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <style>
         :root {
@@ -12,7 +11,6 @@
             --panel-dark: #121417;
             --gold-primary: #d4af37;
             --gold-light: #f3c649;
-            --gold-subtle: rgba(212, 175, 55, 0.15);
             --text-light: #f5f5f5;
             --text-muted: #a0a5ad;
             --border-gold: #3a3219;
@@ -21,229 +19,260 @@
         body {
             font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
             background-color: var(--bg-dark);
+            color: var(--text-light);
             margin: 0;
             padding: 24px;
-            color: var(--text-light);
         }
 
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: var(--panel-dark);
-            padding: 18px 28px;
-            border-radius: 8px;
+            border-bottom: 2px solid var(--border-gold);
+            padding-bottom: 16px;
             margin-bottom: 24px;
-            border: 1px solid var(--border-gold);
-            border-left: 5px solid var(--gold-primary);
         }
-        .header h1 { margin: 0; font-size: 18px; letter-spacing: 2px; text-transform: uppercase; }
-        .header h1 span { color: var(--gold-primary); }
-        .header .status { color: var(--gold-light); font-weight: 600; font-size: 13px; }
+
+        .header h1 {
+            font-size: 20px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--gold-primary);
+            margin: 0;
+        }
+
+        .status-badge {
+            background: #122415;
+            color: #4CAF50;
+            border: 1px solid #2e7d32;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
 
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 18px;
+            gap: 16px;
             margin-bottom: 24px;
         }
-        .card {
-            background: var(--panel-dark);
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #1f2228;
-            position: relative;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        }
-        .card::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, var(--gold-primary), transparent);
-        }
-        .card h3 { margin: 0 0 10px 0; font-size: 11px; color: var(--gold-primary); text-transform: uppercase; letter-spacing: 1.5px; }
-        .card .value { font-size: 24px; font-weight: 700; color: var(--text-light); }
 
-        .content-grid {
+        .metric-card {
+            background: var(--panel-dark);
+            border: 1px solid var(--border-gold);
+            border-top: 3px solid var(--gold-primary);
+            padding: 20px;
+            border-radius: 6px;
+        }
+
+        .metric-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-light);
+        }
+
+        .dashboard-layout {
             display: grid;
             grid-template-columns: 2fr 1fr;
             gap: 24px;
         }
-        .panel {
-            background: var(--panel-dark);
-            padding: 24px;
-            border-radius: 8px;
-            border: 1px solid #1f2228;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        }
-        .panel h2 { 
-            margin-top: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;
-            color: var(--gold-primary); border-bottom: 1px solid #1f2228; padding-bottom: 12px; 
+
+        @media (max-width: 900px) {
+            .dashboard-layout { grid-template-columns: 1fr; }
         }
 
-        .order-item {
+        .panel {
+            background: var(--panel-dark);
+            border: 1px solid var(--border-gold);
+            border-radius: 6px;
+            padding: 20px;
+        }
+
+        .panel-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--gold-primary);
+            margin-top: 0;
+            margin-bottom: 16px;
+            border-bottom: 1px solid #1f2228;
+            padding-bottom: 8px;
+        }
+
+        .manifest-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .manifest-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 12px 0;
-            border-bottom: 1px solid #1a1d24;
-            font-size: 13px;
+            border-bottom: 1px solid #1f2228;
         }
-        .order-item:last-child { border-bottom: none; }
-        .order-item small { color: var(--text-muted); }
-        .badge {
-            background-color: var(--gold-subtle);
+
+        .manifest-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-details h4 {
+            margin: 0 0 4px 0;
+            font-size: 14px;
+            color: var(--text-light);
+        }
+
+        .item-details p {
+            margin: 0;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .item-payout {
+            text-align: right;
+        }
+
+        .payout-amount {
+            font-size: 14px;
+            font-weight: 700;
             color: var(--gold-light);
-            border: 1px solid var(--border-gold);
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: 600;
-            text-transform: uppercase;
         }
+
+        .payout-status {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 3px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+
+        .status-pending { background: #3a2e10; color: #ffca28; }
+        .status-settled { background: #122415; color: #81c784; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1>NGUNI HOMEWARE <span>| SUPPLIER TRADE LEDGER</span></h1>
-        <div class="status" id="connectionStatus">🟡 Syncing Ledger...</div>
+        <div class="status-badge">🟢 Realtime Sync Active</div>
     </div>
 
     <div class="metrics-grid">
-        <div class="card">
-            <h3>Total Units Consigned & Sold</h3>
-            <div class="value" id="totalUnitsVal">0 Units</div>
+        <div class="metric-card">
+            <div class="metric-title">Total Units Consigned & Sold</div>
+            <div class="metric-value" id="totalUnits">0 Units</div>
         </div>
-        <div class="card">
-            <h3>Locked Wholesale Payout Owed</h3>
-            <div class="value" id="supplierPayoutVal" style="color: var(--gold-light);">R 0</div>
+        <div class="metric-card">
+            <div class="metric-title">Locked Wholesale Payout Owed</div>
+            <div class="metric-value" id="totalPayout">R 0</div>
         </div>
-        <div class="card">
-            <h3>Active Pilot SKUs</h3>
-            <div class="value">5 Lines</div>
+        <div class="metric-card">
+            <div class="metric-title">Active Pilot SKUs</div>
+            <div class="metric-value">5 Lines</div>
         </div>
-        <div class="card">
-            <h3>Settlement Cycle</h3>
-            <div class="value">15–30 Days</div>
+        <div class="metric-card">
+            <div class="metric-title">Settlement Cycle</div>
+            <div class="metric-value">15–30 Days</div>
         </div>
     </div>
 
-    <div class="content-grid">
+    <div class="dashboard-layout">
         <div class="panel">
-            <h2>Weekly Unit Sales Velocity</h2>
-            <canvas id="salesChart" height="120"></canvas>
+            <div class="panel-title">Weekly Unit Sales Velocity</div>
+            <p style="color: var(--text-muted); font-size: 13px;">Real-time dispatch synchronization active.</p>
         </div>
 
         <div class="panel">
-            <h2>Consignment Sales Manifest</h2>
-            <div id="ordersList">
-                <p style="color: var(--text-muted); font-size: 13px;">Loading manifest...</p>
-            </div>
+            <div class="panel-title">Consignment Sales Manifest</div>
+            <ul class="manifest-list" id="manifestList">
+                <li style="color: var(--text-muted); font-size: 12px;">Loading ledger orders...</li>
+            </ul>
         </div>
     </div>
 
     <script>
         const SUPABASE_URL = 'https://aivsmcdhxfdccsbqmejt.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_NDE9uLsqMD2QiIa6LMw-Lw_IBOmeebV';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let supabaseClient;
-        if (window.supabase && window.supabase.createClient) {
-            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        function formatDate(dateString) {
+            if (!dateString) return 'Date Pending';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
         }
 
-        const connectionStatus = document.getElementById('connectionStatus');
-        const ordersList = document.getElementById('ordersList');
-        const totalUnitsVal = document.getElementById('totalUnitsVal');
-        const supplierPayoutVal = document.getElementById('supplierPayoutVal');
-
         async function fetchOrders() {
-            if (!supabaseClient) return;
-
             const { data: orders, error } = await supabaseClient
                 .from('orders')
                 .select('*')
                 .order('created_at', { ascending: false });
 
             if (error) {
-                connectionStatus.innerText = '🔴 ' + error.message;
+                console.error('Error loading orders:', error);
                 return;
             }
 
-            connectionStatus.innerText = '🟢 Realtime Sync Active';
-            renderOrders(orders);
+            renderDashboard(orders);
         }
 
-        function renderOrders(orders) {
-            ordersList.innerHTML = '';
-            let totalWholesalePayout = 0;
-            let totalUnits = 0;
+        function renderDashboard(orders) {
+            const manifestList = document.getElementById('manifestList');
+            const totalUnitsEl = document.getElementById('totalUnits');
+            const totalPayoutEl = document.getElementById('totalPayout');
 
-            if (!orders || orders.length === 0) {
-                ordersList.innerHTML = '<p style="color: var(--text-muted); font-size: 13px;">No consignment sales recorded yet.</p>';
-                return;
-            }
+            manifestList.innerHTML = '';
+
+            let totalPayout = 0;
+            let totalUnits = orders.length;
 
             orders.forEach(order => {
-                const wholesale = parseFloat(order.wholesale_floor_zar || 0);
+                totalPayout += parseFloat(order.wholesale_floor_zar || 0);
 
-                totalWholesalePayout += wholesale;
-                totalUnits += 1;
+                const statusClass = order.payout_status === 'SETTLED' ? 'status-settled' : 'status-pending';
+                const formattedDate = formatDate(order.created_at);
 
-                const itemHtml = `
-                    <div class="order-item">
-                        <div>
-                            <strong>${order.item_name}</strong><br>
-                            <small>Order Ref: ${order.order_number}</small>
-                        </div>
-                        <div style="text-align: right;">
-                            <strong style="color: var(--gold-light);">R ${wholesale.toLocaleString()}</strong><br>
-                            <span class="badge">${order.payout_status}</span>
-                        </div>
+                const li = document.createElement('li');
+                li.className = 'manifest-item';
+                li.innerHTML = `
+                    <div class="item-details">
+                        <h4>${order.item_name}</h4>
+                        <p>Order Ref: ${order.order_number} &bull; <span style="color: var(--gold-light);">${formattedDate}</span></p>
+                    </div>
+                    <div class="item-payout">
+                        <div class="payout-amount">R ${parseFloat(order.wholesale_floor_zar).toFixed(0)}</div>
+                        <span class="payout-status ${statusClass}">${order.payout_status}</span>
                     </div>
                 `;
-                ordersList.innerHTML += itemHtml;
+                manifestList.appendChild(li);
             });
 
-            totalUnitsVal.innerText = `${totalUnits} ${totalUnits === 1 ? 'Unit' : 'Units'}`;
-            supplierPayoutVal.innerText = `R ${totalWholesalePayout.toLocaleString()}`;
+            totalUnitsEl.innerText = `${totalUnits} Units`;
+            totalPayoutEl.innerText = `R ${totalPayout.toLocaleString('en-ZA', { minimumFractionDigits: 0 })}`;
         }
 
-        if (supabaseClient) {
-            supabaseClient
-                .channel('public:orders')
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, payload => {
-                    fetchOrders();
-                })
-                .subscribe();
-
-            fetchOrders();
-        }
-
-        const ctx = document.getElementById('salesChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                datasets: [{
-                    label: 'Units Sold',
-                    data: [4, 6, 3, 8, 10, 12, 11],
-                    backgroundColor: '#d4af37',
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { grid: { color: '#1f2228' }, ticks: { color: '#a0a5ad' } },
-                    y: { grid: { color: '#1f2228' }, ticks: { color: '#a0a5ad', precision: 0 } }
-                }
-            }
-        });
+        // Initialize and listen for real-time order updates
+        fetchOrders();
+        supabaseClient
+            .channel('orders_realtime')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+                fetchOrders();
+            })
+            .subscribe();
     </script>
 </body>
 </html>
