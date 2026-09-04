@@ -1,12 +1,17 @@
 async function saveStockEdit(stockId) {
             if (!currentUser) return openLoginModal();
 
-            const sku = document.getElementById(`sku_${stockId}`).value.trim();
-            const itemName = document.getElementById(`name_${stockId}`).value.trim();
-            const supplier = document.getElementById(`supplier_${stockId}`).value.trim();
-            const qty = parseInt(document.getElementById(`qty_${stockId}`).value) || 0;
-            const price = parseFloat(document.getElementById(`price_${stockId}`).value) || 0;
-            const retailPrice = parseFloat(document.getElementById(`selling_${stockId}`).value) || 0;
+            const sku = document.getElementById(`sku_${stockId}`)?.value.trim() || '';
+            const itemName = document.getElementById(`name_${stockId}`)?.value.trim() || '';
+            const supplier = document.getElementById(`supplier_${stockId}`)?.value.trim() || '';
+            const qty = parseInt(document.getElementById(`qty_${stockId}`)?.value) || 0;
+            const price = parseFloat(document.getElementById(`price_${stockId}`)?.value) || 0;
+            
+            // Safe fallback checks for the selling/retail price input ID
+            const sellingInput = document.getElementById(`selling_${stockId}`) || 
+                                 document.getElementById(`retail_${stockId}`) || 
+                                 document.getElementById(`price_${stockId}`);
+            const retailPrice = sellingInput ? parseFloat(sellingInput.value) || 0 : 0;
 
             const { error } = await supabaseClient.from('inventory').update({
                 sku: sku,
@@ -21,10 +26,42 @@ async function saveStockEdit(stockId) {
                 retail_price: retailPrice // Matches your Supabase schema column exactly
             }).eq('id', stockId);
 
-            if (error) alert('Failed to update stock: ' + error.message);
-            else {
+            if (error) {
+                alert('Failed to update stock: ' + error.message);
+            } else {
                 logAuditAction(`Updated Stock Item [${sku}] ${itemName} by ${currentUser.full_name}`);
                 alert('Stock item updated successfully!');
                 fetchAdminOrders();
             }
+        }
+
+        function addStockItemToBatch(e) {
+            e.preventDefault();
+
+            const customSku = document.getElementById('stockSku').value.trim();
+            const stockName = document.getElementById('stockName').value.trim();
+            const qty = parseInt(document.getElementById('stockQty').value) || 0;
+            const unitPrice = parseFloat(document.getElementById('stockUnitPrice').value) || 0;
+            const retailPrice = parseFloat(document.getElementById('stockSellingPrice').value) || 0;
+            const supplier = document.getElementById('stockSupplier').value.trim();
+
+            const generatedSku = customSku ? customSku.toUpperCase() : (stockName.toUpperCase().replace(/[^A-Z0-9]/g, '-').slice(0, 12) + '-' + Math.floor(100 + Math.random() * 900));
+
+            intakeBatch.push({
+                sku: generatedSku,
+                item_name: stockName,
+                item_description: stockName,
+                quantity_allocated: qty,
+                quantity: qty,
+                unit_price: unitPrice,
+                cost_price: unitPrice,
+                wholesale_floor_zar: unitPrice,
+                retail_price: retailPrice, // Matches database schema
+                supplier: supplier,
+                added_by: currentUser ? currentUser.full_name : 'Staff'
+            });
+
+            renderIntakeBatchTable();
+            document.getElementById('stockForm').reset();
+            document.getElementById('stockSku').focus();
         }
