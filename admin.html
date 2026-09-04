@@ -18,6 +18,7 @@
             --green-active: #2e7d32;
             --green-light: #81c784;
             --red-alert: #d32f2f;
+            --red-light: #ef5350;
         }
 
         body {
@@ -30,11 +31,17 @@
 
         .header {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 12px;
             border-bottom: 2px solid var(--border-gold);
             padding-bottom: 16px;
             margin-bottom: 24px;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .header h1 {
@@ -45,10 +52,20 @@
             margin: 0;
         }
 
+        .role-selector {
+            background: #08090a;
+            border: 1px solid var(--border-gold);
+            color: var(--gold-light);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
         /* TABS NAVIGATION */
         .tabs {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 12px;
             margin-bottom: 24px;
         }
@@ -92,12 +109,15 @@
             color: var(--gold-primary);
             margin-top: 0;
             margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         /* METRICS SUMMARY */
         .summary-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 16px;
             margin-bottom: 24px;
         }
@@ -117,7 +137,7 @@
         }
 
         .summary-val {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 700;
             margin-top: 6px;
         }
@@ -160,10 +180,13 @@
             font-size: 10px;
             font-weight: 700;
             text-transform: uppercase;
+            padding: 2px 6px;
+            border-radius: 3px;
         }
 
-        .status-pending { color: var(--gold-light); }
-        .status-settled { color: var(--green-light); }
+        .status-pending { color: var(--gold-light); background: rgba(212, 175, 55, 0.1); }
+        .status-settled { color: var(--green-light); background: rgba(46, 125, 50, 0.2); }
+        .status-returned { color: var(--red-light); background: rgba(211, 47, 47, 0.2); }
 
         .btn-action {
             padding: 6px 10px;
@@ -178,9 +201,11 @@
 
         .btn-pending { background: #d4af37; color: #000; }
         .btn-settled { background: #2e7d32; color: #fff; }
+        .btn-return { background: #e65100; color: #fff; }
         .btn-delete { background: #d32f2f; color: #fff; }
+        .btn-export { background: var(--gold-primary); color: #000; font-weight: bold; cursor: pointer; border: none; padding: 8px 14px; border-radius: 4px; text-transform: uppercase; font-size: 10px; }
 
-        /* FORM INPUT STYLING FOR TAB 1 & 2 */
+        /* FORM INPUT STYLING */
         .form-group {
             margin-bottom: 16px;
         }
@@ -219,15 +244,25 @@
 <body>
 
     <div class="header">
-        <img src="logo.png" alt="Nguni Logo" style="height: 36px;" onerror="this.style.display='none'">
-        <h1>NGUNI HOMEWARE | CONTROL & POS HUB</h1>
+        <div class="header-title">
+            <img src="logo.png" alt="Nguni Logo" style="height: 36px;" onerror="this.style.display='none'">
+            <h1>NGUNI HOMEWARE | CONTROL & POS HUB</h1>
+        </div>
+        <div>
+            <span style="font-size: 10px; color: var(--text-muted); margin-right: 8px;">ACTIVE ACCESS LEVEL:</span>
+            <select class="role-selector" id="roleSelect" onchange="applyRolePermissions()">
+                <option value="manager">Manager Mode (Full Access)</option>
+                <option value="staff">Staff Mode (POS & Intake Only)</option>
+            </select>
+        </div>
     </div>
 
     <!-- TABS -->
     <div class="tabs">
         <button class="tab-btn" onclick="switchTab('tab1')">1. POS SCAN OUT</button>
         <button class="tab-btn" onclick="switchTab('tab2')">2. STOCK IN INTAKE</button>
-        <button class="tab-btn active" onclick="switchTab('tab3')">3. SETTLEMENT & ORDER MANAGER</button>
+        <button class="tab-btn active" id="btnTab3" onclick="switchTab('tab3')">3. SETTLEMENT & ORDER MANAGER</button>
+        <button class="tab-btn" onclick="switchTab('tab4')">4. STOCK ON-HAND & ALERTS</button>
     </div>
 
     <!-- TAB 1: POS SCAN OUT -->
@@ -272,7 +307,10 @@
 
     <!-- TAB 3: SETTLEMENT & ORDER MANAGER -->
     <div id="tab3" class="tab-content active">
-        <div class="section-title">Settlement Ledger & Order Actions</div>
+        <div class="section-title">
+            <span>Settlement Ledger & Order Actions</span>
+            <button class="btn-export" onclick="exportSupplierStatement()">Download Supplier Statement (CSV)</button>
+        </div>
 
         <div class="summary-grid">
             <div class="summary-card">
@@ -282,6 +320,10 @@
             <div class="summary-card">
                 <div class="summary-label">Total Settled & Paid Out</div>
                 <div class="summary-val" id="adminSettled" style="color: var(--green-light);">R 0.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Net Settlement (After R230 Platform Fee)</div>
+                <div class="summary-val" id="adminNet" style="color: #fff;">R 0.00</div>
             </div>
         </div>
 
@@ -302,31 +344,70 @@
         </table>
     </div>
 
+    <!-- TAB 4: STOCK ON-HAND & ALERTS -->
+    <div id="tab4" class="tab-content">
+        <div class="section-title">Active Stock Levels & Reorder Indicators</div>
+        <table class="ledger-table">
+            <thead>
+                <tr>
+                    <th>Product / SKU Description</th>
+                    <th>Total Intake</th>
+                    <th>Total Dispatched</th>
+                    <th>Current Stock On-Hand</th>
+                    <th>Stock Status</th>
+                </tr>
+            </thead>
+            <tbody id="stockTableBody">
+                <tr><td colspan="5" style="color: var(--text-muted);">Calculating live stock thresholds...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
     <script>
         const SUPABASE_URL = 'https://aivsmcdhxfdccsbqmejt.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_NDE9uLsqMD2QiIa6LMw-Lw_IBOmeebV';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const PLATFORM_FEE = 230; // Fixed platform fee in ZAR
+        let cachedOrders = [];
+        let cachedInventory = [];
+
+        function applyRolePermissions() {
+            const role = document.getElementById('roleSelect').value;
+            const btnTab3 = document.getElementById('btnTab3');
+            
+            if (role === 'staff') {
+                btnTab3.style.display = 'none';
+                switchTab('tab1');
+            } else {
+                btnTab3.style.display = 'block';
+            }
+        }
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             
             document.getElementById(tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
+            const targetBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+            if (targetBtn) targetBtn.classList.add('active');
         }
 
         async function fetchAdminOrders() {
-            const { data: orders, error } = await supabaseClient
+            const { data: orders } = await supabaseClient
                 .from('orders')
                 .select('*')
                 .order('created_at', { ascending: false });
 
-            if (error) {
-                console.error("Error loading orders:", error);
-                return;
-            }
+            const { data: inventory } = await supabaseClient
+                .from('inventory')
+                .select('*');
 
-            renderAdminOrders(orders || []);
+            cachedOrders = orders || [];
+            cachedInventory = inventory || [];
+
+            renderAdminOrders(cachedOrders);
+            renderStockTable(cachedInventory, cachedOrders);
         }
 
         function renderAdminOrders(orders) {
@@ -340,17 +421,18 @@
                 tbody.innerHTML = '<tr><td colspan="6" style="color: var(--text-muted);">No orders in database.</td></tr>';
                 document.getElementById('adminOwed').innerText = 'R 0.00';
                 document.getElementById('adminSettled').innerText = 'R 0.00';
+                document.getElementById('adminNet').innerText = 'R 0.00';
                 return;
             }
 
             orders.forEach(order => {
                 const wholesaleVal = parseFloat(order.wholesale_floor_zar) || 0;
                 const qty = parseInt(order.quantity_dispatched) || 1;
-                const isSettled = order.payout_status === 'SETTLED';
+                const status = order.payout_status || 'ESCROW PENDING';
 
-                if (isSettled) {
+                if (status === 'SETTLED') {
                     settledSum += wholesaleVal;
-                } else {
+                } else if (status === 'ESCROW PENDING') {
                     pendingSum += wholesaleVal;
                 }
 
@@ -362,6 +444,10 @@
                     }
                 }
 
+                let statusClass = 'status-pending';
+                if (status === 'SETTLED') statusClass = 'status-settled';
+                if (status === 'RETURNED / CANCELLED') statusClass = 'status-returned';
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>
@@ -372,23 +458,78 @@
                     <td style="font-weight: 700;">${qty} ${qty > 1 ? 'Units' : 'Unit'}</td>
                     <td style="font-weight: 700;">R ${wholesaleVal.toFixed(2)}</td>
                     <td>
-                        <span class="status-badge ${isSettled ? 'status-settled' : 'status-pending'}">
-                            ${order.payout_status || 'ESCROW PENDING'}
+                        <span class="status-badge ${statusClass}">
+                            ${status}
                         </span>
                     </td>
                     <td>
-                        ${isSettled 
+                        ${status === 'SETTLED' 
                             ? `<button class="btn-action btn-pending" onclick="updateStatus('${order.id}', 'ESCROW PENDING')">Mark Pending</button>`
                             : `<button class="btn-action btn-settled" onclick="updateStatus('${order.id}', 'SETTLED')">Mark Settled</button>`
                         }
+                        <button class="btn-action btn-return" onclick="updateStatus('${order.id}', 'RETURNED / CANCELLED')">Return</button>
                         <button class="btn-action btn-delete" onclick="deleteOrder('${order.id}')">Delete</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
 
+            const netPayout = Math.max(0, pendingSum - PLATFORM_FEE);
+
             document.getElementById('adminOwed').innerText = `R ${pendingSum.toFixed(2)}`;
             document.getElementById('adminSettled').innerText = `R ${settledSum.toFixed(2)}`;
+            document.getElementById('adminNet').innerText = `R ${netPayout.toFixed(2)}`;
+        }
+
+        function renderStockTable(inventory, orders) {
+            const tbody = document.getElementById('stockTableBody');
+            tbody.innerHTML = '';
+
+            const stockMap = {};
+
+            // Calculate intake
+            inventory.forEach(item => {
+                const name = (item.item_description || 'Unknown Item').toLowerCase().trim();
+                stockMap[name] = stockMap[name] || { name: item.item_description, intake: 0, dispatched: 0 };
+                stockMap[name].intake += (parseInt(item.quantity_allocated) || 0);
+            });
+
+            // Calculate dispatches (ignoring returned items)
+            orders.forEach(order => {
+                if (order.payout_status !== 'RETURNED / CANCELLED') {
+                    const name = (order.item_name || 'Unknown Item').toLowerCase().trim();
+                    stockMap[name] = stockMap[name] || { name: order.item_name, intake: 0, dispatched: 0 };
+                    stockMap[name].dispatched += (parseInt(order.quantity_dispatched) || 1);
+                }
+            });
+
+            const keys = Object.keys(stockMap);
+            if (keys.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="color: var(--text-muted);">No stock data logged yet.</td></tr>';
+                return;
+            }
+
+            keys.forEach(k => {
+                const item = stockMap[k];
+                const onHand = item.intake - item.dispatched;
+                let statusHtml = '<span style="color: var(--green-light); font-weight: bold;">HEALTHY</span>';
+
+                if (onHand <= 5 && onHand > 0) {
+                    statusHtml = '<span style="color: var(--gold-light); font-weight: bold;">LOW STOCK ALERT</span>';
+                } else if (onHand <= 0) {
+                    statusHtml = '<span style="color: var(--red-light); font-weight: bold;">OUT OF STOCK</span>';
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="item-name">${item.name}</td>
+                    <td>${item.intake} Units</td>
+                    <td>${item.dispatched} Units</td>
+                    <td style="font-weight: bold; font-size: 14px;">${onHand} Units</td>
+                    <td>${statusHtml}</td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
         async function updateStatus(orderId, newStatus) {
@@ -405,7 +546,7 @@
         }
 
         async function deleteOrder(orderId) {
-            if (!confirm('Are you sure you want to delete this order?')) return;
+            if (!confirm('Are you sure you want to delete this order record?')) return;
 
             const { error } = await supabaseClient
                 .from('orders')
@@ -417,6 +558,40 @@
             } else {
                 fetchAdminOrders();
             }
+        }
+
+        function exportSupplierStatement() {
+            if (cachedOrders.length === 0) {
+                alert('No orders available to export.');
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Order Ref,Item Name,Date,Quantity,Wholesale Amount (ZAR),Payout Status\n";
+
+            let grossPending = 0;
+
+            cachedOrders.forEach(o => {
+                const amount = parseFloat(o.wholesale_floor_zar) || 0;
+                const status = o.payout_status || 'ESCROW PENDING';
+                if (status === 'ESCROW PENDING') grossPending += amount;
+
+                csvContent += `"${o.order_number || ''}","${o.item_name || ''}","${o.created_at || ''}",${o.quantity_dispatched || 1},${amount},"${status}"\n`;
+            });
+
+            const netPayout = Math.max(0, grossPending - PLATFORM_FEE);
+            csvContent += `\n"SUMMARY","","","",""\n`;
+            csvContent += `"Gross Escrow Pending","","","",${grossPending}\n`;
+            csvContent += `"Platform Fee Deduction","","",,-${PLATFORM_FEE}\n`;
+            csvContent += `"Net Supplier Payout Owed","","","",${netPayout}\n`;
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Nguni_Supplier_Statement_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         async function handlePosSubmit(e) {
@@ -459,10 +634,11 @@
             } else {
                 alert('Inventory line added successfully!');
                 document.getElementById('stockForm').reset();
+                fetchAdminOrders();
             }
         }
 
-        // Realtime Listener & Initial Load
+        // Initialize & Realtime Sync
         fetchAdminOrders();
         supabaseClient.channel('admin_realtime').on('postgres_changes', { event: '*', schema: 'public' }, () => {
             fetchAdminOrders();
