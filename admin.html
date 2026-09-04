@@ -53,7 +53,7 @@
 
         .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--gold-primary); margin-top: 0; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
 
-        /* MULTI-SLOT & ENTERPRISE POS STYLES */
+        /* MULTI-SLOT & ENTERPRISE STYLES */
         .item-slots-grid {
             display: grid;
             grid-template-columns: 2fr 1.2fr 1fr 1fr 1.5fr;
@@ -156,11 +156,9 @@
         <button class="tab-btn" id="btnTab7" onclick="switchTab('tab7')">7. RETURNS & DAMAGES</button>
     </div>
 
-    <!-- TAB 1: ENTERPRISE POS TERMINAL WITH BATCH CART -->
     <div id="tab1" class="tab-content active">
         <div class="section-title">POS Dispatch / Terminal Checkout</div>
         
-        <!-- SCANNER INPUT BAR -->
         <div class="scan-bar-grid">
             <div class="form-group">
                 <label>Scan Barcode / Type SKU</label>
@@ -176,7 +174,6 @@
             <button type="button" class="btn-sec" onclick="stopCameraScanner()" style="margin-top: 10px; color: var(--red-light); border-color: var(--red-light);">Close Camera</button>
         </div>
 
-        <!-- AUTO-POPULATING PRODUCT SLOTS -->
         <div class="item-slots-grid">
             <div class="slot-box">
                 <span class="slot-label">Product Name</span>
@@ -200,7 +197,6 @@
             </div>
         </div>
 
-        <!-- ITEM STAGING & ENTRY -->
         <div class="transaction-slots-grid">
             <div class="form-group" style="margin-bottom:0;">
                 <label>Order Reference / Transaction No.</label>
@@ -222,7 +218,6 @@
             </div>
         </div>
 
-        <!-- ENTERPRISE POS CART TABLE -->
         <div class="pos-table-container">
             <table class="pos-table">
                 <thead>
@@ -242,7 +237,6 @@
             </table>
         </div>
 
-        <!-- POS CHECKOUT FOOTER -->
         <div class="pos-summary-bar">
             <div>
                 <span class="slot-label">TOTAL ITEMS: <span id="cartItemCount" style="color:#fff;">0</span></span>
@@ -257,10 +251,9 @@
         </div>
     </div>
 
-    <!-- TAB 2: STOCK INTAKE -->
     <div id="tab2" class="tab-content">
-        <div class="section-title">Consignment Stock Intake</div>
-        <form id="stockForm" onsubmit="handleStockSubmit(event)">
+        <div class="section-title">Consignment Stock Intake & Batch Staging</div>
+        <form id="stockForm" onsubmit="addStockItemToBatch(event)" style="margin-bottom: 24px;">
             <div class="form-group">
                 <label>Item Number / Barcode SKU (Optional - Auto Generated if Empty)</label>
                 <input type="text" id="stockSku" class="form-control" placeholder="e.g. 600123456789 or ITEM-101">
@@ -281,11 +274,36 @@
                 <label>Consignor / Wholesale Supplier Partner</label>
                 <input type="text" id="stockSupplier" class="form-control" required placeholder="e.g. Craft Master Wholesalers">
             </div>
-            <button type="submit" class="btn-submit">Add Inventory Line</button>
+            <button type="submit" class="btn-submit" style="background: var(--gold-light); color: #000;">+ Stage Stock Line</button>
         </form>
+
+        <div class="section-title">Batch Intake Staging Queue</div>
+        <div class="pos-table-container">
+            <table class="pos-table">
+                <thead>
+                    <tr>
+                        <th>BARCODE / SKU</th>
+                        <th>PRODUCT NAME</th>
+                        <th>SUPPLIER</th>
+                        <th>QTY</th>
+                        <th>FLOOR PRICE</th>
+                        <th>ACTION</th>
+                    </tr>
+                </thead>
+                <tbody id="intakeBatchTableBody">
+                    <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No items staged for intake batch.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pos-summary-bar">
+            <div>
+                <span class="slot-label">STAGED LINES: <span id="intakeBatchCount" style="color:#fff;">0</span></span>
+            </div>
+            <button type="button" class="btn-submit" style="width: auto; padding: 14px 28px;" onclick="commitIntakeBatch()">COMMIT ALL STAGED INVENTORY</button>
+        </div>
     </div>
 
-    <!-- TAB 3: SETTLEMENT LEDGER -->
     <div id="tab3" class="tab-content">
         <div class="section-title">
             <span>Settlement Ledger & Supplier Split Breakdown</span>
@@ -334,7 +352,6 @@
         </table>
     </div>
 
-    <!-- TAB 4: STOCK ON-HAND -->
     <div id="tab4" class="tab-content">
         <div class="section-title">Active Stock Inventory Management</div>
         <table class="ledger-table">
@@ -354,7 +371,6 @@
         </table>
     </div>
 
-    <!-- TAB 5: STAFF PROFILES -->
     <div id="tab5" class="tab-content">
         <div class="section-title">Staff Profile Management</div>
         <form id="createStaffForm" onsubmit="handleCreateStaff(event)" style="margin-bottom: 24px;">
@@ -392,7 +408,6 @@
         </table>
     </div>
 
-    <!-- TAB 6: AUDIT LOGS -->
     <div id="tab6" class="tab-content">
         <div class="section-title">System Audit Trail & Manager Activity History</div>
         <table class="ledger-table">
@@ -409,7 +424,6 @@
         </table>
     </div>
 
-    <!-- TAB 7: RETURNS & DAMAGES -->
     <div id="tab7" class="tab-content">
         <div class="section-title">Customer Order Returns & Inventory Restock</div>
         <form id="returnForm" onsubmit="handleReturnSubmit(event)" style="margin-bottom: 28px;">
@@ -478,7 +492,6 @@
         </table>
     </div>
 
-    <!-- MODALS -->
     <div class="modal-overlay" id="loginModal">
         <div class="modal-card">
             <h3 style="color: var(--gold-primary); margin-top: 0;">USER PROFILE LOGIN</h3>
@@ -524,6 +537,7 @@
         let cachedInventory = [];
         let activePosMatch = null;
         let posCart = [];
+        let intakeBatch = [];
         let html5QrCodeScanner = null;
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -537,7 +551,7 @@
             }
         });
 
-        // --- SCANNER & SLOT FILL LOGIC ---
+        // --- TAB 1: SCANNER & SLOT FILL LOGIC ---
         function handleBarcodeScanInput() {
             const query = document.getElementById('posBarcodeScan').value.trim().toLowerCase();
             if (!query) {
@@ -608,7 +622,7 @@
             document.getElementById('slotLineTotal').value = 'R 0.00';
         }
 
-        // --- CART BATCH LOGIC ---
+        // --- TAB 1: CART BATCH LOGIC ---
         function addItemToCart() {
             if (!activePosMatch) return alert('Scan or select an item first.');
 
@@ -734,6 +748,84 @@
                 </div>
             `;
             document.getElementById('receiptModal').style.display = 'flex';
+        }
+
+        // --- TAB 2: INTAKE BATCH LOGIC ---
+        function addStockItemToBatch(e) {
+            e.preventDefault();
+
+            const customSku = document.getElementById('stockSku').value.trim();
+            const stockName = document.getElementById('stockName').value.trim();
+            const qty = parseInt(document.getElementById('stockQty').value) || 0;
+            const unitPrice = parseFloat(document.getElementById('stockUnitPrice').value) || 0;
+            const supplier = document.getElementById('stockSupplier').value.trim();
+
+            const generatedSku = customSku ? customSku.toUpperCase() : (stockName.toUpperCase().replace(/[^A-Z0-9]/g, '-').slice(0, 12) + '-' + Math.floor(100 + Math.random() * 900));
+
+            intakeBatch.push({
+                sku: generatedSku,
+                item_name: stockName,
+                item_description: stockName,
+                quantity_allocated: qty,
+                quantity: qty,
+                unit_price: unitPrice,
+                cost_price: unitPrice,
+                wholesale_floor_zar: unitPrice,
+                supplier: supplier,
+                added_by: currentUser ? currentUser.full_name : 'Staff'
+            });
+
+            renderIntakeBatchTable();
+            document.getElementById('stockForm').reset();
+            document.getElementById('stockSku').focus();
+        }
+
+        function renderIntakeBatchTable() {
+            const tbody = document.getElementById('intakeBatchTableBody');
+            tbody.innerHTML = '';
+
+            if (intakeBatch.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No items staged for intake batch.</td></tr>';
+                document.getElementById('intakeBatchCount').innerText = '0';
+                return;
+            }
+
+            intakeBatch.forEach((item, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="color: var(--gold-light); font-weight: bold;">${item.sku}</td>
+                    <td>${item.item_name}</td>
+                    <td>${item.supplier}</td>
+                    <td>${item.quantity}</td>
+                    <td>R ${item.unit_price.toFixed(2)}</td>
+                    <td><button class="btn-action btn-delete" onclick="removeIntakeBatchItem(${idx})">Remove</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('intakeBatchCount').innerText = intakeBatch.length;
+        }
+
+        function removeIntakeBatchItem(idx) {
+            intakeBatch.splice(idx, 1);
+            renderIntakeBatchTable();
+        }
+
+        async function commitIntakeBatch() {
+            if (!currentUser) return openLoginModal();
+            if (intakeBatch.length === 0) return alert('No inventory lines staged to commit.');
+
+            const { error } = await supabaseClient.from('inventory').insert(intakeBatch);
+
+            if (error) {
+                alert('Error processing batch intake: ' + error.message);
+            } else {
+                logAuditAction(`Committed intake batch of ${intakeBatch.length} inventory lines by ${currentUser.full_name}`);
+                alert(`Successfully imported ${intakeBatch.length} inventory lines!`);
+                intakeBatch = [];
+                renderIntakeBatchTable();
+                fetchAdminOrders();
+            }
         }
 
         // --- CAMERA SCANNER ---
@@ -1012,40 +1104,6 @@
             }
         }
 
-        async function handleStockSubmit(e) {
-            e.preventDefault();
-            if (!currentUser) return openLoginModal();
-
-            const customSku = document.getElementById('stockSku').value.trim();
-            const stockName = document.getElementById('stockName').value.trim();
-            const qty = parseInt(document.getElementById('stockQty').value) || 0;
-            const unitPrice = parseFloat(document.getElementById('stockUnitPrice').value) || 0;
-            const supplier = document.getElementById('stockSupplier').value.trim();
-
-            const generatedSku = customSku ? customSku.toUpperCase() : (stockName.toUpperCase().replace(/[^A-Z0-9]/g, '-').slice(0, 12) + '-' + Math.floor(100 + Math.random() * 900));
-
-            const { error } = await supabaseClient.from('inventory').insert([{
-                sku: generatedSku,
-                item_name: stockName,
-                item_description: stockName,
-                quantity_allocated: qty,
-                quantity: qty,
-                unit_price: unitPrice,
-                cost_price: unitPrice,
-                wholesale_floor_zar: unitPrice,
-                supplier: supplier,
-                added_by: currentUser.full_name
-            }]);
-
-            if (error) alert('Error adding stock: ' + error.message);
-            else {
-                logAuditAction(`Added stock ${stockName} [${generatedSku}] by ${currentUser.full_name}`);
-                alert(`Added ${qty} units of "${stockName}"!`);
-                document.getElementById('stockForm').reset();
-                fetchAdminOrders();
-            }
-        }
-
         async function handleReturnSubmit(e) {
             e.preventDefault();
             if (!currentUser) return openLoginModal();
@@ -1090,7 +1148,6 @@
         async function fetchReturnsLog() {
             if (!supabaseClient) return;
             const tbody = document.getElementById('returnsLogTable');
-            const damagedTbody = document.getElementById('damagedTableBody');
             if (!tbody) return;
 
             const { data: returns } = await supabaseClient.from('returns').select('*').order('created_at', { ascending: false });
