@@ -52,7 +52,7 @@
             margin: 0;
         }
 
-        .role-selector {
+        .role-badge {
             background: #08090a;
             border: 1px solid var(--border-gold);
             color: var(--gold-light);
@@ -60,6 +60,9 @@
             border-radius: 4px;
             font-size: 11px;
             font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         /* TABS NAVIGATION */
@@ -204,6 +207,7 @@
         .btn-return { background: #e65100; color: #fff; }
         .btn-delete { background: #d32f2f; color: #fff; }
         .btn-export { background: var(--gold-primary); color: #000; font-weight: bold; cursor: pointer; border: none; padding: 8px 14px; border-radius: 4px; text-transform: uppercase; font-size: 10px; }
+        .btn-sec { background: transparent; border: 1px solid var(--border-gold); color: var(--gold-light); cursor: pointer; padding: 4px 8px; border-radius: 3px; font-size: 10px; font-weight: bold; }
 
         /* FORM INPUT STYLING */
         .form-group {
@@ -239,6 +243,26 @@
             text-transform: uppercase;
             letter-spacing: 1px;
         }
+
+        /* SECURITY OVERLAY MODAL */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+
+        .modal-card {
+            background: var(--panel-dark);
+            border: 2px solid var(--border-gold);
+            padding: 30px;
+            border-radius: 6px;
+            width: 320px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -248,25 +272,22 @@
             <img src="logo.png" alt="Nguni Logo" style="height: 36px;" onerror="this.style.display='none'">
             <h1>NGUNI HOMEWARE | CONTROL & POS HUB</h1>
         </div>
-        <div>
-            <span style="font-size: 10px; color: var(--text-muted); margin-right: 8px;">ACTIVE ACCESS LEVEL:</span>
-            <select class="role-selector" id="roleSelect" onchange="applyRolePermissions()">
-                <option value="manager">Manager Mode (Full Access)</option>
-                <option value="staff">Staff Mode (POS & Intake Only)</option>
-            </select>
+        <div class="role-badge">
+            <span id="roleLabel">MODE: STAFF POS</span>
+            <button class="btn-sec" onclick="openAuthModal()">AUTHENTICATE MANAGER</button>
         </div>
     </div>
 
     <!-- TABS -->
     <div class="tabs">
-        <button class="tab-btn" onclick="switchTab('tab1')">1. POS SCAN OUT</button>
+        <button class="tab-btn active" onclick="switchTab('tab1')">1. POS SCAN OUT</button>
         <button class="tab-btn" onclick="switchTab('tab2')">2. STOCK IN INTAKE</button>
-        <button class="tab-btn active" id="btnTab3" onclick="switchTab('tab3')">3. SETTLEMENT & ORDER MANAGER</button>
-        <button class="tab-btn" onclick="switchTab('tab4')">4. STOCK ON-HAND & ALERTS</button>
+        <button class="tab-btn" id="btnTab3" style="display: none;" onclick="switchTab('tab3')">3. SETTLEMENT & ORDER MANAGER</button>
+        <button class="tab-btn" id="btnTab4" style="display: none;" onclick="switchTab('tab4')">4. STOCK ON-HAND & ALERTS</button>
     </div>
 
     <!-- TAB 1: POS SCAN OUT -->
-    <div id="tab1" class="tab-content">
+    <div id="tab1" class="tab-content active">
         <div class="section-title">POS Dispatch / Scan Out</div>
         <form id="posForm" onsubmit="handlePosSubmit(event)">
             <div class="form-group">
@@ -306,10 +327,13 @@
     </div>
 
     <!-- TAB 3: SETTLEMENT & ORDER MANAGER -->
-    <div id="tab3" class="tab-content active">
+    <div id="tab3" class="tab-content">
         <div class="section-title">
             <span>Settlement Ledger & Order Actions</span>
-            <button class="btn-export" onclick="exportSupplierStatement()">Download Supplier Statement (CSV)</button>
+            <div>
+                <button class="btn-sec" onclick="openPasscodeChangeModal()" style="margin-right: 8px;">CHANGE PASSCODE</button>
+                <button class="btn-export" onclick="exportSupplierStatement()">Download Supplier Statement (CSV)</button>
+            </div>
         </div>
 
         <div class="summary-grid">
@@ -363,25 +387,105 @@
         </table>
     </div>
 
+    <!-- AUTHENTICATION MODAL -->
+    <div class="modal-overlay" id="authModal">
+        <div class="modal-card">
+            <h3 style="color: var(--gold-primary); margin-top: 0;">MANAGER AUTHENTICATION</h3>
+            <p style="font-size: 11px; color: var(--text-muted);">Enter 4-digit Manager PIN to unlock Settlement Manager & Inventory Audit tabs.</p>
+            <div class="form-group">
+                <input type="password" id="managerPinInput" class="form-control" style="text-align: center; font-size: 20px; letter-spacing: 4px;" maxlength="8" placeholder="••••">
+            </div>
+            <button class="btn-submit" style="width: 100%;" onclick="verifyManagerPin()">UNLOCK ACCESS</button>
+            <button class="btn-sec" style="width: 100%; margin-top: 8px;" onclick="closeModal('authModal')">CANCEL</button>
+        </div>
+    </div>
+
+    <!-- CHANGE PASSCODE MODAL -->
+    <div class="modal-overlay" id="changePassModal">
+        <div class="modal-card">
+            <h3 style="color: var(--gold-primary); margin-top: 0;">UPDATE MANAGER PASSCODE</h3>
+            <div class="form-group">
+                <label>Current Passcode</label>
+                <input type="password" id="oldPinInput" class="form-control" placeholder="Current PIN">
+            </div>
+            <div class="form-group">
+                <label>New Passcode</label>
+                <input type="password" id="newPinInput" class="form-control" placeholder="New PIN">
+            </div>
+            <button class="btn-submit" style="width: 100%;" onclick="saveNewPasscode()">SAVE NEW PASSCODE</button>
+            <button class="btn-sec" style="width: 100%; margin-top: 8px;" onclick="closeModal('changePassModal')">CANCEL</button>
+        </div>
+    </div>
+
     <script>
         const SUPABASE_URL = 'https://aivsmcdhxfdccsbqmejt.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_NDE9uLsqMD2QiIa6LMw-Lw_IBOmeebV';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const PLATFORM_FEE = 230; // Fixed platform fee in ZAR
+        const PLATFORM_FEE = 230;
+        let isManagerAuthenticated = false;
         let cachedOrders = [];
         let cachedInventory = [];
 
-        function applyRolePermissions() {
-            const role = document.getElementById('roleSelect').value;
-            const btnTab3 = document.getElementById('btnTab3');
-            
-            if (role === 'staff') {
-                btnTab3.style.display = 'none';
+        function getStoredPin() {
+            return localStorage.getItem('nguni_manager_pin') || '1234';
+        }
+
+        function openAuthModal() {
+            if (isManagerAuthenticated) {
+                isManagerAuthenticated = false;
+                document.getElementById('roleLabel').innerText = 'MODE: STAFF POS';
+                document.getElementById('btnTab3').style.display = 'none';
+                document.getElementById('btnTab4').style.display = 'none';
                 switchTab('tab1');
-            } else {
-                btnTab3.style.display = 'block';
+                alert('Manager session logged out.');
+                return;
             }
+            document.getElementById('managerPinInput').value = '';
+            document.getElementById('authModal').style.display = 'flex';
+        }
+
+        function openPasscodeChangeModal() {
+            document.getElementById('oldPinInput').value = '';
+            document.getElementById('newPinInput').value = '';
+            document.getElementById('changePassModal').style.display = 'flex';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        function verifyManagerPin() {
+            const entered = document.getElementById('managerPinInput').value;
+            if (entered === getStoredPin()) {
+                isManagerAuthenticated = true;
+                document.getElementById('roleLabel').innerText = 'MODE: MANAGER FULL ACCESS';
+                document.getElementById('btnTab3').style.display = 'block';
+                document.getElementById('btnTab4').style.display = 'block';
+                closeModal('authModal');
+                switchTab('tab3');
+            } else {
+                alert('Invalid Manager Passcode.');
+            }
+        }
+
+        function saveNewPasscode() {
+            const oldPin = document.getElementById('oldPinInput').value;
+            const newPin = document.getElementById('newPinInput').value;
+
+            if (oldPin !== getStoredPin()) {
+                alert('Current passcode incorrect.');
+                return;
+            }
+
+            if (!newPin || newPin.length < 4) {
+                alert('New passcode must be at least 4 characters long.');
+                return;
+            }
+
+            localStorage.setItem('nguni_manager_pin', newPin);
+            alert('Manager Passcode updated successfully!');
+            closeModal('changePassModal');
         }
 
         function switchTab(tabId) {
@@ -487,14 +591,12 @@
 
             const stockMap = {};
 
-            // Calculate intake
             inventory.forEach(item => {
                 const name = (item.item_description || 'Unknown Item').toLowerCase().trim();
                 stockMap[name] = stockMap[name] || { name: item.item_description, intake: 0, dispatched: 0 };
                 stockMap[name].intake += (parseInt(item.quantity_allocated) || 0);
             });
 
-            // Calculate dispatches (ignoring returned items)
             orders.forEach(order => {
                 if (order.payout_status !== 'RETURNED / CANCELLED') {
                     const name = (order.item_name || 'Unknown Item').toLowerCase().trim();
@@ -615,7 +717,7 @@
                 alert('Error creating order: ' + error.message);
             } else {
                 document.getElementById('posForm').reset();
-                switchTab('tab3');
+                alert('Order dispatched successfully!');
                 fetchAdminOrders();
             }
         }
@@ -638,7 +740,6 @@
             }
         }
 
-        // Initialize & Realtime Sync
         fetchAdminOrders();
         supabaseClient.channel('admin_realtime').on('postgres_changes', { event: '*', schema: 'public' }, () => {
             fetchAdminOrders();
