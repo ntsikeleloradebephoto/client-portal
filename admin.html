@@ -1,12 +1,20 @@
 <script>
         const SUPABASE_URL = 'https://aivsmcdhxfdccsbqmejt.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_NDE9uLsqMD2QiIa6LMw-Lw_IBOmeebV';
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let supabaseClient;
+
+        // Initialize Supabase safely
+        try {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (e) {
+            console.error("Failed to initialize Supabase:", e);
+        }
 
         const appToast = document.getElementById('appToast');
         const toastMessage = document.getElementById('toastMessage');
 
         function showNotification(message, type = 'success') {
+            if (!toastMessage || !appToast) return;
             toastMessage.innerText = message;
             appToast.className = `show ${type}`;
             setTimeout(() => {
@@ -18,8 +26,12 @@
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             
-            document.getElementById(`tab-${tabNum}`).classList.add('active');
-            event.currentTarget.classList.add('active');
+            const targetTab = document.getElementById(`tab-${tabNum}`);
+            if (targetTab) targetTab.classList.add('active');
+            
+            if (window.event && window.event.currentTarget) {
+                window.event.currentTarget.classList.add('active');
+            }
 
             if (tabNum === 4) {
                 loadEditableInventory();
@@ -28,13 +40,20 @@
 
         async function loadEditableInventory() {
             const tableBody = document.getElementById('editableInventoryTable');
+            if (!tableBody) return;
+            
             tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 25px 0;">Loading inventory...</td></tr>`;
+
+            if (!supabaseClient) {
+                tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--danger); padding: 25px 0;">Supabase client not initialized.</td></tr>`;
+                return;
+            }
 
             const { data, error } = await supabaseClient.from('inventory').select('*').order('id', { ascending: true });
 
             if (error) {
                 console.error("Error fetching inventory:", error);
-                showNotification("Failed to load inventory.", "error");
+                tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--danger); padding: 25px 0;">Failed to load inventory: ${error.message}</td></tr>`;
                 return;
             }
 
@@ -70,7 +89,7 @@
         }
 
         window.saveInventoryRow = async function(id) {
-            console.log("Save clicked for item ID:", id); // Debug log to confirm click registration
+            console.log("Save clicked for item ID:", id);
 
             const descInput = document.getElementById(`desc-${id}`);
             const qtyInput = document.getElementById(`qty-${id}`);
@@ -78,9 +97,8 @@
             const sellingInput = document.getElementById(`selling-${id}`);
             const supplierInput = document.getElementById(`supplier-${id}`);
 
-            if (!descInput || !qtyInput) {
-                console.error("Form inputs could not be found for ID:", id);
-                showNotification("Error: Input elements missing.", "error");
+            if (!descInput) {
+                showNotification("Error: Form inputs missing.", "error");
                 return;
             }
 
@@ -107,6 +125,6 @@
             }
         }
 
-        // Initial load
+        // Run on load
         loadEditableInventory();
     </script>
