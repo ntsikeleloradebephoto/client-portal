@@ -289,7 +289,7 @@
 
         .error-msg {
             color: var(--danger);
-            font-size: 0.75srem;
+            font-size: 0.8rem;
             margin-top: 10px;
             display: none;
         }
@@ -297,7 +297,6 @@
 </head>
 <body>
 
-    <!-- Cashier PIN Login Screen -->
     <div id="loginOverlay">
         <div class="login-box">
             <img src="logo.png" alt="Nguni Logo" class="login-logo">
@@ -305,15 +304,14 @@
             <div class="login-subtitle">Enter Cashier PIN to unlock counter terminal</div>
             
             <div class="form-group">
-                <input type="password" id="cashierPinInput" placeholder="Enter Cashier PIN..." autofocus style="text-align: center; letter-spacing: 3px;">
+                <input type="password" id="cashierPinInput" placeholder="Enter PIN..." autofocus style="text-align: center; letter-spacing: 3px;" maxlength="6">
             </div>
             
             <button class="btn-gold" id="loginBtn">Authorize Terminal</button>
-            <div id="loginError" class="error-msg" style="display:none; color: var(--danger); font-size: 0.8rem; margin-top: 10px;">Incorrect PIN. Access Denied.</div>
+            <div id="loginError" class="error-msg">Incorrect PIN. Access Denied.</div>
         </div>
     </div>
 
-    <!-- Main POS Interface (Protected) -->
     <div id="appContainer">
         <header>
             <div class="brand-container">
@@ -327,7 +325,6 @@
         </header>
 
         <div class="pos-container">
-            <!-- Left Column: Barcode Scan & Staging Input -->
             <div>
                 <div class="card">
                     <div class="card-title">Live Barcode Scan & Terminal Checkout</div>
@@ -379,7 +376,6 @@
                 </div>
             </div>
 
-            <!-- Right Column: Transaction Staged Batch & Grand Total -->
             <div>
                 <div class="card">
                     <div class="card-title">Staged Transaction Batch</div>
@@ -416,8 +412,9 @@
     </div>
 
     <script>
-        // SET YOUR CASHIER PIN HERE (Change '1990' to whatever PIN you prefer)
-        const CASHIER_PIN = '1990';
+        const SUPABASE_URL = 'https://aivsmcdhxfdccsbqmejt.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_NDE9uLsqMD2QiIa6LMw-Lw_IBOmeebV';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const loginOverlay = document.getElementById('loginOverlay');
         const appContainer = document.getElementById('appContainer');
@@ -425,16 +422,26 @@
         const loginBtn = document.getElementById('loginBtn');
         const loginError = document.getElementById('loginError');
 
-        function handleLogin() {
-            if (cashierPinInput.value.trim() === CASHIER_PIN) {
-                loginOverlay.style.display = 'none';
-                appContainer.style.display = 'block';
-                fetchLiveInventory();
-                document.getElementById('barcodeScan').focus();
-            } else {
+        async function handleLogin() {
+            const enteredPin = cashierPinInput.value.trim();
+            if (!enteredPin) return;
+
+            const { data, error } = await supabaseClient
+                .from('cashiers')
+                .select('*')
+                .eq('pin', enteredPin)
+                .single();
+
+            if (error || !data) {
                 loginError.style.display = 'block';
                 cashierPinInput.value = '';
                 cashierPinInput.focus();
+            } else {
+                loginOverlay.style.display = 'none';
+                appContainer.style.display = 'block';
+                document.querySelector('.cashier-badge').innerText = `CASHIER: ${data.cashier_name.toUpperCase()}`;
+                fetchLiveInventory();
+                document.getElementById('barcodeScan').focus();
             }
         }
 
@@ -442,11 +449,6 @@
         cashierPinInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') handleLogin();
         });
-
-        // SUPABASE BACKEND LOGIC
-        const SUPABASE_URL = 'https://aivsmcdhxfdccsbqmejt.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_NDE9uLsqMD2QiIa6LMw-Lw_IBOmeebV';
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const barcodeInput = document.getElementById('barcodeScan');
         const itemDescInput = document.getElementById('itemDesc');
@@ -537,27 +539,6 @@
             let html = '';
             let grandTotal = 0;
 
-            stagedBatch.shorthand = stagedBatch.forEach((item, index) => {
-                grandTotal += item.subtotal;
-                html += `
-                    <tr>
-                        <td>${item.desc}<br><small style="color:var(--text-muted);">${item.sku}</small></td>
-                        <td>${item.qty}</td>
-                        <td>R ${item.subtotal.toFixed(2)}</td>
-                        <td><button class="remove-btn" onclick="removeStagedItem(${index})">Remove</button></td>
-                    </tr>
-                `;
-            });
-
-            // Fallback iteration loop fix
-            stagedBatch.forEach((item, index) => {
-                if(index === 0) grandTotal = 0; // reset once
-                grandTotal += item.subtotal;
-            });
-
-            // Re-evaluating cleanly
-            html = '';
-            grandTotal = 0;
             stagedBatch.forEach((item, index) => {
                 grandTotal += item.subtotal;
                 html += `
