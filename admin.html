@@ -342,10 +342,11 @@
                     <th>Reason</th>
                     <th>Restocked?</th>
                     <th>Processed By</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody id="returnsLogTable">
-                <tr><td colspan="6" style="color: var(--text-muted);">Loading returns log...</td></tr>
+                <tr><td colspan="7" style="color: var(--text-muted);">Loading returns log...</td></tr>
             </tbody>
         </table>
 
@@ -359,10 +360,11 @@
                     <th>Qty Damaged</th>
                     <th>Reason</th>
                     <th>Logged By</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody id="damagedTableBody">
-                <tr><td colspan="5" style="color: var(--text-muted);">No damaged items recorded.</td></tr>
+                <tr><td colspan="6" style="color: var(--text-muted);">No damaged items logged.</td></tr>
             </tbody>
         </table>
     </div>
@@ -716,6 +718,7 @@
             const reason = document.getElementById('returnReason').value;
             const restockAction = document.getElementById('restockAction').value;
 
+            // 1. Update order status to CANCELLED/RETURNED
             const { error: updateError } = await supabaseClient
                 .from('orders')
                 .update({ payout_status: 'RETURNED / CANCELLED' })
@@ -723,6 +726,7 @@
 
             if (updateError) return alert('Error cancelling order: ' + updateError.message);
 
+            // 2. Adjust live inventory if restocking
             if (restockAction === 'YES_RESTOCK') {
                 const stockMatch = cachedInventory.find(i => (i.item_name || i.item_description || '').trim() === itemName.trim());
                 if (stockMatch) {
@@ -734,6 +738,7 @@
                 }
             }
 
+            // 3. Log into returns table
             try {
                 await supabaseClient.from('returns').insert([{
                     order_id: orderId,
@@ -745,7 +750,22 @@
                     processed_by: currentUser.full_name
                 }]);
             } catch (err) {
-                console.warn('Returns log bypassed:', err);
+                console.warn('Returns insert error:', err);
+            }
+
+            // 4. Log specifically into damaged_stock if written off
+            if (restockAction === 'NO_RESTOCK') {
+                try {
+                    await supabaseClient.from('damaged_stock').insert([{
+                        order_ref: orderRef,
+                        item_name: itemName,
+                        qty_damaged: returnQty,
+                        reason: reason,
+                        logged_by: currentUser.full_name
+                    }]);
+                } catch (err) {
+                    console.warn('Damaged stock write-through exception:', err);
+                }
             }
 
             logAuditAction(`Processed Return for Order #${orderRef} (${itemName}, Restocked: ${restockAction}) by ${currentUser.full_name}`);
@@ -760,52 +780,105 @@
             const damagedTbody = document.getElementById('damagedTableBody');
             if (!tbody) return;
 
+            let returns = [];
             try {
-                const { data: returns } = await supabaseClient.from('returns').select('*').order('created_at', { ascending: false });
-                
-                // Render Full Returns Log
-                tbody.innerHTML = '';
-                if (!returns || returns.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="color: var(--text-muted);">No returns processed yet.</td></tr>';
+                const { data } = await supabaseClient.from('returns').select('*').order('created_at', { ascending: false });
+                returns = data || [];
+            } catch (err) {
+                console.warn('Error querying returns table:', err);
+            }
+
+            // Render Full Returns Log Table
+            tbody.innerHTML = '';
+            if (returns.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="color: var(--text-muted);">No returns processed yet.</td></tr>';
+            } else {
+                returns.forEach(r => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${new Date(r.created_at).toLocaleDateString()}</td>
+                        <td style="font-weight: bold;">#${r.order_ref} - ${r.item_name}</td>
+                        <td>${r.return_qty}</td>
+                        <td>${r.reason}</td>
+                        <td>${r.restocked ? '<span style="color: var(--green-light); font-weight: bold;">YES</span>' : '<span style="color: var(--red-light); font-weight: bold;">NO</span>'}</td>
+                        <td style="color: var(--gold-light); font-weight: bold;">${r.processed_by || 'Staff'}</td>
+                        <td><button class="btn-action btn-delete" onclick="deleteReturnRecord('${r.id}')">Delete</button></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // Render Damaged & Written-Off Table (Queries damaged_stock table directly, falls back to non-restocked returns)
+            if (damagedTbody) {
+                damagedTbody.innerHTML = '';
+                let damagedData = [];
+
+                try {
+                    const { data: dData } = await supabaseClient.from('damaged_stock').select('*').order('created_at', { ascending: false });
+                    if (dData && dData.length > 0) {
+                        damagedData = dData;
+                    }
+                } catch (e) {
+                    console.warn('damaged_stock table fallback to returns filter', e);
+                }
+
+                // Fallback to filtering returns if dedicated table is empty or uninitialized
+                if (damagedData.length === 0) {
+                    damagedData = returns.filter(r => !r.restocked).map(r => ({
+                        id: r.id,
+                        order_ref: r.order_ref,
+                        item_name: r.item_name,
+                        qty_damaged: r.return_qty,
+                        reason: r.reason,
+                        logged_by: r.processed_by,
+                        is_return_fallback: true
+                    }));
+                }
+
+                if (damagedData.length === 0) {
+                    damagedTbody.innerHTML = '<tr><td colspan="6" style="color: var(--text-muted);">No damaged items logged.</td></tr>';
                 } else {
-                    returns.forEach(r => {
+                    damagedData.forEach(d => {
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
-                            <td>${new Date(r.created_at).toLocaleDateString()}</td>
-                            <td style="font-weight: bold;">#${r.order_ref} - ${r.item_name}</td>
-                            <td>${r.return_qty}</td>
-                            <td>${r.reason}</td>
-                            <td>${r.restocked ? '<span style="color: var(--green-light); font-weight: bold;">YES</span>' : '<span style="color: var(--red-light); font-weight: bold;">NO</span>'}</td>
-                            <td style="color: var(--gold-light); font-weight: bold;">${r.processed_by || 'Staff'}</td>
+                            <td>#${d.order_ref}</td>
+                            <td style="font-weight: bold; color: var(--red-light);">${d.item_name}</td>
+                            <td>${d.qty_damaged}</td>
+                            <td>${d.reason}</td>
+                            <td style="color: var(--gold-light); font-weight: bold;">${d.logged_by || 'Staff'}</td>
+                            <td><button class="btn-action btn-delete" onclick="deleteDamagedItem('${d.id}', ${d.is_return_fallback || false})">Delete</button></td>
                         `;
-                        tbody.appendChild(tr);
+                        damagedTbody.appendChild(tr);
                     });
                 }
+            }
+        }
 
-                // Filter non-restocked (damaged/defective) items for the damaged goods table
-                if (damagedTbody) {
-                    damagedTbody.innerHTML = '';
-                    const damagedItems = returns ? returns.filter(r => !r.restocked) : [];
-                    
-                    if (damagedItems.length === 0) {
-                        damagedTbody.innerHTML = '<tr><td colspan="5" style="color: var(--text-muted);">No damaged items logged.</td></tr>';
-                    } else {
-                        damagedItems.forEach(d => {
-                            const tr = document.createElement('tr');
-                            tr.innerHTML = `
-                                <td>#${d.order_ref}</td>
-                                <td style="font-weight: bold; color: var(--red-light);">${d.item_name}</td>
-                                <td>${d.return_qty}</td>
-                                <td>${d.reason}</td>
-                                <td>${d.processed_by || 'Staff'}</td>
-                            `;
-                            damagedTbody.appendChild(tr);
-                        });
-                    }
-                }
+        async function deleteReturnRecord(id) {
+            if (!currentUser) return openLoginModal();
+            if (!confirm('Are you sure you want to delete this return record?')) return;
 
-            } catch (err) {
-                tbody.innerHTML = '<tr><td colspan="6" style="color: var(--text-muted);">Returns table not initialized in database.</td></tr>';
+            const { error } = await supabaseClient.from('returns').delete().eq('id', id);
+            if (error) {
+                alert('Error deleting record: ' + error.message);
+            } else {
+                logAuditAction(`Deleted Return Record ID ${id} by ${currentUser.full_name}`);
+                fetchAdminOrders();
+            }
+        }
+
+        async function deleteDamagedItem(id, isFallback) {
+            if (!currentUser) return openLoginModal();
+            if (!confirm('Are you sure you want to delete this damage/write-off record?')) return;
+
+            const targetTable = isFallback ? 'returns' : 'damaged_stock';
+            const { error } = await supabaseClient.from(targetTable).delete().eq('id', id);
+
+            if (error) {
+                alert('Error deleting damage record: ' + error.message);
+            } else {
+                logAuditAction(`Deleted Damaged Record ID ${id} from ${targetTable} by ${currentUser.full_name}`);
+                fetchAdminOrders();
             }
         }
 
