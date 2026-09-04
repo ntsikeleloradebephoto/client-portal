@@ -288,6 +288,7 @@
 </head>
 <body>
 
+    <!-- In-App Toast Container -->
     <div id="appToast">
         <span id="toastMessage">Notification message here</span>
     </div>
@@ -303,6 +304,7 @@
         </div>
     </header>
 
+    <!-- Hub Navigation Tabs -->
     <div class="hub-tabs">
         <button class="tab-btn" onclick="switchTab(this, 1)">1. POS Scan Out</button>
         <button class="tab-btn" onclick="switchTab(this, 2)">2. Stock Intake</button>
@@ -313,10 +315,10 @@
         <button class="tab-btn" onclick="switchTab(this, 7)">7. Returns & Damages</button>
     </div>
 
+    <!-- TAB 1: POS SCAN OUT -->
     <div id="tab-1" class="tab-content">
         <div class="card">
             <div class="card-title">Live POS Terminal Scan Out Overview</div>
-            <p style="color:var(--text-muted); margin-bottom: 20px;">Review live register scan sessions and terminal activity.</p>
             <table>
                 <thead>
                     <tr>
@@ -336,6 +338,7 @@
         </div>
     </div>
 
+    <!-- TAB 2: STOCK INTAKE -->
     <div id="tab-2" class="tab-content">
         <div class="card">
             <div class="card-title">New Stock Intake & Inventory Registration</div>
@@ -369,6 +372,7 @@
         </div>
     </div>
 
+    <!-- TAB 3: SETTLEMENT LEDGER -->
     <div id="tab-3" class="tab-content">
         <div class="card">
             <div class="card-title">Completed Settlement Ledger</div>
@@ -389,6 +393,7 @@
         </div>
     </div>
 
+    <!-- TAB 4: STOCK ON-HAND (Editable) -->
     <div id="tab-4" class="tab-content active">
         <div class="card">
             <div class="card-title">Live Inventory Stock On-Hand (Editable)</div>
@@ -415,6 +420,7 @@
         </div>
     </div>
 
+    <!-- TAB 5: STAFF PROFILES -->
     <div id="tab-5" class="tab-content">
         <div class="card">
             <div class="card-title">Cashier Security PINs & Profiles</div>
@@ -433,6 +439,7 @@
         </div>
     </div>
 
+    <!-- TAB 6: AUDIT LOGS -->
     <div id="tab-6" class="tab-content">
         <div class="card">
             <div class="card-title">System Audit Trails</div>
@@ -451,6 +458,7 @@
         </div>
     </div>
 
+    <!-- TAB 7: RETURNS & DAMAGES -->
     <div id="tab-7" class="tab-content">
         <div class="card">
             <div class="card-title">Returns & Damaged Stock Processing</div>
@@ -495,7 +503,6 @@
             if (tabNum === 5) loadStaffProfiles();
         }
 
-        // Tab 4: Editable Inventory
         async function loadEditableInventory() {
             const tableBody = document.getElementById('editableInventoryTable');
             if (!tableBody || !supabaseClient) return;
@@ -569,7 +576,6 @@
             }
         }
 
-        // Tab 1: POS Scan Out
         async function loadPosScanOut() {
             const tableBody = document.getElementById('posScanOutTable');
             if (!tableBody || !supabaseClient) return;
@@ -585,7 +591,6 @@
             tableBody.innerHTML = html;
         }
 
-        // Tab 2: Stock Intake Registration
         window.submitStockIntake = async function() {
             const sku = document.getElementById('intakeSku').value.trim();
             const desc = document.getElementById('intakeDesc').value.trim();
@@ -621,7 +626,6 @@
             }
         }
 
-        // Tab 3: Settlement Ledger
         async function loadSettlementLedger() {
             const tableBody = document.getElementById('settlementLedgerTable');
             if (!tableBody || !supabaseClient) return;
@@ -632,12 +636,11 @@
             }
             let html = '';
             data.forEach(s => {
-                html += `<tr><td>${s.order_ref || '--'}</td><td>${s.payment_method || '--'}</td><td>${s.cashier || '--'}</td><td>${s.status || 'SETTLED'}</td><td>${new Date(s.created_at || Date.now()).toLocaleString()}</td></tr>`;
+                html += `<tr><td>${s.order_ref || '--'}</td><td>${s.payment_method || '--'}</td><td>${s.cashier || '--'}</td><td>${s.status || 'SETTLES'}</td><td>${new Date(s.created_at || Date.now()).toLocaleString()}</td></tr>`;
             });
             tableBody.innerHTML = html;
         }
 
-        // Tab 5: Staff Profiles
         async function loadStaffProfiles() {
             const tableBody = document.getElementById('staffProfilesTable');
             if (!tableBody || !supabaseClient) return;
@@ -653,7 +656,6 @@
             tableBody.innerHTML = html;
         }
 
-        // Initial load on page start (Tab 4 active)
         loadEditableInventory();
     </script>
 </body>
