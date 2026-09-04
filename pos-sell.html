@@ -559,17 +559,23 @@
             const { data, error } = await supabaseClient.from('inventory').select('*');
             if (!error) {
                 currentInventory = data || [];
-                console.log("Loaded inventory items:", currentInventory.length);
             } else {
                 console.error("Error loading inventory:", error);
             }
         }
 
+        // Auto-detect barcode lookup and immediate auto-stage on Enter key
+        barcodeInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                processScannedItem();
+            }
+        });
+
         barcodeInput.addEventListener('input', (e) => {
             const query = e.target.value.trim().toLowerCase();
             if (!query) return;
 
-            // Flexible matching across multiple common column names
             activeScannedItem = currentInventory.find(item => {
                 const s = String(item.sku || '').toLowerCase();
                 const num = String(item.item_number || '').toLowerCase();
@@ -578,17 +584,7 @@
             });
 
             if (activeScannedItem) {
-                const name = activeScannedItem.item_description || activeScannedItem.product_name || activeScannedItem.name || 'Unnamed Product';
-                const code = activeScannedItem.sku || activeScannedItem.item_number || activeScannedItem.barcode || query;
-                const stock = activeScannedItem.stock_qty ?? activeScannedItem.stock ?? activeScannedItem.quantity ?? 0;
-                const price = activeScannedItem.wholesale_floor || activeScannedItem.unit_price || activeScannedItem.price || 0;
-                const supplier = activeScannedItem.supplier_partner || activeScannedItem.consignor || activeScannedItem.supplier || 'Standard';
-
-                itemDescInput.value = name;
-                barcodeDisplay.value = code;
-                stockAvailInput.value = stock;
-                unitPriceInput.value = parseFloat(price).toFixed(2);
-                supplierTagInput.value = supplier;
+                updateScanUI(activeScannedItem, query);
             } else {
                 itemDescInput.value = "Item not found in live stock";
                 barcodeDisplay.value = query;
@@ -598,14 +594,33 @@
             }
         });
 
-        // Trigger staging on Enter key inside quantity or barcode
-        quantityInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') stageItemBtn.click();
-        });
+        function updateScanUI(item, query) {
+            const name = item.item_description || item.product_name || item.name || 'Unnamed Product';
+            const code = item.sku || item.item_number || item.barcode || query;
+            const stock = item.stock_qty ?? item.stock ?? item.quantity ?? 0;
+            const price = item.wholesale_floor || item.unit_price || item.price || 0;
+            const supplier = item.supplier_partner || item.consignor || item.supplier || 'Standard';
 
-        stageItemBtn.addEventListener('click', () => {
+            itemDescInput.value = name;
+            barcodeDisplay.value = code;
+            stockAvailInput.value = stock;
+            unitPriceInput.value = parseFloat(price).toFixed(2);
+            supplierTagInput.value = supplier;
+        }
+
+        function processScannedItem() {
+            const query = barcodeInput.value.trim().toLowerCase();
+            if (!activeScannedItem && query) {
+                activeScannedItem = currentInventory.find(item => {
+                    const s = String(item.sku || '').toLowerCase();
+                    const num = String(item.item_number || '').toLowerCase();
+                    const barcode = String(item.barcode || '').toLowerCase();
+                    return s === query || num === query || barcode === query;
+                });
+            }
+
             if (!activeScannedItem) {
-                alert("Please scan or select a valid inventory item first.");
+                alert("Please scan or enter a valid inventory item.");
                 return;
             }
 
@@ -632,7 +647,9 @@
 
             renderBatchCart();
             resetScanFields();
-        });
+        }
+
+        stageItemBtn.addEventListener('click', processScannedItem);
 
         function renderBatchCart() {
             if (stagedBatch.length === 0) {
@@ -726,7 +743,6 @@
                     const currentStockVal = matchedStockItem.stock_qty ?? matchedStockItem.stock ?? matchedStockItem.quantity ?? 0;
                     const newQty = Math.max(0, currentStockVal - item.qty);
                     
-                    // Update whichever stock column exists
                     const updatePayload = {};
                     if ('stock_qty' in matchedStockItem) updatePayload.stock_qty = newQty;
                     else if ('stock' in matchedStockItem) updatePayload.stock = newQty;
