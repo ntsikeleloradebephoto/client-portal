@@ -621,16 +621,25 @@
 
         async function handleStockSubmit(e) {
             e.preventDefault();
-            if (!currentUser) return openLoginModal();
 
-            const stockName = document.getElementById('stockName').value;
-            const qty = parseInt(document.getElementById('stockQty').value);
-            const unitPrice = parseFloat(document.getElementById('stockUnitPrice').value);
-            const supplier = document.getElementById('stockSupplier').value;
+            if (!currentUser) {
+                alert('Please login to process stock intake.');
+                return openLoginModal();
+            }
+
+            const stockName = document.getElementById('stockName').value.trim();
+            const qty = parseInt(document.getElementById('stockQty').value) || 0;
+            const unitPrice = parseFloat(document.getElementById('stockUnitPrice').value) || 0;
+            const supplier = document.getElementById('stockSupplier').value.trim();
+
+            if (!stockName || qty <= 0) {
+                alert('Please provide a valid product name and quantity.');
+                return;
+            }
 
             const generatedSku = stockName.toUpperCase().replace(/[^A-Z0-9]/g, '-').slice(0, 12) + '-' + Math.floor(100 + Math.random() * 900);
 
-            const { error } = await supabaseClient.from('inventory').insert([{
+            const payload = {
                 sku: generatedSku,
                 item_name: stockName,
                 item_description: stockName,
@@ -640,13 +649,18 @@
                 cost_price: unitPrice,
                 supplier: supplier,
                 added_by: currentUser.full_name
-            }]);
+            };
+
+            console.log("Submitting inventory payload:", payload);
+
+            const { data, error } = await supabaseClient.from('inventory').insert([payload]);
 
             if (error) {
-                alert('Error: ' + error.message);
+                console.error("Supabase Stock Insert Error:", error);
+                alert(`Stock Intake Failed: ${error.message} (${error.details || error.code})`);
             } else {
                 logAuditAction(`Added stock ${stockName} (${qty} units) by ${currentUser.full_name}`);
-                alert('Inventory added!');
+                alert(`Success: ${qty} units of "${stockName}" added to inventory!`);
                 document.getElementById('stockForm').reset();
                 fetchAdminOrders();
             }
