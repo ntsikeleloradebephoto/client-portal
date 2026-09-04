@@ -114,14 +114,18 @@
         <div class="section-title">POS Dispatch / Scan Out</div>
         <form id="posForm" onsubmit="handlePosSubmit(event)">
             <div class="form-group">
+                <label>Scan Barcode / Item Number (Auto-Selects Item)</label>
+                <input type="text" id="posBarcodeScan" class="form-control" placeholder="Scan Barcode or Type Item No..." oninput="handleBarcodeScanInput()">
+            </div>
+            <div class="form-group">
                 <label>Select Inventory Item (Live Stock)</label>
                 <select id="posItemSelect" class="form-control" onchange="autofillPosDetails()" required>
                     <option value="">-- Choose Item from Inventory --</option>
                 </select>
             </div>
             <div class="form-group">
-                <label>Order Ref / Barcode SKU (Auto Scan Enabled)</label>
-                <input type="text" id="posOrderRef" class="form-control" required placeholder="Scan Barcode or Type Ref e.g. #1043">
+                <label>Order Reference / Transaction No.</label>
+                <input type="text" id="posOrderRef" class="form-control" required placeholder="e.g. #1043 or POS-8923">
             </div>
             <div class="form-group">
                 <label>Quantity Dispatched</label>
@@ -143,6 +147,10 @@
     <div id="tab2" class="tab-content">
         <div class="section-title">Consignment Stock Intake</div>
         <form id="stockForm" onsubmit="handleStockSubmit(event)">
+            <div class="form-group">
+                <label>Item Number / Barcode SKU (Optional - Auto Generated if Empty)</label>
+                <input type="text" id="stockSku" class="form-control" placeholder="e.g. 600123456789 or ITEM-101">
+            </div>
             <div class="form-group">
                 <label>SKU Description / Product Name</label>
                 <input type="text" id="stockName" class="form-control" required placeholder="e.g. Ceramic Teaset">
@@ -218,6 +226,7 @@
         <table class="ledger-table">
             <thead>
                 <tr>
+                    <th>Item No / SKU</th>
                     <th>Product / Description</th>
                     <th>Supplier Partner</th>
                     <th>Total Intake</th>
@@ -227,7 +236,7 @@
                 </tr>
             </thead>
             <tbody id="stockTableBody">
-                <tr><td colspan="6" style="color: var(--text-muted);">Calculating stock...</td></tr>
+                <tr><td colspan="7" style="color: var(--text-muted);">Calculating stock...</td></tr>
             </tbody>
         </table>
     </div>
@@ -446,7 +455,8 @@
             const stockMap = {};
             inventory.forEach(item => {
                 const name = (item.item_name || item.item_description || item.sku || 'Unknown Item').trim();
-                stockMap[name] = stockMap[name] || { name: name, intake: 0, dispatched: 0, supplier: item.supplier || 'General', price: item.wholesale_floor_zar || item.unit_price || item.cost_price || 0 };
+                const sku = item.sku || '';
+                stockMap[name] = stockMap[name] || { name: name, sku: sku, intake: 0, dispatched: 0, supplier: item.supplier || 'General', price: item.wholesale_floor_zar || item.unit_price || item.cost_price || 0 };
                 stockMap[name].intake += (parseInt(item.quantity_allocated || item.quantity) || 0);
             });
 
@@ -462,13 +472,32 @@
                 const onHand = item.intake - item.dispatched;
                 const option = document.createElement('option');
                 option.value = item.name;
+                option.dataset.sku = item.sku;
                 option.dataset.price = item.price;
                 option.dataset.supplier = item.supplier;
                 option.dataset.onhand = onHand;
-                option.innerText = `${item.name} (${onHand} in stock) - R${item.price}`;
+                option.innerText = `[${item.sku || 'NO SKU'}] ${item.name} (${onHand} in stock) - R${item.price}`;
                 if (onHand <= 0) option.disabled = true;
                 select.appendChild(option);
             });
+        }
+
+        function handleBarcodeScanInput() {
+            const val = document.getElementById('posBarcodeScan').value.trim().toLowerCase();
+            if (!val) return;
+
+            const select = document.getElementById('posItemSelect');
+            for (let i = 0; i < select.options.length; i++) {
+                const opt = select.options[i];
+                const optSku = (opt.dataset.sku || '').toLowerCase();
+                const optName = (opt.value || '').toLowerCase();
+
+                if (optSku === val || optName === val) {
+                    select.selectedIndex = i;
+                    autofillPosDetails();
+                    break;
+                }
+            }
         }
 
         function autofillPosDetails() {
@@ -540,7 +569,8 @@
 
             inventory.forEach(item => {
                 const name = (item.item_name || item.item_description || item.sku || 'Unknown').trim();
-                stockMap[name] = stockMap[name] || { name: name, supplier: item.supplier || 'General', intake: 0, dispatched: 0 };
+                const sku = item.sku || 'N/A';
+                stockMap[name] = stockMap[name] || { name: name, sku: sku, supplier: item.supplier || 'General', intake: 0, dispatched: 0 };
                 stockMap[name].intake += (parseInt(item.quantity_allocated || item.quantity) || 0);
             });
 
@@ -556,6 +586,7 @@
                 const onHand = item.intake - item.dispatched;
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
+                    <td style="color: var(--gold-light); font-weight: bold;">${item.sku}</td>
                     <td style="font-weight: bold;">${item.name}</td>
                     <td>${item.supplier}</td>
                     <td>${item.intake} Units</td>
@@ -601,6 +632,7 @@
                 logAuditAction(`Dispatched Order #${orderRef} (${itemName}) by ${currentUser.full_name}`);
                 showReceipt(orderRef, itemName, qty, wholesale, currentUser.full_name);
                 document.getElementById('posForm').reset();
+                document.getElementById('posBarcodeScan').value = '';
                 fetchAdminOrders();
             }
         }
@@ -627,6 +659,7 @@
                 return openLoginModal();
             }
 
+            const customSku = document.getElementById('stockSku').value.trim();
             const stockName = document.getElementById('stockName').value.trim();
             const qty = parseInt(document.getElementById('stockQty').value) || 0;
             const unitPrice = parseFloat(document.getElementById('stockUnitPrice').value) || 0;
@@ -637,7 +670,7 @@
                 return;
             }
 
-            const generatedSku = stockName.toUpperCase().replace(/[^A-Z0-9]/g, '-').slice(0, 12) + '-' + Math.floor(100 + Math.random() * 900);
+            const generatedSku = customSku ? customSku.toUpperCase() : (stockName.toUpperCase().replace(/[^A-Z0-9]/g, '-').slice(0, 12) + '-' + Math.floor(100 + Math.random() * 900));
 
             const payload = {
                 sku: generatedSku,
@@ -647,7 +680,7 @@
                 quantity: qty,
                 unit_price: unitPrice,
                 cost_price: unitPrice,
-                wholesale_floor_zar: unitPrice, // Added to fix NOT-NULL constraint
+                wholesale_floor_zar: unitPrice,
                 supplier: supplier,
                 added_by: currentUser.full_name
             };
@@ -660,8 +693,8 @@
                 console.error("Supabase Stock Insert Error:", error);
                 alert(`Stock Intake Failed: ${error.message} (${error.details || error.code})`);
             } else {
-                logAuditAction(`Added stock ${stockName} (${qty} units) by ${currentUser.full_name}`);
-                alert(`Success: ${qty} units of "${stockName}" added to inventory!`);
+                logAuditAction(`Added stock ${stockName} [${generatedSku}] (${qty} units) by ${currentUser.full_name}`);
+                alert(`Success: ${qty} units of "${stockName}" [SKU: ${generatedSku}] added to inventory!`);
                 document.getElementById('stockForm').reset();
                 fetchAdminOrders();
             }
