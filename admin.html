@@ -1376,3 +1376,118 @@
     </script>
 </body>
 </html>
+
+<div class="card" style="margin-top: 25px;">
+    <div class="card-title">Cashier & PIN Profile Management</div>
+    
+    <div class="inline-fields" style="margin-bottom: 15px;">
+        <div class="form-group">
+            <label for="newCashierName">Cashier Full Name</label>
+            <input type="text" id="newCashierName" placeholder="e.g. Thando Ndlovu">
+        </div>
+        <div class="form-group">
+            <label for="newCashierPin">Access PIN (4-Digits)</label>
+            <input type="password" id="newCashierPin" placeholder="e.g. 1234" maxlength="4">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="newCounterId">Assigned Terminal</label>
+        <input type="text" id="newCounterId" value="COUNTER-01">
+    </div>
+
+    <button class="btn-gold" id="saveCashierBtn">+ Create Cashier Profile & PIN</button>
+
+    <div style="margin-top: 25px;">
+        <label>Active Authorized Cashiers</label>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Terminal</th>
+                    <th>PIN Code</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="cashiersTableBody">
+                <tr>
+                    <td colspan="4" style="text-align: center; color: var(--text-muted);">Loading cashiers...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const cashierNameInput = document.getElementById('newCashierName');
+    const cashierPinInput = document.getElementById('newCashierPin');
+    const counterIdInput = document.getElementById('newCounterId');
+    const saveCashierBtn = document.getElementById('saveCashierBtn');
+    const cashiersTableBody = document.getElementById('cashiersTableBody');
+
+    async function fetchCashierProfiles() {
+        const { data, error } = await supabaseClient.from('cashiers').select('*');
+        if (error) {
+            console.error('Error fetching cashiers:', error);
+            cashiersTableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--danger);">Failed to load cashiers table.</td></tr>`;
+            return;
+        }
+
+        if (!data || data.length === 0) {
+            cashiersTableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No cashier profiles created yet.</td></tr>`;
+            return;
+        }
+
+        let html = '';
+        data.forEach((c) => {
+            html += `
+                <tr>
+                    <td>${c.cashier_name}</td>
+                    <td>${c.counter_id}</td>
+                    <td><code style="color: var(--accent-gold);">${c.pin}</code></td>
+                    <td><button class="remove-btn" onclick="deleteCashier(${c.id})">Revoke</button></td>
+                </tr>
+            `;
+        });
+        cashiersTableBody.innerHTML = html;
+    }
+
+    saveCashierBtn.addEventListener('click', async () => {
+        const name = cashierNameInput.value.trim();
+        const pin = cashierPinInput.value.trim();
+        const counter = counterIdInput.value.trim() || 'COUNTER-01';
+
+        if (!name || !pin) {
+            alert("Please provide both a cashier name and a PIN code.");
+            return;
+        }
+
+        const { error } = await supabaseClient.from('cashiers').insert([{
+            cashier_name: name,
+            pin: pin,
+            counter_id: counter
+        }]);
+
+        if (error) {
+            alert("Error saving cashier profile: " + error.message);
+        } else {
+            alert(`Cashier profile for ${name} successfully created!`);
+            cashierNameInput.value = '';
+            cashierPinInput.value = '';
+            fetchCashierProfiles();
+        }
+    });
+
+    window.deleteCashier = async function(id) {
+        if (confirm("Are you sure you want to revoke this cashier's access?")) {
+            const { error } = await supabaseClient.from('cashiers').delete().eq('id', id);
+            if (error) {
+                alert("Error deleting cashier.");
+            } else {
+                fetchCashierProfiles();
+            }
+        }
+    }
+
+    fetchCashierProfiles();
+</script>
