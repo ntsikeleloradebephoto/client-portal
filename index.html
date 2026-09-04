@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nguni Homeware - Supplier Trade Ledger</title>
+    <title>Nguni Homeware | Supplier Trade Ledger</title>
     <link rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -16,6 +16,8 @@
             --text-light: #f5f5f5;
             --text-muted: #a0a5ad;
             --border-gold: #3a3219;
+            --green-active: #2e7d32;
+            --green-light: #81c784;
         }
 
         body {
@@ -35,195 +37,195 @@
             margin-bottom: 24px;
         }
 
-        .header-brand {
+        .header-title {
             display: flex;
             align-items: center;
-            gap: 14px;
-        }
-
-        .header-logo {
-            height: 40px;
-            width: auto;
-            object-fit: contain;
+            gap: 12px;
         }
 
         .header h1 {
-            font-size: 20px;
+            font-size: 18px;
             letter-spacing: 2px;
             text-transform: uppercase;
             color: var(--gold-primary);
             margin: 0;
         }
 
-        .status-badge {
-            background: #122415;
-            color: #4CAF50;
-            border: 1px solid #2e7d32;
+        .sync-badge {
+            background: rgba(46, 125, 50, 0.2);
+            border: 1px solid var(--green-active);
+            color: var(--green-light);
             padding: 6px 12px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--green-light);
+            border-radius: 50%;
         }
 
         .metrics-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(4, 1fr);
             gap: 16px;
             margin-bottom: 24px;
         }
 
-        .metric-card {
+        @media (max-width: 900px) {
+            .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .card {
             background: var(--panel-dark);
             border: 1px solid var(--border-gold);
-            border-top: 3px solid var(--gold-primary);
             padding: 20px;
             border-radius: 6px;
         }
 
-        .metric-title {
-            font-size: 11px;
+        .card-label {
+            font-size: 10px;
             text-transform: uppercase;
-            letter-spacing: 1px;
             color: var(--text-muted);
-            margin-bottom: 8px;
+            letter-spacing: 1px;
         }
 
-        .metric-value {
+        .card-val {
             font-size: 28px;
             font-weight: 700;
+            margin-top: 8px;
             color: var(--text-light);
         }
 
-        .dashboard-layout {
+        .main-grid {
             display: grid;
             grid-template-columns: 2fr 1fr;
             gap: 24px;
         }
 
-        @media (max-width: 900px) {
-            .dashboard-layout { grid-template-columns: 1fr; }
+        @media (max-width: 1000px) {
+            .main-grid { grid-template-columns: 1fr; }
         }
 
         .panel {
             background: var(--panel-dark);
             border: 1px solid var(--border-gold);
-            border-radius: 6px;
             padding: 20px;
+            border-radius: 6px;
         }
 
         .panel-title {
-            font-size: 12px;
+            font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: var(--gold-primary);
             margin-top: 0;
             margin-bottom: 16px;
-            border-bottom: 1px solid #1f2228;
-            padding-bottom: 8px;
         }
 
         .manifest-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
         .manifest-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #1f2228;
+            padding: 12px;
+            background: #08090a;
+            border: 1px solid #1f2228;
+            border-radius: 4px;
         }
 
-        .manifest-item:last-child {
-            border-bottom: none;
-        }
-
-        .item-details h4 {
-            margin: 0 0 4px 0;
+        .item-title {
+            font-weight: 700;
             font-size: 14px;
-            color: var(--text-light);
+            text-transform: capitalize;
         }
 
-        .item-details p {
-            margin: 0;
+        .item-sub {
             font-size: 11px;
             color: var(--text-muted);
+            margin-top: 2px;
         }
 
-        .item-payout {
+        .item-price {
+            font-weight: 700;
+            color: var(--gold-light);
             text-align: right;
         }
 
-        .payout-amount {
-            font-size: 14px;
+        .badge-status {
+            font-size: 9px;
             font-weight: 700;
-            color: var(--gold-light);
+            text-transform: uppercase;
+            margin-top: 2px;
+            text-align: right;
         }
 
-        .payout-status {
-            font-size: 10px;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 3px;
-            display: inline-block;
-            margin-top: 4px;
-        }
-
-        .status-pending { background: #3a2e10; color: #ffca28; }
-        .status-settled { background: #122415; color: #81c784; }
-
-        .chart-container {
-            position: relative;
-            height: 260px;
-            width: 100%;
-        }
+        .status-escrow { color: var(--gold-light); }
+        .status-settled { color: var(--green-light); }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="header-brand">
-            <img src="logo.png" alt="Nguni Logo" class="header-logo" onerror="this.style.display='none'">
-            <h1>NGUNI HOMEWARE <span>| SUPPLIER TRADE LEDGER</span></h1>
+        <div class="header-title">
+            <img src="logo.png" alt="Nguni Logo" style="height: 36px;" onerror="this.style.display='none'">
+            <h1>NGUNI HOMEWARE | SUPPLIER TRADE LEDGER</h1>
         </div>
-        <div class="status-badge">🟢 Realtime Sync Active</div>
+        <div class="sync-badge">
+            <span class="dot"></span> Realtime Sync Active
+        </div>
     </div>
 
+    <!-- METRICS CARDS -->
     <div class="metrics-grid">
-        <div class="metric-card">
-            <div class="metric-title">Total Units Consigned & Sold</div>
-            <div class="metric-value" id="totalUnits">0 Units</div>
+        <div class="card">
+            <div class="card-label">Total Units Consigned & Sold</div>
+            <div class="card-val" id="cardUnits">0 Units</div>
         </div>
-        <div class="metric-card">
-            <div class="metric-title">Locked Wholesale Payout Owed</div>
-            <div class="metric-value" id="totalPayout">R 0</div>
+        <div class="card">
+            <div class="card-label">Locked Wholesale Payout Owed</div>
+            <div class="card-val" id="cardOwed" style="color: var(--gold-light);">R 0</div>
         </div>
-        <div class="metric-card">
-            <div class="metric-title">Active Pilot SKUs</div>
-            <div class="metric-value">5 Lines</div>
+        <div class="card">
+            <div class="card-label">Active Pilot SKUs</div>
+            <div class="card-val" id="cardSkus">0 Lines</div>
         </div>
-        <div class="metric-card">
-            <div class="metric-title">Settlement Cycle</div>
-            <div class="metric-value">15–30 Days</div>
+        <div class="card">
+            <div class="card-label">Settlement Cycle</div>
+            <div class="card-val">15–30 Days</div>
         </div>
     </div>
 
-    <div class="dashboard-layout">
+    <!-- MAIN DASHBOARD CONTENT -->
+    <div class="main-grid">
+        
+        <!-- LEFT: VELOCITY CHART -->
         <div class="panel">
             <div class="panel-title">Weekly Unit Sales Velocity</div>
-            <div class="chart-container">
-                <canvas id="salesChart"></canvas>
+            <div style="height: 320px;">
+                <canvas id="velocityChart"></canvas>
             </div>
         </div>
 
+        <!-- RIGHT: CONSIGNMENT SALES MANIFEST -->
         <div class="panel">
             <div class="panel-title">Consignment Sales Manifest</div>
-            <ul class="manifest-list" id="manifestList">
-                <li style="color: var(--text-muted); font-size: 12px;">Loading ledger orders...</li>
-            </ul>
+            <div class="manifest-list" id="manifestList">
+                <div style="color: var(--text-muted); font-size: 12px;">Loading sales manifest...</div>
+            </div>
         </div>
+
     </div>
 
     <script>
@@ -231,130 +233,114 @@
         const SUPABASE_KEY = 'sb_publishable_NDE9uLsqMD2QiIa6LMw-Lw_IBOmeebV';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let salesChartInstance = null;
+        let velocityChart = null;
 
-        function formatDate(dateString) {
-            if (!dateString) return 'Date Pending';
-            const date = new Date(dateString);
-            return date.toLocaleDateString('en-GB', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric'
-            });
-        }
+        async function fetchLedgerData() {
+            // Fetch Inventory count
+            const { data: invData } = await supabaseClient.from('inventory').select('id');
+            const skuCount = invData ? invData.length : 0;
+            document.getElementById('cardSkus').innerText = `${skuCount} Lines`;
 
-        async function fetchOrders() {
-            const { data: orders, error } = await supabaseClient
-                .from('orders')
-                .select('*')
-                .order('created_at', { ascending: false });
+            // Fetch Orders
+            const { data: ordersData, error } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
 
-            if (error) {
-                console.error('Error loading orders:', error);
-                return;
+            if (!error && ordersData) {
+                renderDashboard(ordersData);
             }
-
-            renderDashboard(orders);
-            renderChart(orders);
         }
 
         function renderDashboard(orders) {
-            const manifestList = document.getElementById('manifestList');
-            const totalUnitsEl = document.getElementById('totalUnits');
-            const totalPayoutEl = document.getElementById('totalPayout');
+            // 1. Total Units Sold
+            let totalUnits = 0;
+            orders.forEach(o => totalUnits += (o.quantity_dispatched || 1));
+            document.getElementById('cardUnits').innerText = `${totalUnits} Units`;
 
+            // 2. Locked Wholesale Payout Owed (FILTERED ONLY FOR 'ESCROW PENDING')
+            const totalOwed = orders
+                .filter(order => order.payout_status === 'ESCROW PENDING')
+                .reduce((sum, order) => sum + parseFloat(order.wholesale_floor_zar || 0), 0);
+
+            document.getElementById('cardOwed').innerText = `R ${Math.round(totalOwed).toLocaleString()}`;
+
+            // 3. Render Manifest List
+            const manifestList = document.getElementById('manifestList');
             manifestList.innerHTML = '';
 
-            let totalPayout = 0;
-            let totalUnits = orders.length;
-
             orders.forEach(order => {
-                totalPayout += parseFloat(order.wholesale_floor_zar || 0);
+                const isSettled = order.payout_status === 'SETTLED';
+                const dateStr = order.created_at ? new Date(order.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'Short', year: 'numeric' }) : '';
 
-                const statusClass = order.payout_status === 'SETTLED' ? 'status-settled' : 'status-pending';
-                const formattedDate = formatDate(order.created_at);
-
-                const li = document.createElement('li');
-                li.className = 'manifest-item';
-                li.innerHTML = `
-                    <div class="item-details">
-                        <h4>${order.item_name}</h4>
-                        <p>Order Ref: ${order.order_number} &bull; <span style="color: var(--gold-light);">${formattedDate}</span></p>
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'manifest-item';
+                itemDiv.innerHTML = `
+                    <div>
+                        <div class="item-title">${order.item_name}</div>
+                        <div class="item-sub">Order Ref: ${order.order_number} • ${dateStr}</div>
                     </div>
-                    <div class="item-payout">
-                        <div class="payout-amount">R ${parseFloat(order.wholesale_floor_zar).toFixed(0)}</div>
-                        <span class="payout-status ${statusClass}">${order.payout_status}</span>
+                    <div>
+                        <div class="item-price">R ${Math.round(order.wholesale_floor_zar)}</div>
+                        <div class="badge-status ${isSettled ? 'status-settled' : 'status-escrow'}">
+                            ${order.payout_status}
+                        </div>
                     </div>
                 `;
-                manifestList.appendChild(li);
+                manifestList.appendChild(itemDiv);
             });
 
-            totalUnitsEl.innerText = `${totalUnits} Units`;
-            totalPayoutEl.innerText = `R ${totalPayout.toLocaleString('en-ZA', { minimumFractionDigits: 0 })}`;
+            // 4. Render Velocity Chart
+            renderChart(orders);
         }
 
         function renderChart(orders) {
-            const ctx = document.getElementById('salesChart').getContext('2d');
-
-            const dateCounts = {};
-            const sortedOrders = [...orders].reverse();
-
-            sortedOrders.forEach(order => {
-                const dateKey = formatDate(order.created_at);
-                dateCounts[dateKey] = (dateCounts[dateKey] || 0) + 1;
+            const dateMap = {};
+            
+            // Group sales by date
+            orders.slice().reverse().forEach(o => {
+                const dateKey = o.created_at ? new Date(o.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'Short', year: 'numeric' }) : 'Recent';
+                dateMap[dateKey] = (dateMap[dateKey] || 0) + (o.quantity_dispatched || 1);
             });
 
-            const labels = Object.keys(dateCounts).length > 0 ? Object.keys(dateCounts) : ['No Data'];
-            const dataPoints = Object.values(dateCounts).length > 0 ? Object.values(dateCounts) : [0];
+            const labels = Object.keys(dateMap);
+            const dataPoints = Object.values(dateMap);
 
-            if (salesChartInstance) {
-                salesChartInstance.destroy();
+            const ctx = document.getElementById('velocityChart').getContext('2d');
+
+            if (velocityChart) {
+                velocityChart.destroy();
             }
 
-            salesChartInstance = new Chart(ctx, {
+            velocityChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: labels,
+                    labels: labels.length ? labels : ['No Data'],
                     datasets: [{
                         label: 'Units Dispatched',
-                        data: dataPoints,
+                        data: dataPoints.length ? dataPoints : [0],
                         borderColor: '#d4af37',
-                        backgroundColor: 'rgba(212, 175, 55, 0.15)',
-                        borderWidth: 2,
+                        backgroundColor: 'rgba(212, 175, 55, 0.1)',
                         fill: true,
-                        tension: 0.3,
-                        pointBackgroundColor: '#f3c649'
+                        tension: 0.2,
+                        pointBackgroundColor: '#d4af37',
+                        pointRadius: 4
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
+                    plugins: { legend: { display: false } },
                     scales: {
-                        x: {
-                            grid: { color: '#1f2228' },
-                            ticks: { color: '#a0a5ad', font: { size: 10 } }
-                        },
-                        y: {
-                            grid: { color: '#1f2228' },
-                            ticks: { color: '#a0a5ad', stepSize: 1, precision: 0 },
-                            beginAtZero: true
-                        }
+                        x: { grid: { color: '#1f2228' }, ticks: { color: '#a0a5ad', font: { size: 10 } } },
+                        y: { grid: { color: '#1f2228' }, ticks: { color: '#a0a5ad', font: { size: 10 } }, beginAtZero: true }
                     }
                 }
             });
         }
 
-        // Initialize and listen for real-time order updates
-        fetchOrders();
-        supabaseClient
-            .channel('orders_realtime')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
-                fetchOrders();
-            })
-            .subscribe();
+        // Initialize & Listen for Realtime Updates
+        fetchLedgerData();
+        supabaseClient.channel('public_realtime').on('postgres_changes', { event: '*', schema: 'public' }, () => {
+            fetchLedgerData();
+        }).subscribe();
     </script>
 </body>
 </html>
