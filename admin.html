@@ -1,13 +1,332 @@
-<script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nguni Homeware | Enterprise POS Hub</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg-dark: #08080a;
+            --card-bg: rgba(28, 28, 32, 0.65);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --accent-gold: #f3c65d;
+            --accent-hover: #fae19c;
+            --text-main: #f5f5f7;
+            --text-muted: #86868b;
+            --success: #30d158;
+            --danger: #ff453a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            padding: 30px;
+            background-image: 
+                radial-gradient(circle at 20% 10%, rgba(243, 198, 93, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 80% 90%, rgba(48, 209, 88, 0.03) 0%, transparent 40%);
+            min-height: 100vh;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 22px;
+            margin-bottom: 30px;
+        }
+
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .brand-logo {
+            width: 44px;
+            height: 44px;
+            object-fit: contain;
+        }
+
+        h1 {
+            font-size: 1rem;
+            letter-spacing: 0.05em;
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+            border: 1px solid var(--border-color);
+            padding: 10px 16px;
+            border-radius: 10px;
+            background: var(--card-bg);
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .manager-badge {
+            background: rgba(243, 198, 93, 0.1);
+            border: 1px solid rgba(243, 198, 93, 0.2);
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--accent-gold);
+        }
+
+        /* Hub Navigation Tabs */
+        .hub-tabs {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .tab-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 14px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            letter-spacing: 0.05em;
+        }
+
+        .tab-btn:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            color: var(--text-main);
+        }
+
+        .tab-btn.active {
+            background: var(--accent-gold);
+            color: #111;
+            border-color: var(--accent-gold);
+            box-shadow: 0 4px 20px rgba(243, 198, 93, 0.25);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 28px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+            margin-bottom: 24px;
+        }
+
+        .card-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 22px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 14px 12px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.85rem;
+        }
+
+        th {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input.table-input {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            width: 100%;
+            transition: all 0.2s;
+        }
+
+        input.table-input:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            background: rgba(0, 0, 0, 0.6);
+            box-shadow: 0 0 0 2px rgba(243, 198, 93, 0.15);
+        }
+
+        .btn-action {
+            background: rgba(243, 198, 93, 0.15);
+            border: 1px solid rgba(243, 198, 93, 0.3);
+            color: var(--accent-gold);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .btn-action:hover {
+            background: var(--accent-gold);
+            color: #111;
+        }
+
+        /* In-App Toast Banner */
+        #appToast {
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            background: rgba(36, 36, 42, 0.95);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent-gold);
+            color: var(--text-main);
+            padding: 16px 22px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            backdrop-filter: blur(15px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 0.88rem;
+            transform: translateY(-100px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        #appToast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        #appToast.error {
+            border-left-color: var(--danger);
+        }
+        #appToast.success {
+            border-left-color: var(--success);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- In-App Toast Container -->
+    <div id="appToast">
+        <span id="toastMessage">Notification message here</span>
+    </div>
+
+    <header>
+        <div class="brand-container">
+            <img src="logo.png" alt="Nguni Logo" class="brand-logo">
+            <h1>NGUNI HOMEWARE | ENTERPRISE POS HUB</h1>
+        </div>
+        <div class="header-actions">
+            <a href="pos-sell.html" class="nav-link">POS Front Desk &rarr;</a>
+            <div class="manager-badge">USER: DEFAULT MANAGER (MANAGER)</div>
+        </div>
+    </header>
+
+    <!-- Hub Navigation Tabs -->
+    <div class="hub-tabs">
+        <button class="tab-btn" onclick="switchTab(this, 1)">1. POS Scan Out</button>
+        <button class="tab-btn" onclick="switchTab(this, 2)">2. Stock Intake</button>
+        <button class="tab-btn" onclick="switchTab(this, 3)">3. Settlement Ledger</button>
+        <button class="tab-btn active" onclick="switchTab(this, 4)">4. Stock On-Hand</button>
+        <button class="tab-btn" onclick="switchTab(this, 5)">5. Staff Profiles</button>
+        <button class="tab-btn" onclick="switchTab(this, 6)">6. Audit Logs</button>
+        <button class="tab-btn" onclick="switchTab(this, 7)">7. Returns & Damages</button>
+    </div>
+
+    <!-- TAB 4: STOCK ON-HAND (Editable) -->
+    <div id="tab-4" class="tab-content active">
+        <div class="card">
+            <div class="card-title">Live Inventory Stock On-Hand (Editable)</div>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>SKU</th>
+                            <th>Product Description</th>
+                            <th>Stock Qty</th>
+                            <th>Floor Price (ZAR)</th>
+                            <th>Selling Price (ZAR)</th>
+                            <th>Supplier Partner</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="editableInventoryTable">
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 25px 0;">Loading inventory...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Placeholder panels for other tabs -->
+    <div id="tab-1" class="tab-content"><div class="card"><div class="card-title">POS Scan Out Overview</div><p style="color:var(--text-muted);">Use POS Front Desk terminal.</p></div></div>
+    <div id="tab-2" class="tab-content"><div class="card"><div class="card-title">Stock Intake Module</div><p style="color:var(--text-muted);">Intake logs managed here.</p></div></div>
+    <div id="tab-3" class="tab-content"><div class="card"><div class="card-title">Settlement Ledger</div><p style="color:var(--text-muted);">Financial records.</p></div></div>
+    <div id="tab-5" class="tab-content"><div class="card"><div class="card-title">Staff Profiles</div><p style="color:var(--text-muted);">Security PINs and permissions.</p></div></div>
+    <div id="tab-6" class="tab-content"><div class="card"><div class="card-title">Audit Logs</div><p style="color:var(--text-muted);">Activity trails.</p></div></div>
+    <div id="tab-7" class="tab-content"><div class="card"><div class="card-title">Returns & Damages</div><p style="color:var(--text-muted);">Returns processing.</p></div></div>
+
+    <script>
         const SUPABASE_URL = 'https://aivsmcdhxfdccsbqmejt.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_NDE9uLsqMD2QiIa6LMw-Lw_IBOmeebV';
         let supabaseClient;
 
-        // Initialize Supabase safely
         try {
             supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         } catch (e) {
-            console.error("Failed to initialize Supabase:", e);
+            console.error("Supabase initialization error:", e);
         }
 
         const appToast = document.getElementById('appToast');
@@ -22,16 +341,13 @@
             }, 3200);
         }
 
-        function switchTab(tabNum) {
+        function switchTab(btnElement, tabNum) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             
             const targetTab = document.getElementById(`tab-${tabNum}`);
             if (targetTab) targetTab.classList.add('active');
-            
-            if (window.event && window.event.currentTarget) {
-                window.event.currentTarget.classList.add('active');
-            }
+            if (btnElement) btnElement.classList.add('active');
 
             if (tabNum === 4) {
                 loadEditableInventory();
@@ -125,6 +441,8 @@
             }
         }
 
-        // Run on load
+        // Initial load on page start
         loadEditableInventory();
     </script>
+</body>
+</html>
