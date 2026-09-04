@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nguni Homeware | Cashier POS Front Desk</title>
+    <title>Nguni Homeware | Admin Hub</title>
     <link rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -160,7 +160,7 @@
             border-color: rgba(255, 255, 255, 0.2);
         }
 
-        .cashier-badge {
+        .admin-badge {
             background: rgba(243, 198, 93, 0.1);
             border: 1px solid rgba(243, 198, 93, 0.2);
             padding: 10px 18px;
@@ -170,9 +170,9 @@
             color: var(--accent-gold);
         }
 
-        .pos-container {
+        .dashboard-grid {
             display: grid;
-            grid-template-columns: 2fr 1fr;
+            grid-template-columns: 1fr 1fr;
             gap: 24px;
         }
 
@@ -230,18 +230,6 @@
             box-shadow: 0 0 0 3px rgba(243, 198, 93, 0.12);
         }
 
-        input[readonly] {
-            color: var(--text-muted);
-            background: rgba(255, 255, 255, 0.02);
-            border-color: rgba(255, 255, 255, 0.04);
-        }
-
-        .inline-fields {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-
         .btn-gold {
             background-color: var(--accent-gold);
             color: #111;
@@ -281,60 +269,6 @@
             font-size: 0.7rem;
             font-weight: 600;
             text-transform: uppercase;
-        }
-
-        .total-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid var(--border-color);
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-
-        .total-amount {
-            color: var(--accent-gold);
-        }
-
-        .tender-options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 15px;
-        }
-
-        .tender-btn {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 12px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            transition: all 0.2s;
-        }
-
-        .tender-btn.active {
-            border-color: var(--accent-gold);
-            background: rgba(243, 198, 93, 0.1);
-            color: var(--accent-gold);
-        }
-
-        .remove-btn {
-            background: transparent;
-            border: none;
-            color: var(--danger);
-            cursor: pointer;
-            font-size: 0.8rem;
-            opacity: 0.8;
-        }
-
-        .remove-btn:hover {
-            opacity: 1;
         }
 
         .error-msg {
@@ -389,11 +323,11 @@
     <div id="loginOverlay">
         <div class="login-box">
             <img src="logo.png" alt="Nguni Logo" class="login-logo">
-            <div class="login-title">Authentication Required</div>
-            <div class="login-subtitle">Enter 4-digit cashier security PIN</div>
+            <div class="login-title">Admin Hub Authentication</div>
+            <div class="login-subtitle">Enter security PIN to proceed</div>
             
             <div class="form-group" style="margin-bottom: 0;">
-                <input type="password" id="cashierPinInput" class="pin-input" placeholder="••••" autofocus maxlength="6">
+                <input type="password" id="adminPinInput" class="pin-input" placeholder="••••" autofocus maxlength="6">
             </div>
             
             <div id="loginError" class="error-msg">Incorrect PIN. Please try again.</div>
@@ -404,109 +338,67 @@
         <header>
             <div class="brand-container">
                 <img src="logo.png" alt="Nguni Logo" class="brand-logo">
-                <h1>NGUNI HOMEWARE | RETAIL FRONT DESK</h1>
+                <h1>NGUNI HOMEWARE | MANAGEMENT & ADMIN HUB</h1>
             </div>
             <div class="header-actions">
-                <a href="admin.html" class="nav-link">&larr; Admin Hub</a>
-                <div class="cashier-badge" id="cashierBadgeDisplay">CASHIER: COUNTER-01</div>
+                <a href="index.html" class="nav-link">&larr; POS Front Desk</a>
+                <div class="admin-badge">ADMIN ACCESS ACTIVE</div>
             </div>
         </header>
 
-        <div class="pos-container">
+        <div class="dashboard-grid">
             <div>
                 <div class="card">
-                    <div class="card-title">Live Barcode Scan & Terminal Checkout</div>
-                    
-                    <div class="form-group">
-                        <label for="barcodeScan">Scan Barcode / Type SKU (Auto-Adds to Cart on Enter)</label>
-                        <input type="text" id="barcodeScan" placeholder="Scan barcode or type item number..." autofocus>
-                    </div>
+                    <div class="card-title">Register New Cashier / Staff PIN</div>
+                    <form id="cashierForm">
+                        <div class="form-group">
+                            <label for="newCashierName">Staff Name / Counter ID</label>
+                            <input type="text" id="newCashierName" placeholder="e.g. Counter 02 or Thando" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newCashierPin">4-Digit Security PIN</label>
+                            <input type="password" id="newCashierPin" placeholder="••••" maxlength="4" required>
+                        </div>
+                        <button type="submit" class="btn-gold">Save Cashier Profile</button>
+                    </form>
+                </div>
 
-                    <div class="inline-fields">
-                        <div class="form-group">
-                            <label for="itemDesc">Last Scanned Product</label>
-                            <input type="text" id="itemDesc" readonly placeholder="Waiting for barcode scan...">
-                        </div>
-                        <div class="form-group">
-                            <label for="barcodeDisplay">Barcode / SKU</label>
-                            <input type="text" id="barcodeDisplay" readonly value="--">
-                        </div>
-                    </div>
-
-                    <div class="inline-fields">
-                        <div class="form-group">
-                            <label for="stockAvail">Stock Available</label>
-                            <input type="number" id="stockAvail" readonly value="0">
-                        </div>
-                        <div class="form-group">
-                            <label for="unitPrice">Selling Price (ZAR)</label>
-                            <input type="number" id="unitPrice" readonly value="0.00">
-                        </div>
-                    </div>
-
-                    <div class="inline-fields">
-                        <div class="form-group">
-                            <label for="orderRef">Order Reference / Transaction No.</label>
-                            <input type="text" id="orderRef" placeholder="e.g. #1043 or POS-8923">
-                        </div>
-                        <div class="form-group">
-                            <label for="quantity">Quantity Multiplier per Scan</label>
-                            <input type="number" id="quantity" value="1" min="1">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="supplierTag">Consignor / Supplier</label>
-                        <input type="text" id="supplierTag" readonly value="--">
+                <div class="card">
+                    <div class="card-title">Authorized Staff List</div>
+                    <div style="max-height: 220px; overflow-y: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Assigned PIN</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="cashiersTableBody">
+                                <tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 15px;">Loading staff...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
             <div>
                 <div class="card">
-                    <div class="card-title">Active Cart Batch</div>
-                    
-                    <div style="max-height: 280px; overflow-y: auto;">
+                    <div class="card-title">Quick Inventory Stock Overview</div>
+                    <div style="max-height: 440px; overflow-y: auto;">
                         <table>
                             <thead>
                                 <tr>
+                                    <th>SKU / Code</th>
                                     <th>Product</th>
-                                    <th>Qty</th>
-                                    <th>Subtotal</th>
-                                    <th></th>
+                                    <th>Stock</th>
+                                    <th>Price</th>
                                 </tr>
                             </thead>
-                            <tbody id="cartTableBody">
-                                <tr>
-                                    <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px 0;">No items added yet.</td>
-                                </tr>
+                            <tbody id="inventoryTableBody">
+                                <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 15px;">Loading inventory...</td></tr>
                             </tbody>
                         </table>
-                    </div>
-
-                    <div class="total-section">
-                        <span>Grand Total:</span>
-                        <span class="total-amount" id="grandTotalDisplay">R 0.00</span>
-                    </div>
-
-                    <div style="margin-top: 20px;">
-                        <label>Payment Tender Method</label>
-                        <div class="tender-options">
-                            <button class="tender-btn active" id="tenderCash" onclick="setTender('CASH')">Cash</button>
-                            <button class="tender-btn" id="tenderCard" onclick="setTender('CARD')">Card / POS</button>
-                        </div>
-
-                        <div class="form-group" id="cashTenderGroup">
-                            <label for="cashReceived">Cash Tendered (ZAR)</label>
-                            <input type="number" id="cashReceived" placeholder="0.00" oninput="calculateChange()">
-                        </div>
-
-                        <div class="form-group" id="changeDueGroup">
-                            <label for="changeDue">Change Due</label>
-                            <input type="text" id="changeDue" readonly value="R 0.00" style="color: var(--success); font-weight: 650;">
-                        </div>
-
-                        <button class="btn-gold" id="checkoutBtn" style="margin-top: 5px;">Complete & Sync Sale</button>
                     </div>
                 </div>
             </div>
@@ -520,14 +412,10 @@
 
         const loginOverlay = document.getElementById('loginOverlay');
         const appContainer = document.getElementById('appContainer');
-        const cashierPinInput = document.getElementById('cashierPinInput');
+        const adminPinInput = document.getElementById('adminPinInput');
         const loginError = document.getElementById('loginError');
-        const cashierBadgeDisplay = document.getElementById('cashierBadgeDisplay');
         const appToast = document.getElementById('appToast');
         const toastMessage = document.getElementById('toastMessage');
-
-        let activeCashierName = 'COUNTER-01';
-        let selectedTender = 'CASH';
 
         function showNotification(message, type = 'error') {
             toastMessage.innerText = message;
@@ -537,14 +425,13 @@
             }, 3200);
         }
 
-        cashierPinInput.addEventListener('input', async (e) => {
+        adminPinInput.addEventListener('input', async (e) => {
             const enteredPin = e.target.value.trim();
             loginError.style.display = 'none';
 
             // Master Fallback Bypass for PIN "1234"
             if (enteredPin === "1234") {
-                activeCashierName = "ADMIN-MASTER";
-                grantAccess();
+                grantAdminAccess();
                 return;
             }
 
@@ -556,245 +443,99 @@
                     .single();
 
                 if (!error && data) {
-                    activeCashierName = data.cashier_name.toUpperCase();
-                    grantAccess();
+                    grantAdminAccess();
                 } else if (enteredPin.length >= 6) {
                     loginError.style.display = 'block';
-                    cashierPinInput.value = '';
+                    adminPinInput.value = '';
                 }
             }
         });
 
-        function grantAccess() {
+        function grantAdminAccess() {
             loginOverlay.style.opacity = '0';
             loginOverlay.style.transition = 'opacity 0.3s ease';
             setTimeout(() => {
                 loginOverlay.style.display = 'none';
                 appContainer.style.display = 'block';
-                cashierBadgeDisplay.innerText = `CASHIER: ${activeCashierName}`;
-                fetchLiveInventory();
-                document.getElementById('barcodeScan').focus();
+                loadAdminData();
             }, 300);
         }
 
-        window.setTender = function(method) {
-            selectedTender = method;
-            document.getElementById('tenderCash').classList.toggle('active', method === 'CASH');
-            document.getElementById('tenderCard').classList.toggle('active', method === 'CARD');
-            
-            const cashGroup = document.getElementById('cashTenderGroup');
-            const changeGroup = document.getElementById('changeDueGroup');
-            if (method === 'CARD') {
-                cashGroup.style.display = 'none';
-                changeGroup.style.display = 'none';
-            } else {
-                cashGroup.style.display = 'block';
-                changeGroup.style.display = 'block';
-            }
+        async function loadAdminData() {
+            fetchCashiers();
+            fetchInventoryOverview();
         }
 
-        const barcodeInput = document.getElementById('barcodeScan');
-        const itemDescInput = document.getElementById('itemDesc');
-        const barcodeDisplay = document.getElementById('barcodeDisplay');
-        const stockAvailInput = document.getElementById('stockAvail');
-        const unitPriceInput = document.getElementById('unitPrice');
-        const supplierTagInput = document.getElementById('supplierTag');
-        const orderRefInput = document.getElementById('orderRef');
-        const quantityInput = document.getElementById('quantity');
-        
-        const cartTableBody = document.getElementById('cartTableBody');
-        const grandTotalDisplay = document.getElementById('grandTotalDisplay');
-        const checkoutBtn = document.getElementById('checkoutBtn');
-
-        let currentInventory = [];
-        let stagedBatch = [];
-        let currentGrandTotal = 0;
-
-        async function fetchLiveInventory() {
-            const { data, error } = await supabaseClient.from('inventory').select('*');
-            if (!error) {
-                currentInventory = data || [];
-            } else {
-                console.error("Error loading inventory:", error);
-            }
-        }
-
-        // AUTO-ADD TO CART STRAIGHT ON ENTER (No intermediary staging step)
-        barcodeInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                processAndAddToCart();
-            }
-        });
-
-        function processAndAddToCart() {
-            const query = barcodeInput.value.trim().toLowerCase();
-            if (!query) return;
-
-            const matchedItem = currentInventory.find(item => {
-                const s = String(item.sku || '').toLowerCase();
-                const num = String(item.item_number || '').toLowerCase();
-                const barcode = String(item.barcode || '').toLowerCase();
-                return s === query || num === query || barcode === query;
-            });
-
-            if (!matchedItem) {
-                showNotification(`Item not found for code: "${query}". Please check inventory or re-scan.`, 'error');
-                barcodeInput.value = '';
-                barcodeInput.focus();
-                return;
-            }
-
-            const name = matchedItem.item_description || matchedItem.product_name || matchedItem.name || 'Unnamed Product';
-            const code = matchedItem.sku || matchedItem.item_number || matchedItem.barcode || query;
-            const stockAvailable = matchedItem.stock_qty ?? matchedItem.stock ?? matchedItem.quantity ?? 0;
-            
-            const price = parseFloat(matchedItem.selling_price || matchedItem.unit_price || matchedItem.wholesale_floor || 0);
-            const supplier = matchedItem.supplier_partner || matchedItem.consignor || matchedItem.supplier || 'Standard';
-
-            const qty = parseInt(quantityInput.value) || 1;
-
-            if (qty > stockAvailable && stockAvailable > 0) {
-                showNotification(`Cannot add more than available stock (${stockAvailable}).`, 'error');
-                barcodeInput.value = '';
-                barcodeInput.focus();
-                return;
-            }
-
-            // Populate metadata display fields
-            itemDescInput.value = name;
-            barcodeDisplay.value = code;
-            stockAvailInput.value = stockAvailable;
-            unitPriceInput.value = price.toFixed(2);
-            supplierTagInput.value = supplier;
-
-            const subtotal = qty * price;
-
-            // Instantly append or aggregate item inside the Cart batch list
-            const existingBatchIndex = stagedBatch.findIndex(i => i.sku.toLowerCase() === code.toLowerCase());
-            if (existingBatchIndex > -1) {
-                stagedBatch[existingBatchIndex].qty += qty;
-                stagedBatch[existingBatchIndex].subtotal = stagedBatch[existingBatchIndex].qty * stagedBatch[existingBatchIndex].price;
-            } else {
-                stagedBatch.push({
-                    id: matchedItem.id,
-                    sku: code,
-                    desc: name,
-                    supplier: supplier,
-                    qty: qty,
-                    price: price,
-                    subtotal: subtotal
-                });
-            }
-
-            renderBatchCart();
-
-            // Clear input and focus instantly back for continuous fast multi-scanning
-            barcodeInput.value = '';
-            quantityInput.value = '1';
-            barcodeInput.focus();
-        }
-
-        function renderBatchCart() {
-            if (stagedBatch.length === 0) {
-                cartTableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px 0;">No items added yet.</td></tr>`;
-                currentGrandTotal = 0;
-                grandTotalDisplay.innerText = "R 0.00";
+        async function fetchCashiers() {
+            const { data, error } = await supabaseClient.from('cashiers').select('*');
+            const tbody = document.getElementById('cashiersTableBody');
+            if (error || !data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 15px;">No cashiers found. (Using master PIN 1234)</td></tr>`;
                 return;
             }
 
             let html = '';
-            currentGrandTotal = 0;
-
-            stagedBatch.forEach((item, index) => {
-                currentGrandTotal += item.subtotal;
+            data.forEach(c => {
                 html += `
                     <tr>
-                        <td>${item.desc}<br><small style="color:var(--text-muted);">${item.sku}</small></td>
-                        <td>${item.qty}</td>
-                        <td>R ${item.subtotal.toFixed(2)}</td>
-                        <td><button class="remove-btn" onclick="removeStagedItem(${index})">Remove</button></td>
+                        <td>${c.cashier_name}</td>
+                        <td>••••</td>
+                        <td><button style="background:transparent; border:none; color:var(--danger); cursor:pointer;" onclick="deleteCashier('${c.id}')">Revoke</button></td>
                     </tr>
                 `;
             });
-
-            cartTableBody.innerHTML = html;
-            grandTotalDisplay.innerText = `R ${currentGrandTotal.toFixed(2)}`;
-            calculateChange();
+            tbody.innerHTML = html;
         }
 
-        window.removeStagedItem = function(index) {
-            stagedBatch.splice(index, 1);
-            renderBatchCart();
-            barcodeInput.focus();
+        document.getElementById('cashierForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('newCashierName').value.trim();
+            const pin = document.getElementById('newCashierPin').value.trim();
+
+            const { error } = await supabaseClient.from('cashiers').insert([{ cashier_name: name, pin: pin }]);
+            if (!error) {
+                showNotification("Cashier profile saved successfully!", "success");
+                document.getElementById('newCashierName').value = '';
+                document.getElementById('newCashierPin').value = '';
+                fetchCashiers();
+            } else {
+                showNotification("Error saving cashier profile.", "error");
+            }
+        });
+
+        window.deleteCashier = async function(id) {
+            const { error } = await supabaseClient.from('cashiers').delete().eq('id', id);
+            if (!error) {
+                showNotification("Cashier access revoked.", "success");
+                fetchCashiers();
+            }
         }
 
-        window.calculateChange = function() {
-            if (selectedTender === 'CARD') return;
-            const cashReceived = parseFloat(document.getElementById('cashReceived').value) || 0;
-            const change = cashReceived - currentGrandTotal;
-            document.getElementById('changeDue').value = change >= 0 ? `R ${change.toFixed(2)}` : "Insufficient Cash";
-        }
-
-        checkoutBtn.addEventListener('click', async () => {
-            if (stagedBatch.length === 0) {
-                showNotification("Cart is empty. Add items before completing checkout.", 'error');
+        async function fetchInventoryOverview() {
+            const { data, error } = await supabaseClient.from('inventory').select('*');
+            const tbody = document.getElementById('inventoryTableBody');
+            if (error || !data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 15px;">No inventory records found.</td></tr>`;
                 return;
             }
 
-            if (selectedTender === 'CASH') {
-                const cashReceived = parseFloat(document.getElementById('cashReceived').value) || 0;
-                if (cashReceived < currentGrandTotal) {
-                    showNotification("Tendered cash is less than the grand total.", 'error');
-                    return;
-                }
-            }
-
-            const orderRef = orderRefInput.value.trim() || `POS-${Math.floor(1000 + Math.random() * 9000)}`;
-
-            for (const item of stagedBatch) {
-                const { error: orderError } = await supabaseClient.from('orders').insert([{
-                    order_ref: orderRef,
-                    sku: item.sku,
-                    item_description: item.desc,
-                    supplier_partner: item.supplier,
-                    quantity: item.qty,
-                    subtotal: item.subtotal,
-                    payment_method: selectedTender,
-                    cashier: activeCashierName,
-                    status: 'SETTLED'
-                }]);
-
-                if (orderError) console.error("Order sync error:", orderError);
-
-                const matchedStockItem = currentInventory.find(inv => 
-                    String(inv.sku || '').toLowerCase() === String(item.sku).toLowerCase() || 
-                    String(inv.item_number || '').toLowerCase() === String(item.sku).toLowerCase()
-                );
-                
-                if (matchedStockItem) {
-                    const currentStockVal = matchedStockItem.stock_qty ?? matchedStockItem.stock ?? matchedStockItem.quantity ?? 0;
-                    const newQty = Math.max(0, currentStockVal - item.qty);
-                    
-                    const updatePayload = {};
-                    if ('stock_qty' in matchedStockItem) updatePayload.stock_qty = newQty;
-                    else if ('stock' in matchedStockItem) updatePayload.stock = newQty;
-                    else if ('quantity' in matchedStockItem) updatePayload.quantity = newQty;
-
-                    await supabaseClient.from('inventory').update(updatePayload).eq('id', matchedStockItem.id);
-                }
-            }
-
-            showNotification(`Sale ${orderRef} successfully settled via ${selectedTender} (${activeCashierName})!`, 'success');
-            
-            stagedBatch = [];
-            orderRefInput.value = '';
-            document.getElementById('cashReceived').value = '';
-            document.getElementById('changeDue').value = 'R 0.00';
-            renderBatchCart();
-            fetchLiveInventory();
-            barcodeInput.focus();
-        });
+            let html = '';
+            data.forEach(item => {
+                const name = item.item_description || item.product_name || item.name || 'Unnamed';
+                const code = item.sku || item.item_number || item.barcode || '--';
+                const stock = item.stock_qty ?? item.stock ?? item.quantity ?? 0;
+                const price = parseFloat(item.selling_price || item.unit_price || 0).toFixed(2);
+                html += `
+                    <tr>
+                        <td><small>${code}</small></td>
+                        <td>${name}</td>
+                        <td>${stock}</td>
+                        <td>R ${price}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
     </script>
 </body>
 </html>
