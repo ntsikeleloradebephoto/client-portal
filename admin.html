@@ -88,7 +88,7 @@
             border-color: rgba(255, 255, 255, 0.2);
         }
 
-        .manager-badge {
+        .user-badge {
             background: rgba(243, 198, 93, 0.1);
             border: 1px solid rgba(243, 198, 93, 0.2);
             padding: 10px 18px;
@@ -103,7 +103,7 @@
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             gap: 10px;
-            margin-bottom: 24px;
+            margin-bottom: 25px;
         }
 
         .tab-btn {
@@ -115,15 +115,15 @@
             font-size: 0.75rem;
             font-weight: 600;
             text-transform: uppercase;
+            letter-spacing: 0.05em;
             cursor: pointer;
             transition: all 0.2s ease;
             text-align: center;
-            letter-spacing: 0.05em;
         }
 
         .tab-btn:hover {
-            border-color: rgba(255, 255, 255, 0.2);
             color: var(--text-main);
+            border-color: rgba(255, 255, 255, 0.2);
         }
 
         .tab-btn.active {
@@ -133,23 +133,15 @@
             box-shadow: 0 4px 20px rgba(243, 198, 93, 0.25);
         }
 
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
         .card {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 18px;
             padding: 28px;
+            margin-bottom: 20px;
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
-            margin-bottom: 24px;
         }
 
         .card-title {
@@ -163,10 +155,69 @@
             padding-bottom: 12px;
         }
 
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            letter-spacing: 0.05em;
+        }
+
+        input, select {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 13px 16px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            background: rgba(0, 0, 0, 0.6);
+            box-shadow: 0 0 0 3px rgba(243, 198, 93, 0.12);
+        }
+
+        .inline-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .btn-gold {
+            background-color: var(--accent-gold);
+            color: #111;
+            font-weight: 600;
+            border: none;
+            padding: 14px;
+            width: 100%;
+            border-radius: 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 20px rgba(243, 198, 93, 0.25);
+        }
+
+        .btn-gold:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 5px;
+            margin-top: 10px;
         }
 
         th, td {
@@ -181,43 +232,13 @@
             font-size: 0.7rem;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
         }
 
-        input.table-input {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 8px 10px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            width: 100%;
-            transition: all 0.2s;
+        .tab-content {
+            display: none;
         }
-
-        input.table-input:focus {
-            outline: none;
-            border-color: var(--accent-gold);
-            background: rgba(0, 0, 0, 0.6);
-            box-shadow: 0 0 0 2px rgba(243, 198, 93, 0.15);
-        }
-
-        .btn-action {
-            background: rgba(243, 198, 93, 0.15);
-            border: 1px solid rgba(243, 198, 93, 0.3);
-            color: var(--accent-gold);
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-transform: uppercase;
-        }
-
-        .btn-action:hover {
-            background: var(--accent-gold);
-            color: #111;
+        .tab-content.active {
+            display: block;
         }
 
         /* In-App Toast Banner */
@@ -256,7 +277,6 @@
 </head>
 <body>
 
-    <!-- In-App Toast Container -->
     <div id="appToast">
         <span id="toastMessage">Notification message here</span>
     </div>
@@ -267,56 +287,173 @@
             <h1>NGUNI HOMEWARE | ENTERPRISE POS HUB</h1>
         </div>
         <div class="header-actions">
-            <a href="pos-sell.html" class="nav-link">POS Front Desk &rarr;</a>
-            <div class="manager-badge">USER: DEFAULT MANAGER (MANAGER)</div>
+            <a href="pos-sell.html" class="nav-link">&larr; POS Front Desk</a>
+            <div class="user-badge" id="userBadgeDisplay">USER: DEFAULT MANAGER (MANAGER)</div>
         </div>
     </header>
 
     <!-- Hub Navigation Tabs -->
     <div class="hub-tabs">
-        <button class="tab-btn" onclick="switchTab(1)">1. POS Scan Out</button>
-        <button class="tab-btn" onclick="switchTab(2)">2. Stock Intake</button>
-        <button class="tab-btn" onclick="switchTab(3)">3. Settlement Ledger</button>
-        <button class="tab-btn active" onclick="switchTab(4)">4. Stock On-Hand</button>
-        <button class="tab-btn" onclick="switchTab(5)">5. Staff Profiles</button>
-        <button class="tab-btn" onclick="switchTab(6)">6. Audit Logs</button>
-        <button class="tab-btn" onclick="switchTab(7)">7. Returns & Damages</button>
+        <button class="tab-btn" onclick="switchTab('tab-pos')">1. POS Scan Out</button>
+        <button class="tab-btn active" onclick="switchTab('tab-intake')">2. Stock Intake</button>
+        <button class="tab-btn" onclick="switchTab('tab-ledger')">3. Settlement Ledger</button>
+        <button class="tab-btn" onclick="switchTab('tab-stock')">4. Stock On-Hand</button>
+        <button class="tab-btn" onclick="switchTab('tab-staff')">5. Staff Profiles</button>
+        <button class="tab-btn" onclick="switchTab('tab-audit')">6. Audit Logs</button>
+        <button class="tab-btn" onclick="switchTab('tab-returns')">7. Returns & Damages</button>
     </div>
 
-    <!-- TAB 4: STOCK ON-HAND (Editable) -->
-    <div id="tab-4" class="tab-content active">
+    <!-- TAB 1: POS SCAN OUT -->
+    <div id="tab-pos" class="tab-content">
         <div class="card">
-            <div class="card-title">Live Inventory Stock On-Hand (Editable)</div>
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>SKU</th>
-                            <th>Product Description</th>
-                            <th>Stock Qty</th>
-                            <th>Floor Price (ZAR)</th>
-                            <th>Selling Price (ZAR)</th>
-                            <th>Supplier Partner</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="editableInventoryTable">
-                        <tr>
-                            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 25px 0;">Loading inventory...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <div class="card-title">POS Terminal Redirection</div>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Use the dedicated cashier terminal interface for high-speed barcode scanning and client checkouts.</p>
+            <a href="pos-sell.html" class="nav-link" style="display:inline-block; background:var(--accent-gold); color:#111; font-weight:600; border:none;">Launch POS Front Desk &rarr;</a>
         </div>
     </div>
 
-    <!-- Placeholder panels for other tabs to keep hub fully functional -->
-    <div id="tab-1" class="tab-content"><div class="card"><div class="card-title">POS Scan Out Overview</div><p style="color:var(--text-muted);">Use the POS Front Desk terminal for live scanning.</p></div></div>
-    <div id="tab-2" class="tab-content"><div class="card"><div class="card-title">Stock Intake Module</div><p style="color:var(--text-muted);">Intake logs are managed here.</p></div></div>
-    <div id="tab-3" class="tab-content"><div class="card"><div class="card-title">Settlement Ledger</div><p style="color:var(--text-muted);">Transaction financial records.</p></div></div>
-    <div id="tab-5" class="tab-content"><div class="card"><div class="card-title">Staff Profiles</div><p style="color:var(--text-muted);">Cashier security PINs and permissions.</p></div></div>
-    <div id="tab-6" class="tab-content"><div class="card"><div class="card-title">Audit Logs</div><p style="color:var(--text-muted);">System activity trails.</p></div></div>
-    <div id="tab-7" class="tab-content"><div class="card"><div class="card-title">Returns & Damages</div><p style="color:var(--text-muted);">Returns processing module.</p></div></div>
+    <!-- TAB 2: STOCK INTAKE -->
+    <div id="tab-intake" class="tab-content active">
+        <div class="card">
+            <div class="card-title">Consignment Stock Intake & Batch Staging</div>
+            
+            <div class="form-group">
+                <label for="intakeSku">Item Number / Barcode SKU (Optional - Auto Generated if Empty)</label>
+                <input type="text" id="intakeSku" placeholder="e.g. 600123456789 or ITEM-101">
+            </div>
+
+            <div class="form-group">
+                <label for="intakeDesc">SKU Description / Product Name</label>
+                <input type="text" id="intakeDesc" placeholder="e.g. Ceramic Teaset">
+            </div>
+
+            <div class="form-group">
+                <label for="intakeQty">Quantity Intake</label>
+                <input type="number" id="intakeQty" value="10" min="1">
+            </div>
+
+            <div class="inline-fields">
+                <div class="form-group">
+                    <label for="intakeFloorPrice">Wholesale Floor Price Per Unit (ZAR)</label>
+                    <input type="number" id="intakeFloorPrice" placeholder="e.g. 260">
+                </div>
+                <div class="form-group">
+                    <label for="intakeSellingPrice">Selling Price Per Unit (ZAR)</label>
+                    <input type="number" id="intakeSellingPrice" placeholder="e.g. 450">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="intakeSupplier">Consignor / Wholesale Supplier Partner</label>
+                <input type="text" id="intakeSupplier" placeholder="e.g. Craft Master Wholesalers">
+            </div>
+
+            <button class="btn-gold" id="stageIntakeBtn">+ Stage Stock Line</button>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Batch Intake Staging Queue</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>SKU</th>
+                        <th>Product</th>
+                        <th>Qty</th>
+                        <th>Floor Price</th>
+                        <th>Selling Price</th>
+                        <th>Supplier</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="stagedIntakeTableBody">
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px 0;">No stock lines staged in queue.</td>
+                    </tr>
+                </tbody>
+            </table>
+            <button class="btn-gold" id="commitIntakeBtn" style="margin-top: 20px; display: none;">Commit Staged Batch to Inventory</button>
+        </div>
+    </div>
+
+    <!-- TAB 3: SETTLEMENT LEDGER -->
+    <div id="tab-ledger" class="tab-content">
+        <div class="card">
+            <div class="card-title">Settlement Ledger & Sales Activity</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Order Ref</th>
+                        <th>SKU / Product</th>
+                        <th>Qty</th>
+                        <th>Subtotal</th>
+                        <th>Tender</th>
+                        <th>Cashier</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody id="ledgerTableBody">
+                    <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">Loading settlement ledger...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 4: STOCK ON-HAND -->
+    <div id="tab-stock" class="tab-content">
+        <div class="card">
+            <div class="card-title">Live Inventory Stock On-Hand</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>SKU</th>
+                        <th>Product Description</th>
+                        <th>Stock Qty</th>
+                        <th>Floor Price</th>
+                        <th>Selling Price</th>
+                        <th>Supplier Partner</th>
+                    </tr>
+                </thead>
+                <tbody id="stockTableBody">
+                    <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">Loading inventory...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 5: STAFF PROFILES -->
+    <div id="tab-staff" class="tab-content">
+        <div class="card">
+            <div class="card-title">Staff & Cashier Security Profiles</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cashier Name</th>
+                        <th>Security PIN</th>
+                        <th>Role</th>
+                    </tr>
+                </thead>
+                <tbody id="staffTableBody">
+                    <tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 20px;">Loading staff profiles...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 6: AUDIT LOGS -->
+    <div id="tab-audit" class="tab-content">
+        <div class="card">
+            <div class="card-title">System Audit Trails</div>
+            <p style="color: var(--text-muted); font-size: 0.9ora;">All inventory updates, cash drops, and admin overrides are logged securely.</p>
+        </div>
+    </div>
+
+    <!-- TAB 7: RETURNS & DAMAGES -->
+    <div id="tab-returns" class="tab-content">
+        <div class="card">
+            <div class="card-title">Returns & Damaged Goods Processing</div>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Log returned merchandise or write off damaged items against supplier accounts.</p>
+        </div>
+    </div>
 
     <script>
         const SUPABASE_URL = 'https://aivsmcdhxfdccsbqmejt.supabase.co';
@@ -326,7 +463,7 @@
         const appToast = document.getElementById('appToast');
         const toastMessage = document.getElementById('toastMessage');
 
-        function showNotification(message, type = 'success') {
+        function showNotification(message, type = 'error') {
             toastMessage.innerText = message;
             appToast.className = `show ${type}`;
             setTimeout(() => {
@@ -334,91 +471,178 @@
             }, 3200);
         }
 
-        function switchTab(tabNum) {
+        window.switchTab = function(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             
-            document.getElementById(`tab-${tabNum}`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
             event.currentTarget.classList.add('active');
 
-            if (tabNum === 4) {
-                loadEditableInventory();
-            }
+            if (tabId === 'tab-ledger') fetchLedger();
+            if (tabId === 'tab-stock') fetchStock();
+            if (tabId === 'tab-staff') fetchStaff();
         }
 
-        async function loadEditableInventory() {
-            const tableBody = document.getElementById('editableInventoryTable');
-            tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 25px 0;">Loading inventory...</td></tr>`;
+        let stagedIntakeBatch = [];
 
-            const { data, error } = await supabaseClient.from('inventory').select('*').order('id', { ascending: true });
+        document.getElementById('stageIntakeBtn').addEventListener('click', () => {
+            const sku = document.getElementById('intakeSku').value.trim() || `NGUNI-${Math.floor(1000 + Math.random() * 9000)}` ;
+            const desc = document.getElementById('intakeDesc').value.trim();
+            const qty = parseInt(document.getElementById('intakeQty').value) || 0;
+            const floorPrice = parseFloat(document.getElementById('intakeFloorPrice').value) || 0;
+            const sellingPrice = parseFloat(document.getElementById('intakeSellingPrice').value) || 0;
+            const supplier = document.getElementById('intakeSupplier').value.trim() || 'Standard';
 
-            if (error) {
-                console.error("Error fetching inventory:", error);
-                tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--danger); padding: 25px 0;">Failed to load inventory.</td></tr>`;
+            if (!desc) {
+                showNotification("Please provide a SKU Description / Product Name.", 'error');
                 return;
             }
 
-            if (!data || data.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 25px 0;">No inventory records found.</td></tr>`;
+            stagedIntakeBatch.push({ sku, desc, qty, floorPrice, sellingPrice, supplier });
+            renderIntakeBatch();
+
+            // Reset form fields
+            document.getElementById('intakeSku').value = '';
+            document.getElementById('intakeDesc').value = '';
+            document.getElementById('intakeFloorPrice').value = '';
+            document.getElementById('intakeSellingPrice').value = '';
+            document.getElementById('intakeSupplier').value = '';
+        });
+
+        function renderIntakeBatch() {
+            const tbody = document.getElementById('stagedIntakeTableBody');
+            const commitBtn = document.getElementById('commitIntakeBtn');
+
+            if (stagedIntakeBatch.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px 0;">No stock lines staged in queue.</td></tr>`;
+                commitBtn.style.display = 'none';
                 return;
             }
 
             let html = '';
-            data.forEach(item => {
-                const id = item.id;
-                const sku = item.sku || item.item_number || item.barcode || '';
-                const desc = item.item_description || item.product_name || item.name || '';
-                const stockQty = item.stock_qty ?? item.stock ?? item.quantity ?? 0;
-                const floorPrice = item.wholesale_floor || item.floor_price || 0;
-                const sellingPrice = item.selling_price || item.unit_price || 0;
-                const supplier = item.supplier_partner || item.consignor || item.supplier || 'Standard';
-
+            stagedIntakeBatch.forEach((item, index) => {
                 html += `
-                    <tr id="row-${id}">
-                        <td><small style="color:var(--text-muted);">${sku}</small></td>
-                        <td><input type="text" class="table-input" id="desc-${id}" value="${desc}"></td>
-                        <td><input type="number" class="table-input" id="qty-${id}" value="${stockQty}" style="width: 80px;"></td>
-                        <td><input type="number" step="0.01" class="table-input" id="floor-${id}" value="${parseFloat(floorPrice).toFixed(2)}" style="width: 100px;"></td>
-                        <td><input type="number" step="0.01" class="table-input" id="selling-${id}" value="${parseFloat(sellingPrice).toFixed(2)}" style="width: 100px;"></td>
-                        <td><input type="text" class="table-input" id="supplier-${id}" value="${supplier}"></td>
-                        <td><button class="btn-action" onclick="saveInventoryRow(${id})">Save</button></td>
+                    <tr>
+                        <td>${item.sku}</td>
+                        <td>${item.desc}</td>
+                        <td>${item.qty}</td>
+                        <td>R ${item.floorPrice.toFixed(2)}</td>
+                        <td>R ${item.sellingPrice.toFixed(2)}</td>
+                        <td>${item.supplier}</td>
+                        <td><button style="background:transparent; border:none; color:var(--danger); cursor:pointer;" onclick="removeIntake(${index})">Remove</button></td>
                     </tr>
                 `;
             });
 
-            tableBody.innerHTML = html;
+            tbody.innerHTML = html;
+            commitBtn.style.display = 'block';
         }
 
-        window.saveInventoryRow = async function(id) {
-            const desc = document.getElementById(`desc-${id}`).value.trim();
-            const qty = parseInt(document.getElementById(`qty-${id}`).value) || 0;
-            const floor = parseFloat(document.getElementById(`floor-${id}`).value) || 0;
-            const selling = parseFloat(document.getElementById(`selling-${id}`).value) || 0;
-            const supplier = document.getElementById(`supplier-${id}`).value.trim();
+        window.removeIntake = function(index) {
+            stagedIntakeBatch.splice(index, 1);
+            renderIntakeBatch();
+        }
 
-            const updatePayload = {
-                item_description: desc,
-                stock_qty: qty,
-                wholesale_floor: floor,
-                selling_price: selling,
-                supplier_partner: supplier
-            };
+        document.getElementById('commitIntakeBtn').addEventListener('click', async () => {
+            for (const item of stagedIntakeBatch) {
+                const { error } = await supabaseClient.from('inventory').insert([{
+                    sku: item.sku,
+                    item_description: item.desc,
+                    stock_qty: item.qty,
+                    wholesale_floor: item.floorPrice,
+                    selling_price: item.sellingPrice,
+                    supplier_partner: item.supplier
+                }]);
 
-            const { error } = await supabaseClient
-                .from('inventory')
-                .update(updatePayload)
-                .eq('id', id);
+                if (error) {
+                    console.error("Error committing inventory:", error);
+                    showNotification("Error saving intake batch to database.", 'error');
+                    return;
+                }
+            }
 
-            if (error) {
-                console.error("Update error:", error);
-                showNotification("Failed to update item. Please check console.", "error");
-            } else {
-                showNotification(`Item SKU successfully updated!`, "success");
+            showNotification("Successfully committed stock intake batch to inventory!", 'success');
+            stagedIntakeBatch = [];
+            renderIntakeBatch();
+        });
+
+        async function fetchLedger() {
+            const tbody = document.getElementById('ledgerTableBody');
+            const { data, error } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
+            if (!error && data) {
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No settlement records found.</td></tr>`;
+                    return;
+                }
+                let html = '';
+                data.forEach(order => {
+                    html += `
+                        <tr>
+                            <td>${order.order_ref || '--'}</td>
+                            <td>${order.item_description || order.sku || '--'}</td>
+                            <td>${order.quantity || 1}</td>
+                            <td>R ${(order.subtotal || 0).toFixed(2)}</td>
+                            <td>${order.payment_method || 'CASH'}</td>
+                            <td>${order.cashier || 'COUNTER-01'}</td>
+                            <td>${new Date(order.created_at).toLocaleString()}</td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
             }
         }
 
-        // Initial load on page start if tab 4 is active
-        loadEditableInventory();
+        async function fetchStock() {
+            const tbody = document.getElementById('stockTableBody');
+            const { data, error } = await supabaseClient.from('inventory').select('*');
+            if (!error && data) {
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No inventory stock found.</td></tr>`;
+                    return;
+                }
+                let html = '';
+                data.forEach(item => {
+                    const desc = item.item_description || item.product_name || item.name || 'Unnamed';
+                    const qty = item.stock_qty ?? item.stock ?? item.quantity ?? 0;
+                    const floor = parseFloat(item.wholesale_floor || item.unit_price || 0);
+                    const selling = parseFloat(item.selling_price || 0);
+                    const supplier = item.supplier_partner || item.consignor || 'Standard';
+                    html += `
+                        <tr>
+                            <td>${item.sku || item.item_number || '--'}</td>
+                            <td>${desc}</td>
+                            <td>${qty}</td>
+                            <td>R ${floor.toFixed(2)}</td>
+                            <td>R ${selling.toFixed(2)}</td>
+                            <td>${supplier}</td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+            }
+        }
+
+        async function fetchStaff() {
+            const tbody = document.getElementById('staffTableBody');
+            const { data, error } = await supabaseClient.from('cashiers').select('*');
+            if (!error && data) {
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 20px;">No staff profiles found.</td></tr>`;
+                    return;
+                }
+                let html = '';
+                data.forEach(staff => {
+                    html += `
+                        <tr>
+                            <td>${staff.cashier_name || 'Staff'}</td>
+                            <td>••••</td>
+                            <td>${staff.role || 'CASHIER'}</td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+            }
+        }
     </script>
 </body>
 </html>
