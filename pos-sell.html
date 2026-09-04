@@ -344,9 +344,47 @@
             margin-top: 14px;
             display: none;
         }
+
+        /* In-App Toast Banner */
+        #appToast {
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            background: rgba(36, 36, 42, 0.95);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent-gold);
+            color: var(--text-main);
+            padding: 16px 22px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            backdrop-filter: blur(15px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 0.88rem;
+            transform: translateY(-100px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        #appToast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        #appToast.error {
+            border-left-color: var(--danger);
+        }
+        #appToast.success {
+            border-left-color: var(--success);
+        }
     </style>
 </head>
 <body>
+
+    <!-- In-App Toast Container -->
+    <div id="appToast">
+        <span id="toastMessage">Notification message here</span>
+    </div>
 
     <div id="loginOverlay">
         <div class="login-box">
@@ -485,9 +523,19 @@
         const cashierPinInput = document.getElementById('cashierPinInput');
         const loginError = document.getElementById('loginError');
         const cashierBadgeDisplay = document.getElementById('cashierBadgeDisplay');
+        const appToast = document.getElementById('appToast');
+        const toastMessage = document.getElementById('toastMessage');
 
         let activeCashierName = 'COUNTER-01';
         let selectedTender = 'CASH';
+
+        function showNotification(message, type = 'error') {
+            toastMessage.innerText = message;
+            appToast.className = `show ${type}`;
+            setTimeout(() => {
+                appToast.className = '';
+            }, 3200);
+        }
 
         cashierPinInput.addEventListener('input', async (e) => {
             const enteredPin = e.target.value.trim();
@@ -581,7 +629,7 @@
             });
 
             if (!matchedItem) {
-                alert(`Item not found for code: "${query}". Please check inventory or re-scan.`);
+                showNotification(`Item not found for code: "${query}". Please check inventory or re-scan.`, 'error');
                 barcodeInput.value = '';
                 barcodeInput.focus();
                 return;
@@ -596,7 +644,7 @@
             const qty = parseInt(quantityInput.value) || 1;
 
             if (qty > stockAvailable && stockAvailable > 0) {
-                alert(`Cannot stage more than available stock (${stockAvailable}).`);
+                showNotification(`Cannot stage more than available stock (${stockAvailable}).`, 'error');
                 barcodeInput.value = '';
                 barcodeInput.focus();
                 return;
@@ -679,14 +727,14 @@
 
         checkoutBtn.addEventListener('click', async () => {
             if (stagedBatch.length === 0) {
-                alert("Batch is empty. Add items before completing checkout.");
+                showNotification("Batch is empty. Add items before completing checkout.", 'error');
                 return;
             }
 
             if (selectedTender === 'CASH') {
                 const cashReceived = parseFloat(document.getElementById('cashReceived').value) || 0;
                 if (cashReceived < currentGrandTotal) {
-                    alert("Tendered cash is less than the grand total.");
+                    showNotification("Tendered cash is less than the grand total.", 'error');
                     return;
                 }
             }
@@ -726,7 +774,7 @@
                 }
             }
 
-            alert(`Sale ${orderRef} successfully settled via ${selectedTender} (${activeCashierName})! Receipt dispatched.`);
+            showNotification(`Sale ${orderRef} successfully settled via ${selectedTender} (${activeCashierName})!`, 'success');
             
             stagedBatch = [];
             orderRefInput.value = '';
