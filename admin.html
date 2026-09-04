@@ -9,19 +9,20 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root {
-            --bg-dark: #07080a;
-            --panel-glass: rgba(18, 20, 26, 0.75);
-            --panel-solid: #12141a;
-            --gold-primary: #d4af37;
-            --gold-light: #f3c649;
-            --text-light: #f5f5f7;
-            --text-muted: #86868b;
-            --border-glass: rgba(212, 175, 55, 0.15);
-            --border-subtle: rgba(255, 255, 255, 0.08);
+            --bg-dark: #000000;
+            --bg-surface: rgba(28, 28, 30, 0.75);
+            --panel-glass: rgba(36, 36, 40, 0.75);
+            --panel-solid: #1c1c1e;
+            --gold-primary: #f1c40f;
+            --gold-light: #f7dc6f;
+            --text-light: #ffffff;
+            --text-muted: #8e8e93;
+            --border-glass: rgba(241, 196, 15, 0.2);
+            --border-subtle: rgba(255, 255, 255, 0.12);
             --green-active: #30d158;
             --red-alert: #ff453a;
             --cyan-bright: #64d2ff;
-            --blur-radius: blur(20px);
+            --blur-radius: blur(30px);
         }
 
         body {
@@ -47,7 +48,7 @@
         .header h1 { font-size: 15px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold-primary); margin: 0; }
         
         .role-badge { 
-            background: rgba(255, 255, 255, 0.05); 
+            background: var(--bg-surface); 
             border: 1px solid var(--border-glass); 
             color: var(--gold-light); 
             padding: 8px 16px; 
@@ -58,7 +59,7 @@
             align-items: center; 
             gap: 12px;
             backdrop-filter: var(--blur-radius);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         /* tvOS Segmented Control Tabs */
@@ -67,10 +68,11 @@
             grid-template-columns: repeat(7, 1fr); 
             gap: 10px; 
             margin-bottom: 28px; 
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(255, 255, 255, 0.05);
             padding: 6px;
-            border-radius: 14px;
+            border-radius: 16px;
             border: 1px solid var(--border-subtle);
+            backdrop-filter: var(--blur-radius);
         }
         .tab-btn { 
             background: transparent; 
@@ -81,15 +83,15 @@
             font-size: 11px; 
             letter-spacing: 0.3px; 
             cursor: pointer; 
-            border-radius: 10px; 
+            border-radius: 12px; 
             transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1); 
             text-align: center; 
         }
-        .tab-btn:hover { color: var(--text-light); background: rgba(255,255,255,0.04); }
+        .tab-btn:hover { color: var(--text-light); background: rgba(255,255,255,0.08); }
         .tab-btn.active { 
-            background: linear-gradient(135deg, #e6c55c 0%, #b89726 100%); 
+            background: linear-gradient(135deg, #f7dc6f 0%, #f1c40f 100%); 
             color: #000; 
-            box-shadow: 0 4px 16px rgba(212, 175, 55, 0.3);
+            box-shadow: 0 6px 20px rgba(241, 196, 15, 0.4);
         }
 
         .tab-content { 
@@ -97,9 +99,9 @@
             background: var(--panel-glass); 
             border: 1px solid var(--border-glass); 
             padding: 32px; 
-            border-radius: 20px; 
+            border-radius: 24px; 
             backdrop-filter: var(--blur-radius);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.7);
         }
         .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
 
@@ -128,7 +130,7 @@
         .form-control, .table-input { 
             width: 100%; 
             padding: 12px 16px; 
-            background: rgba(0, 0, 0, 0.4); 
+            background: rgba(0, 0, 0, 0.5); 
             border: 1px solid var(--border-subtle); 
             color: #fff; 
             border-radius: 12px; 
@@ -140,24 +142,24 @@
         .form-control:focus, .table-input:focus {
             outline: none;
             border-color: var(--gold-primary);
-            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15);
-            background: rgba(0, 0, 0, 0.6);
+            box-shadow: 0 0 0 4px rgba(241, 196, 15, 0.2);
+            background: rgba(0, 0, 0, 0.7);
         }
 
         .item-slots-grid {
             display: grid;
-            grid-template-columns: 2fr 1.2fr 1fr 1fr 1.5fr;
+            grid-template-columns: 2fr 1.2fr 1fr 1fr 1fr 1.5fr;
             gap: 14px;
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.35);
             padding: 20px;
-            border-radius: 14px;
+            border-radius: 16px;
             border: 1px solid var(--border-subtle);
             margin-bottom: 20px;
         }
 
         .slot-box { display: flex; flex-direction: column; gap: 6px; }
         .slot-label { font-size: 10px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase; }
-        .slot-input { background: rgba(0,0,0,0.5); border: 1px solid var(--border-subtle); color: #fff; padding: 12px; font-size: 13px; border-radius: 10px; width: 100%; box-sizing: border-box; }
+        .slot-input { background: rgba(0,0,0,0.6); border: 1px solid var(--border-subtle); color: #fff; padding: 12px; font-size: 13px; border-radius: 10px; width: 100%; box-sizing: border-box; }
         .slot-input.highlight-stock { color: var(--cyan-bright); font-weight: 600; }
         .slot-input.highlight-price { color: var(--gold-light); font-weight: 600; }
 
@@ -169,66 +171,66 @@
             align-items: end;
         }
 
-        .pos-table-container { background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); border-radius: 14px; overflow: hidden; margin-bottom: 24px; }
+        .pos-table-container { background: rgba(0,0,0,0.35); border: 1px solid var(--border-subtle); border-radius: 16px; overflow: hidden; margin-bottom: 24px; }
         .pos-table, .ledger-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .pos-table th, .ledger-table th { background: rgba(255,255,255,0.03); color: var(--gold-primary); text-align: left; padding: 14px 16px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border-subtle); }
-        .pos-table td, .ledger-table td { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+        .pos-table th, .ledger-table th { background: rgba(255,255,255,0.05); color: var(--gold-primary); text-align: left; padding: 14px 16px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border-subtle); }
+        .pos-table td, .ledger-table td { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: middle; }
 
         .pos-summary-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.45);
             border: 1px solid var(--border-subtle);
             padding: 20px 24px;
-            border-radius: 14px;
+            border-radius: 16px;
         }
         .grand-total-text { font-size: 26px; font-weight: 700; color: var(--cyan-bright); margin: 0; letter-spacing: -0.5px; }
 
         .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
-        .summary-card { background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); padding: 20px; border-radius: 14px; backdrop-filter: var(--blur-radius); }
+        .summary-card { background: rgba(0,0,0,0.35); border: 1px solid var(--border-subtle); padding: 20px; border-radius: 16px; backdrop-filter: var(--blur-radius); }
         .summary-label { font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; }
         .summary-val { font-size: 22px; font-weight: 700; margin-top: 8px; letter-spacing: -0.5px; }
 
         .status-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 980px; display: inline-block; }
-        .status-pending { color: var(--gold-light); background: rgba(212, 175, 55, 0.12); border: 1px solid rgba(212, 175, 55, 0.3); }
-        .status-settled { color: var(--green-active); background: rgba(48, 209, 88, 0.12); border: 1px solid rgba(48, 209, 88, 0.3); }
-        .status-returned { color: var(--red-alert); background: rgba(255, 69, 58, 0.12); border: 1px solid rgba(255, 69, 58, 0.3); }
+        .status-pending { color: var(--gold-light); background: rgba(241, 196, 15, 0.15); border: 1px solid rgba(241, 196, 15, 0.35); }
+        .status-settled { color: var(--green-active); background: rgba(48, 209, 88, 0.15); border: 1px solid rgba(48, 209, 88, 0.35); }
+        .status-returned { color: var(--red-alert); background: rgba(255, 69, 58, 0.15); border: 1px solid rgba(255, 69, 58, 0.35); }
 
         /* BUTTONS */
         .btn-action { padding: 8px 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; border: none; border-radius: 8px; cursor: pointer; margin-right: 6px; transition: transform 0.15s ease; }
         .btn-action:hover { transform: scale(1.03); }
-        .btn-pending { background: rgba(212, 175, 55, 0.2); color: var(--gold-light); border: 1px solid rgba(212, 175, 55, 0.4); }
-        .btn-settled { background: rgba(48, 209, 88, 0.2); color: var(--green-active); border: 1px solid rgba(48, 209, 88, 0.4); }
-        .btn-delete { background: rgba(255, 69, 58, 0.2); color: var(--red-alert); border: 1px solid rgba(255, 69, 58, 0.4); }
+        .btn-pending { background: rgba(241, 196, 15, 0.25); color: var(--gold-light); border: 1px solid rgba(241, 196, 15, 0.45); }
+        .btn-settled { background: rgba(48, 209, 88, 0.25); color: var(--green-active); border: 1px solid rgba(48, 209, 88, 0.45); }
+        .btn-delete { background: rgba(255, 69, 58, 0.25); color: var(--red-alert); border: 1px solid rgba(255, 69, 58, 0.45); }
         
-        .btn-export { background: rgba(255,255,255,0.06); border: 1px solid var(--border-subtle); color: var(--text-light); font-weight: 600; cursor: pointer; padding: 10px 16px; border-radius: 10px; text-transform: uppercase; font-size: 11px; transition: background 0.2s; }
-        .btn-export:hover { background: rgba(255,255,255,0.1); }
+        .btn-export { background: rgba(255,255,255,0.08); border: 1px solid var(--border-subtle); color: var(--text-light); font-weight: 600; cursor: pointer; padding: 10px 16px; border-radius: 12px; text-transform: uppercase; font-size: 11px; transition: background 0.2s; }
+        .btn-export:hover { background: rgba(255,255,255,0.15); }
 
-        .btn-sec { background: rgba(255,255,255,0.06); border: 1px solid var(--border-subtle); color: var(--gold-light); cursor: pointer; padding: 10px 16px; border-radius: 10px; font-size: 11px; font-weight: 600; transition: all 0.2s; }
-        .btn-sec:hover { background: rgba(255,255,255,0.1); border-color: var(--gold-primary); }
+        .btn-sec { background: rgba(255,255,255,0.08); border: 1px solid var(--border-subtle); color: var(--gold-light); cursor: pointer; padding: 10px 16px; border-radius: 12px; font-size: 11px; font-weight: 600; transition: all 0.2s; }
+        .btn-sec:hover { background: rgba(255,255,255,0.15); border-color: var(--gold-primary); }
 
         .btn-submit { 
-            background: linear-gradient(135deg, #f3c649 0%, #d4af37 100%); 
+            background: linear-gradient(135deg, #f7dc6f 0%, #f1c40f 100%); 
             color: #000; 
             font-weight: 700; 
             padding: 14px 24px; 
             border: none; 
-            border-radius: 12px; 
+            border-radius: 14px; 
             cursor: pointer; 
             text-transform: uppercase; 
             letter-spacing: 0.8px; 
             width: 100%; 
             font-size: 12px;
-            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
-            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+            box-shadow: 0 6px 20px rgba(241, 196, 15, 0.35);
+            transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1);
         }
-        .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(212, 175, 55, 0.4); }
+        .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(241, 196, 15, 0.5); }
         .btn-submit:active { transform: translateY(1px); }
 
         /* MODALS */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(25px); display: flex; justify-content: center; align-items: center; z-index: 999; animation: fadeIn 0.2s ease; }
-        .modal-card { background: #14161c; border: 1px solid var(--border-glass); padding: 36px; border-radius: 24px; width: 380px; text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.8); }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(35px); display: flex; justify-content: center; align-items: center; z-index: 999; animation: fadeIn 0.2s ease; }
+        .modal-card { background: #1c1c1e; border: 1px solid var(--border-glass); padding: 36px; border-radius: 28px; width: 380px; text-align: center; box-shadow: 0 40px 80px rgba(0,0,0,0.9); }
 
         @media print {
             body * { visibility: hidden; }
@@ -283,7 +285,7 @@
         <div class="item-slots-grid">
             <div class="slot-box">
                 <span class="slot-label">Product Name</span>
-                <input type="text" id="slotProductName" class="slot-input" readonly placeholder="Waiting for barcode scan...">
+                <input type="text" id="slotProductName" class="slot-input" readonly placeholder="Waiting for scan...">
             </div>
             <div class="slot-box">
                 <span class="slot-label">Barcode / SKU</span>
@@ -294,8 +296,12 @@
                 <input type="text" id="slotStockOnHand" class="slot-input highlight-stock" readonly placeholder="0">
             </div>
             <div class="slot-box">
-                <span class="slot-label">Unit Price (ZAR)</span>
+                <span class="slot-label">Wholesale Cost (ZAR)</span>
                 <input type="text" id="slotUnitPrice" class="slot-input highlight-price" readonly placeholder="R 0.00">
+            </div>
+            <div class="slot-box">
+                <span class="slot-label">Selling Price (ZAR)</span>
+                <input type="text" id="slotSellingPrice" class="slot-input highlight-price" readonly placeholder="R 0.00" style="color: var(--cyan-bright);">
             </div>
             <div class="slot-box">
                 <span class="slot-label">Consignor / Supplier</span>
@@ -332,7 +338,7 @@
                         <th>PRODUCT NAME</th>
                         <th>SUPPLIER</th>
                         <th>QTY</th>
-                        <th>UNIT PRICE</th>
+                        <th>UNIT SELLING PRICE</th>
                         <th>SUBTOTAL</th>
                         <th>ACTION</th>
                     </tr>
@@ -378,10 +384,14 @@
                 <input type="number" id="stockUnitPrice" class="form-control" required placeholder="e.g. 260">
             </div>
             <div class="form-group">
+                <label>Retail Selling Price per Unit (ZAR)</label>
+                <input type="number" id="stockSellingPrice" class="form-control" required placeholder="e.g. 450">
+            </div>
+            <div class="form-group">
                 <label>Consignor / Wholesale Supplier Partner</label>
                 <input type="text" id="stockSupplier" class="form-control" required placeholder="e.g. Craft Master Wholesalers">
             </div>
-            <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #fff 0%, #d4af37 100%); color: #000;">+ Stage Stock Line</button>
+            <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #fff 0%, #f1c40f 100%); color: #000;">+ Stage Stock Line</button>
         </form>
 
         <div class="section-title">Batch Intake Staging Queue</div>
@@ -394,11 +404,12 @@
                         <th>SUPPLIER</th>
                         <th>QTY</th>
                         <th>FLOOR PRICE</th>
+                        <th>SELLING PRICE</th>
                         <th>ACTION</th>
                     </tr>
                 </thead>
                 <tbody id="intakeBatchTableBody">
-                    <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No items staged for intake batch.</td></tr>
+                    <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No items staged for intake batch.</td></tr>
                 </tbody>
             </table>
         </div>
@@ -473,12 +484,13 @@
                         <th>Product / Description</th>
                         <th>Supplier Partner</th>
                         <th>Intake Qty</th>
-                        <th>Unit Price (ZAR)</th>
+                        <th>Wholesale Cost</th>
+                        <th>Selling Price</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="stockTableBody">
-                    <tr><td colspan="6" style="color: var(--text-muted); padding: 24px;">Loading captured stock...</td></tr>
+                    <tr><td colspan="7" style="color: var(--text-muted); padding: 24px;">Loading captured stock...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -486,27 +498,28 @@
 
     <!-- TAB 5: STAFF PROFILES -->
     <div id="tab5" class="tab-content">
-        <div class="section-title">Staff Profile Management</div>
+        <div class="section-title">Cashier & Staff Profile Management</div>
         <form id="createStaffForm" onsubmit="handleCreateStaff(event)" style="margin-bottom: 28px;">
             <div class="form-group">
-                <label>Staff Member Full Name</label>
+                <label>Cashier / Staff Member Full Name</label>
                 <input type="text" id="staffNameInput" class="form-control" required placeholder="e.g. Sipho Ndlovu">
             </div>
             <div class="form-group">
-                <label>4-Digit Login PIN</label>
+                <label>4 to 6-Digit Login PIN</label>
                 <input type="password" id="staffPinInput" class="form-control" maxlength="6" required placeholder="e.g. 5678">
             </div>
             <div class="form-group">
                 <label>Access Role</label>
                 <select id="staffRoleSelect" class="form-control">
-                    <option value="staff" style="background:#14161c;">Staff (POS & Intake Only)</option>
-                    <option value="manager" style="background:#14161c;">Manager (Full Access & Ledger)</option>
+                    <option value="cashier" style="background:#1c1c1e;">Cashier (POS Dispatch Only)</option>
+                    <option value="staff" style="background:#1c1c1e;">Staff (POS & Intake Only)</option>
+                    <option value="manager" style="background:#1c1c1e;">Manager (Full Access & Ledger)</option>
                 </select>
             </div>
-            <button type="submit" class="btn-submit">Create User Profile</button>
+            <button type="submit" class="btn-submit">Create Cashier / Staff Profile</button>
         </form>
 
-        <div class="section-title">Active Staff Accounts</div>
+        <div class="section-title">Active Staff & Cashier Accounts</div>
         <div class="pos-table-container">
             <table class="ledger-table">
                 <thead>
@@ -550,7 +563,7 @@
             <div class="form-group">
                 <label>Select Dispatched Order / Transaction</label>
                 <select id="returnOrderSelect" class="form-control" onchange="autofillReturnDetails()" required>
-                    <option value="" style="background:#14161c;">-- Choose Order to Return --</option>
+                    <option value="" style="background:#1c1c1e;">-- Choose Order to Return --</option>
                 </select>
             </div>
             <div class="form-group">
@@ -560,17 +573,17 @@
             <div class="form-group">
                 <label>Reason for Return</label>
                 <select id="returnReason" class="form-control" required>
-                    <option value="Customer Change of Mind" style="background:#14161c;">Customer Change of Mind</option>
-                    <option value="Defective / Damaged Item" style="background:#14161c;">Defective / Damaged Item</option>
-                    <option value="Incorrect Item Dispatched" style="background:#14161c;">Incorrect Item Dispatched</option>
-                    <option value="Exchanged for Other Product" style="background:#14161c;">Exchanged for Other Product</option>
+                    <option value="Customer Change of Mind" style="background:#1c1c1e;">Customer Change of Mind</option>
+                    <option value="Defective / Damaged Item" style="background:#1c1c1e;">Defective / Damaged Item</option>
+                    <option value="Incorrect Item Dispatched" style="background:#1c1c1e;">Incorrect Item Dispatched</option>
+                    <option value="Exchanged for Other Product" style="background:#1c1c1e;">Exchanged for Other Product</option>
                 </select>
             </div>
             <div class="form-group">
                 <label>Inventory Restock Action</label>
                 <select id="restockAction" class="form-control" required>
-                    <option value="YES_RESTOCK" style="background:#14161c;">YES - Restock item back to active inventory</option>
-                    <option value="NO_RESTOCK" style="background:#14161c;">NO - Do not restock (Damaged / Written off)</option>
+                    <option value="YES_RESTOCK" style="background:#1c1c1e;">YES - Restock item back to active inventory</option>
+                    <option value="NO_RESTOCK" style="background:#1c1c1e;">NO - Do not restock (Damaged / Written off)</option>
                 </select>
             </div>
             <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #ff453a 0%, #c52820 100%); color: #fff;">Process Return & Adjust Stock</button>
@@ -600,7 +613,7 @@
     <!-- MODALS -->
     <div class="modal-overlay" id="loginModal">
         <div class="modal-card">
-            <h3 style="color: var(--gold-primary); margin-top: 0; font-size: 16px; font-weight: 600; letter-spacing: 0.5px;">USER PROFILE LOGIN</h3>
+            <h3 style="color: var(--gold-primary); margin-top: 0; font-size: 16px; font-weight: 600; letter-spacing: 0.5px;">CASHIER / USER LOGIN</h3>
             <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 24px;">Enter PIN code for instant secure access.</p>
             <div class="form-group">
                 <input type="password" id="userPinInput" class="form-control" style="text-align: center; font-size: 24px; letter-spacing: 8px; padding: 14px;" maxlength="6" placeholder="••••" oninput="checkAutoLoginPin()" autofocus>
@@ -610,7 +623,7 @@
     </div>
 
     <div class="modal-overlay" id="receiptModal" style="display: none;">
-        <div class="modal-card" style="background: #fff; color: #000; text-align: left; font-family: monospace; width: 380px; border-radius: 16px;">
+        <div class="modal-card" style="background: #fff; color: #000; text-align: left; font-family: monospace; width: 380px; border-radius: 20px;">
             <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 12px; margin-bottom: 12px;">
                 <h3 style="margin: 0; font-size: 16px;">NGUNI HOMEWARE</h3>
                 <p style="margin: 4px 0 0 0; font-size: 10px;">Consignment & Retail POS Hub</p>
@@ -637,7 +650,7 @@
             console.error("Supabase load error", e);
         }
 
-        const PLATFORM_FEE = 230;
+        const PLATFORM_FEE = 230; //
         let currentUser = null;
         let cachedOrders = [];
         let cachedInventory = [];
@@ -675,7 +688,8 @@
                     intake: 0, 
                     dispatched: 0, 
                     supplier: item.supplier || 'General Wholesaler', 
-                    price: item.wholesale_floor_zar || item.unit_price || item.cost_price || 0 
+                    price: item.wholesale_floor_zar || item.unit_price || item.cost_price || 0,
+                    sellingPrice: item.selling_price || item.retail_price || (item.wholesale_floor_zar ? item.wholesale_floor_zar * 1.3 : 0)
                 };
                 stockMap[name].intake += (parseInt(item.quantity_allocated || item.quantity) || 0);
             });
@@ -703,6 +717,7 @@
                 document.getElementById('slotBarcode').value = match.sku || 'N/A';
                 document.getElementById('slotStockOnHand').value = onHand;
                 document.getElementById('slotUnitPrice').value = `R ${parseFloat(match.price).toFixed(2)}`;
+                document.getElementById('slotSellingPrice').value = `R ${parseFloat(match.sellingPrice).toFixed(2)}`;
                 document.getElementById('slotSupplier').value = match.supplier;
 
                 calculateSlotLineTotal();
@@ -714,8 +729,8 @@
         function calculateSlotLineTotal() {
             if (!activePosMatch) return;
             const qty = parseInt(document.getElementById('posQty').value) || 1;
-            const unitPrice = parseFloat(activePosMatch.price) || 0;
-            document.getElementById('slotLineTotal').value = `R ${(qty * unitPrice).toFixed(2)}`;
+            const sellingPrice = parseFloat(activePosMatch.sellingPrice) || 0;
+            document.getElementById('slotLineTotal').value = `R ${(qty * sellingPrice).toFixed(2)}`;
         }
 
         function clearPosSlots() {
@@ -724,6 +739,7 @@
             document.getElementById('slotBarcode').value = '';
             document.getElementById('slotStockOnHand').value = '0';
             document.getElementById('slotUnitPrice').value = 'R 0.00';
+            document.getElementById('slotSellingPrice').value = 'R 0.00';
             document.getElementById('slotSupplier').value = '';
             document.getElementById('slotLineTotal').value = 'R 0.00';
         }
@@ -737,15 +753,15 @@
 
             if (qty > onHand) return alert(`Insufficient stock. Only ${onHand} units available.`);
 
-            const unitPrice = parseFloat(activePosMatch.price) || 0;
+            const sellingPrice = parseFloat(activePosMatch.sellingPrice) || 0;
 
             posCart.push({
                 sku: activePosMatch.sku,
                 name: activePosMatch.name,
                 supplier: activePosMatch.supplier,
                 qty: qty,
-                unitPrice: unitPrice,
-                subtotal: qty * unitPrice
+                sellingPrice: sellingPrice,
+                subtotal: qty * sellingPrice
             });
 
             renderCartTable();
@@ -778,7 +794,7 @@
                     <td>${item.name}</td>
                     <td>${item.supplier}</td>
                     <td>${item.qty}</td>
-                    <td>R ${item.unitPrice.toFixed(2)}</td>
+                    <td>R ${item.sellingPrice.toFixed(2)}</td>
                     <td style="color: var(--cyan-bright); font-weight: 600;">R ${item.subtotal.toFixed(2)}</td>
                     <td><button class="btn-action btn-delete" onclick="removeCartItem(${idx})">Remove</button></td>
                 `;
@@ -805,7 +821,7 @@
                 item_name: item.name,
                 order_number: orderRef,
                 quantity_dispatched: item.qty,
-                wholesale_floor_zar: item.subtotal,
+                wholesale_floor_zar: item.subtotal, // ledger tracks financial volume/revenue split value
                 supplier: item.supplier,
                 marketplace: 'POS / In-Store',
                 payout_status: 'ESCROW PENDING',
@@ -817,7 +833,7 @@
             if (error) {
                 alert('Checkout Error: ' + error.message);
             } else {
-                logAuditAction(`Dispatched Batch Order #${orderRef} (${posCart.length} lines) by ${currentUser.full_name}`);
+                logAuditAction(`Dispatched Batch Order #${orderRef} (${posCart.length} lines) by cashier/user ${currentUser.full_name}`);
                 showBatchReceipt(orderRef, posCart, currentUser.full_name);
                 posCart = [];
                 renderCartTable();
@@ -864,6 +880,7 @@
             const stockName = document.getElementById('stockName').value.trim();
             const qty = parseInt(document.getElementById('stockQty').value) || 0;
             const unitPrice = parseFloat(document.getElementById('stockUnitPrice').value) || 0;
+            const sellingPrice = parseFloat(document.getElementById('stockSellingPrice').value) || 0;
             const supplier = document.getElementById('stockSupplier').value.trim();
 
             const generatedSku = customSku ? customSku.toUpperCase() : (stockName.toUpperCase().replace(/[^A-Z0-9]/g, '-').slice(0, 12) + '-' + Math.floor(100 + Math.random() * 900));
@@ -877,6 +894,7 @@
                 unit_price: unitPrice,
                 cost_price: unitPrice,
                 wholesale_floor_zar: unitPrice,
+                selling_price: sellingPrice,
                 supplier: supplier,
                 added_by: currentUser ? currentUser.full_name : 'Staff'
             });
@@ -891,7 +909,7 @@
             tbody.innerHTML = '';
 
             if (intakeBatch.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No items staged for intake batch.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No items staged for intake batch.</td></tr>';
                 document.getElementById('intakeBatchCount').innerText = '0';
                 return;
             }
@@ -904,6 +922,7 @@
                     <td>${item.supplier}</td>
                     <td>${item.quantity}</td>
                     <td>R ${item.unit_price.toFixed(2)}</td>
+                    <td style="color: var(--cyan-bright);">R ${item.selling_price.toFixed(2)}</td>
                     <td><button class="btn-action btn-delete" onclick="removeIntakeBatchItem(${idx})">Remove</button></td>
                 `;
                 tbody.appendChild(tr);
@@ -992,7 +1011,7 @@
         async function checkAutoLoginPin() {
             const pin = document.getElementById('userPinInput').value.trim();
             if (pin === '1234') { currentUser = { full_name: 'Default Manager', role: 'manager' }; applyUserSession(); } 
-            else if (pin === '0000') { currentUser = { full_name: 'Floor Staff', role: 'staff' }; applyUserSession(); } 
+            else if (pin === '0000') { currentUser = { full_name: 'Cashier Floor', role: 'cashier' }; applyUserSession(); } 
             else if (pin.length >= 4 && supabaseClient) {
                 const { data } = await supabaseClient.from('staff_profiles').select('*').eq('pin_code', pin);
                 if (data && data.length > 0) { currentUser = data[0]; applyUserSession(); }
@@ -1002,7 +1021,7 @@
         async function authenticateUserPin() {
             const pin = document.getElementById('userPinInput').value.trim();
             if (pin === '1234') { currentUser = { full_name: 'Default Manager', role: 'manager' }; applyUserSession(); return; } 
-            if (pin === '0000') { currentUser = { full_name: 'Floor Staff', role: 'staff' }; applyUserSession(); return; }
+            if (pin === '0000') { currentUser = { full_name: 'Cashier Floor', role: 'cashier' }; applyUserSession(); return; }
 
             const { data } = await supabaseClient.from('staff_profiles').select('*').eq('pin_code', pin);
             if (data && data.length > 0) { currentUser = data[0]; applyUserSession(); } 
@@ -1015,14 +1034,20 @@
                 ['btnTab3', 'btnTab4', 'btnTab5', 'btnTab6'].forEach(id => {
                     if (document.getElementById(id)) document.getElementById(id).style.display = 'block';
                 });
-            } else {
+                switchTab('tab1');
+            } else if (currentUser.role === 'cashier') {
+                ['btnTab3', 'btnTab4', 'btnTab5', 'btnTab6'].forEach(id => {
+                    if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
+                });
+                switchTab('tab1');
+            } else { // general staff
                 ['btnTab3', 'btnTab4', 'btnTab5', 'btnTab6'].forEach(id => {
                     if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
                 });
                 switchTab('tab1');
             }
             closeModal('loginModal');
-            logAuditAction(`User logged in (${currentUser.full_name})`);
+            logAuditAction(`User logged in (${currentUser.full_name} - ${currentUser.role})`);
             fetchAdminOrders();
             fetchStaffProfiles();
         }
@@ -1054,12 +1079,12 @@
         function populateReturnsOrderDropdown(orders) {
             const select = document.getElementById('returnOrderSelect');
             if (!select) return;
-            select.innerHTML = '<option value="" style="background:#14161c;">-- Choose Order to Return --</option>';
+            select.innerHTML = '<option value="" style="background:#1c1c1e;">-- Choose Order to Return --</option>';
 
             orders.filter(o => o.payout_status !== 'RETURNED / CANCELLED').forEach(order => {
                 const opt = document.createElement('option');
                 opt.value = order.id;
-                opt.style.background = '#14161c';
+                opt.style.background = '#1c1c1e';
                 opt.dataset.itemName = order.item_name;
                 opt.dataset.qty = order.quantity_dispatched || 1;
                 opt.dataset.orderRef = order.order_number;
@@ -1136,13 +1161,14 @@
             tbody.innerHTML = '';
 
             if (inventory.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="color: var(--text-muted); padding: 24px;">No inventory records captured yet.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="color: var(--text-muted); padding: 24px;">No inventory records captured yet.</td></tr>';
                 return;
             }
 
             inventory.forEach(item => {
                 const tr = document.createElement('tr');
                 const priceVal = item.wholesale_floor_zar || item.unit_price || item.cost_price || 0;
+                const sellingVal = item.selling_price || item.retail_price || (priceVal * 1.3);
                 const qtyVal = item.quantity_allocated || item.quantity || 0;
 
                 tr.innerHTML = `
@@ -1162,6 +1188,9 @@
                         <input type="number" class="table-input" id="price_${item.id}" style="width: 90px;" value="${priceVal}">
                     </td>
                     <td>
+                        <input type="number" class="table-input" id="selling_${item.id}" style="width: 90px; color: var(--cyan-bright);" value="${sellingVal}">
+                    </td>
+                    <td>
                         <button class="btn-action btn-settled" onclick="saveStockEdit('${item.id}')">Save</button>
                         <button class="btn-action btn-delete" onclick="deleteStockItem('${item.id}')">Delete</button>
                     </td>
@@ -1178,6 +1207,7 @@
             const supplier = document.getElementById(`supplier_${stockId}`).value.trim();
             const qty = parseInt(document.getElementById(`qty_${stockId}`).value) || 0;
             const price = parseFloat(document.getElementById(`price_${stockId}`).value) || 0;
+            const sellingPrice = parseFloat(document.getElementById(`selling_${stockId}`).value) || 0;
 
             const { error } = await supabaseClient.from('inventory').update({
                 sku: sku,
@@ -1188,13 +1218,14 @@
                 quantity: qty,
                 unit_price: price,
                 cost_price: price,
-                wholesale_floor_zar: price
+                wholesale_floor_zar: price,
+                selling_price: sellingPrice
             }).eq('id', stockId);
 
             if (error) alert('Failed to update stock: ' + error.message);
             else {
                 logAuditAction(`Updated Stock Item [${sku}] ${itemName} by ${currentUser.full_name}`);
-                alert('Stock item updated!');
+                alert('Stock item and selling price updated successfully!');
                 fetchAdminOrders();
             }
         }
@@ -1312,7 +1343,7 @@
             const role = document.getElementById('staffRoleSelect').value;
 
             await supabaseClient.from('staff_profiles').insert([{ full_name: name, pin_code: pin, role: role }]);
-            alert('Staff profile created!');
+            alert('Cashier / Staff profile created successfully!');
             document.getElementById('createStaffForm').reset();
             fetchStaffProfiles();
         }
