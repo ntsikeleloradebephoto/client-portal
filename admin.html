@@ -3,127 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nguni Homeware | Control & Enterprise POS Hub</title>
+    <title>Nguni Homeware | Enterprise POS Hub (tvOS Edition)</title>
     <link rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root {
-            --bg-dark: #0b0c0e;
-            --panel-dark: #121417;
+            --bg-dark: #07080a;
+            --panel-glass: rgba(18, 20, 26, 0.75);
+            --panel-solid: #12141a;
             --gold-primary: #d4af37;
             --gold-light: #f3c649;
-            --text-light: #f5f5f5;
-            --text-muted: #a0a5ad;
-            --border-gold: #3a3219;
-            --green-active: #2e7d32;
-            --green-light: #81c784;
-            --red-alert: #d32f2f;
-            --red-light: #ef5350;
-            --cyan-bright: #00ffcc;
+            --text-light: #f5f5f7;
+            --text-muted: #86868b;
+            --border-glass: rgba(212, 175, 55, 0.15);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --green-active: #30d158;
+            --red-alert: #ff453a;
+            --cyan-bright: #64d2ff;
+            --blur-radius: blur(20px);
         }
 
         body {
-            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-dark);
             color: var(--text-light);
             margin: 0;
-            padding: 24px;
+            padding: 32px;
+            -webkit-font-smoothing: antialiased;
         }
 
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid var(--border-gold);
-            padding-bottom: 16px;
-            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 20px;
+            margin-bottom: 28px;
+            backdrop-filter: var(--blur-radius);
         }
 
-        .header-title { display: flex; align-items: center; gap: 12px; }
-        .header h1 { font-size: 18px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold-primary); margin: 0; }
-        .role-badge { background: #08090a; border: 1px solid var(--border-gold); color: var(--gold-light); padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        .header-title { display: flex; align-items: center; gap: 14px; }
+        .header h1 { font-size: 15px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold-primary); margin: 0; }
+        
+        .role-badge { 
+            background: rgba(255, 255, 255, 0.05); 
+            border: 1px solid var(--border-glass); 
+            color: var(--gold-light); 
+            padding: 8px 16px; 
+            border-radius: 980px; 
+            font-size: 11px; 
+            font-weight: 600; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px;
+            backdrop-filter: var(--blur-radius);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
 
-        .tabs { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 24px; }
-        .tab-btn { background: var(--panel-dark); border: 1px solid var(--border-gold); color: var(--text-muted); padding: 12px 6px; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; border-radius: 4px; transition: all 0.2s ease; text-align: center; }
-        .tab-btn.active { background: var(--gold-primary); color: #000; border-color: var(--gold-light); }
+        /* tvOS Segmented Control Tabs */
+        .tabs { 
+            display: grid; 
+            grid-template-columns: repeat(7, 1fr); 
+            gap: 10px; 
+            margin-bottom: 28px; 
+            background: rgba(255, 255, 255, 0.03);
+            padding: 6px;
+            border-radius: 14px;
+            border: 1px solid var(--border-subtle);
+        }
+        .tab-btn { 
+            background: transparent; 
+            border: none; 
+            color: var(--text-muted); 
+            padding: 12px 8px; 
+            font-weight: 600; 
+            font-size: 11px; 
+            letter-spacing: 0.3px; 
+            cursor: pointer; 
+            border-radius: 10px; 
+            transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1); 
+            text-align: center; 
+        }
+        .tab-btn:hover { color: var(--text-light); background: rgba(255,255,255,0.04); }
+        .tab-btn.active { 
+            background: linear-gradient(135deg, #e6c55c 0%, #b89726 100%); 
+            color: #000; 
+            box-shadow: 0 4px 16px rgba(212, 175, 55, 0.3);
+        }
 
-        .tab-content { display: none; background: var(--panel-dark); border: 1px solid var(--border-gold); padding: 24px; border-radius: 6px; }
-        .tab-content.active { display: block; }
+        .tab-content { 
+            display: none; 
+            background: var(--panel-glass); 
+            border: 1px solid var(--border-glass); 
+            padding: 32px; 
+            border-radius: 20px; 
+            backdrop-filter: var(--blur-radius);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
 
-        .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--gold-primary); margin-top: 0; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-        /* MULTI-SLOT & ENTERPRISE STYLES */
+        .section-title { 
+            font-size: 12px; 
+            font-weight: 600;
+            text-transform: uppercase; 
+            letter-spacing: 1.2px; 
+            color: var(--gold-primary); 
+            margin-top: 0; 
+            margin-bottom: 24px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+
+        /* APPLE INPUTS & CONTROLS */
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 11px; font-weight: 500; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 0.5px; }
+        
+        .form-control, .table-input { 
+            width: 100%; 
+            padding: 12px 16px; 
+            background: rgba(0, 0, 0, 0.4); 
+            border: 1px solid var(--border-subtle); 
+            color: #fff; 
+            border-radius: 12px; 
+            box-sizing: border-box; 
+            font-size: 13px;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+        .form-control:focus, .table-input:focus {
+            outline: none;
+            border-color: var(--gold-primary);
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15);
+            background: rgba(0, 0, 0, 0.6);
+        }
+
         .item-slots-grid {
             display: grid;
             grid-template-columns: 2fr 1.2fr 1fr 1fr 1.5fr;
-            gap: 12px;
-            background: #08090a;
-            padding: 16px;
-            border-radius: 6px;
-            border: 1px solid var(--border-gold);
-            margin-bottom: 16px;
+            gap: 14px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 14px;
+            border: 1px solid var(--border-subtle);
+            margin-bottom: 20px;
         }
 
         .slot-box { display: flex; flex-direction: column; gap: 6px; }
-        .slot-label { font-size: 9px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase; }
-        .slot-input { background: #121417; border: 1px solid #22252a; color: #fff; padding: 10px; font-size: 13px; border-radius: 4px; width: 100%; box-sizing: border-box; }
-        .slot-input.highlight-stock { color: var(--cyan-bright); font-weight: bold; }
-        .slot-input.highlight-price { color: var(--gold-light); font-weight: bold; }
+        .slot-label { font-size: 10px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase; }
+        .slot-input { background: rgba(0,0,0,0.5); border: 1px solid var(--border-subtle); color: #fff; padding: 12px; font-size: 13px; border-radius: 10px; width: 100%; box-sizing: border-box; }
+        .slot-input.highlight-stock { color: var(--cyan-bright); font-weight: 600; }
+        .slot-input.highlight-price { color: var(--gold-light); font-weight: 600; }
 
         .transaction-slots-grid {
             display: grid;
             grid-template-columns: 1.5fr 1fr 1fr 1.5fr;
-            gap: 12px;
-            margin-bottom: 20px;
+            gap: 14px;
+            margin-bottom: 24px;
             align-items: end;
         }
 
-        .pos-table-container { background: #08090a; border: 1px solid var(--border-gold); border-radius: 6px; overflow: hidden; margin-bottom: 20px; }
-        .pos-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .pos-table th { background: #121417; color: var(--gold-primary); text-align: left; padding: 10px 12px; font-size: 10px; text-transform: uppercase; border-bottom: 1px solid var(--border-gold); }
-        .pos-table td { padding: 10px 12px; border-bottom: 1px solid #1f2228; vertical-align: middle; }
+        .pos-table-container { background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); border-radius: 14px; overflow: hidden; margin-bottom: 24px; }
+        .pos-table, .ledger-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .pos-table th, .ledger-table th { background: rgba(255,255,255,0.03); color: var(--gold-primary); text-align: left; padding: 14px 16px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border-subtle); }
+        .pos-table td, .ledger-table td { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
 
         .pos-summary-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: #08090a;
-            border: 1px solid var(--border-gold);
-            padding: 16px 20px;
-            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-subtle);
+            padding: 20px 24px;
+            border-radius: 14px;
         }
-        .grand-total-text { font-size: 24px; font-weight: bold; color: var(--cyan-bright); margin: 0; }
+        .grand-total-text { font-size: 26px; font-weight: 700; color: var(--cyan-bright); margin: 0; letter-spacing: -0.5px; }
 
-        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
-        .summary-card { background: #08090a; border: 1px solid #1f2228; padding: 16px; border-radius: 4px; }
-        .summary-label { font-size: 9px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; }
-        .summary-val { font-size: 20px; font-weight: 700; margin-top: 6px; }
+        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+        .summary-card { background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); padding: 20px; border-radius: 14px; backdrop-filter: var(--blur-radius); }
+        .summary-label { font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; }
+        .summary-val { font-size: 22px; font-weight: 700; margin-top: 8px; letter-spacing: -0.5px; }
 
-        .ledger-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .ledger-table th { text-align: left; padding: 12px; font-size: 10px; text-transform: uppercase; color: var(--gold-primary); letter-spacing: 1px; border-bottom: 1px solid var(--border-gold); }
-        .ledger-table td { padding: 14px 12px; border-bottom: 1px solid #1f2228; vertical-align: middle; }
+        .status-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 980px; display: inline-block; }
+        .status-pending { color: var(--gold-light); background: rgba(212, 175, 55, 0.12); border: 1px solid rgba(212, 175, 55, 0.3); }
+        .status-settled { color: var(--green-active); background: rgba(48, 209, 88, 0.12); border: 1px solid rgba(48, 209, 88, 0.3); }
+        .status-returned { color: var(--red-alert); background: rgba(255, 69, 58, 0.12); border: 1px solid rgba(255, 69, 58, 0.3); }
 
-        .status-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; }
-        .status-pending { color: var(--gold-light); background: rgba(212, 175, 55, 0.1); }
-        .status-settled { color: var(--green-light); background: rgba(46, 125, 50, 0.2); }
-        .status-returned { color: var(--red-light); background: rgba(211, 47, 47, 0.2); }
+        /* BUTTONS */
+        .btn-action { padding: 8px 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; border: none; border-radius: 8px; cursor: pointer; margin-right: 6px; transition: transform 0.15s ease; }
+        .btn-action:hover { transform: scale(1.03); }
+        .btn-pending { background: rgba(212, 175, 55, 0.2); color: var(--gold-light); border: 1px solid rgba(212, 175, 55, 0.4); }
+        .btn-settled { background: rgba(48, 209, 88, 0.2); color: var(--green-active); border: 1px solid rgba(48, 209, 88, 0.4); }
+        .btn-delete { background: rgba(255, 69, 58, 0.2); color: var(--red-alert); border: 1px solid rgba(255, 69, 58, 0.4); }
+        
+        .btn-export { background: rgba(255,255,255,0.06); border: 1px solid var(--border-subtle); color: var(--text-light); font-weight: 600; cursor: pointer; padding: 10px 16px; border-radius: 10px; text-transform: uppercase; font-size: 11px; transition: background 0.2s; }
+        .btn-export:hover { background: rgba(255,255,255,0.1); }
 
-        .btn-action { padding: 6px 10px; font-size: 10px; font-weight: 700; text-transform: uppercase; border: none; border-radius: 3px; cursor: pointer; margin-right: 4px; }
-        .btn-pending { background: #d4af37; color: #000; }
-        .btn-settled { background: #2e7d32; color: #fff; }
-        .btn-delete { background: #d32f2f; color: #fff; }
-        .btn-export { background: var(--gold-primary); color: #000; font-weight: bold; cursor: pointer; border: none; padding: 8px 14px; border-radius: 4px; text-transform: uppercase; font-size: 10px; }
-        .btn-sec { background: transparent; border: 1px solid var(--border-gold); color: var(--gold-light); cursor: pointer; padding: 6px 12px; border-radius: 3px; font-size: 10px; font-weight: bold; }
+        .btn-sec { background: rgba(255,255,255,0.06); border: 1px solid var(--border-subtle); color: var(--gold-light); cursor: pointer; padding: 10px 16px; border-radius: 10px; font-size: 11px; font-weight: 600; transition: all 0.2s; }
+        .btn-sec:hover { background: rgba(255,255,255,0.1); border-color: var(--gold-primary); }
 
-        .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; font-size: 10px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
-        .form-control { width: 100%; padding: 10px; background: #08090a; border: 1px solid #1f2228; color: #fff; border-radius: 4px; box-sizing: border-box; }
-        .btn-submit { background: var(--gold-primary); color: #000; font-weight: 700; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; width: 100%; }
+        .btn-submit { 
+            background: linear-gradient(135deg, #f3c649 0%, #d4af37 100%); 
+            color: #000; 
+            font-weight: 700; 
+            padding: 14px 24px; 
+            border: none; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            text-transform: uppercase; 
+            letter-spacing: 0.8px; 
+            width: 100%; 
+            font-size: 12px;
+            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(212, 175, 55, 0.4); }
+        .btn-submit:active { transform: translateY(1px); }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 999; }
-        .modal-card { background: var(--panel-dark); border: 2px solid var(--border-gold); padding: 30px; border-radius: 6px; width: 340px; text-align: center; }
-        .table-input { background: #08090a; border: 1px solid #333; color: #fff; padding: 6px; border-radius: 3px; font-size: 12px; width: 90%; }
+        /* MODALS */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(25px); display: flex; justify-content: center; align-items: center; z-index: 999; animation: fadeIn 0.2s ease; }
+        .modal-card { background: #14161c; border: 1px solid var(--border-glass); padding: 36px; border-radius: 24px; width: 380px; text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.8); }
 
         @media print {
             body * { visibility: hidden; }
@@ -137,12 +242,12 @@
 
     <div class="header">
         <div class="header-title">
-            <img src="logo.png" alt="Nguni Logo" style="height: 36px;" onerror="this.style.display='none'">
+            <img src="logo.png" alt="Nguni Logo" style="height: 34px;" onerror="this.style.display='none'">
             <h1>NGUNI HOMEWARE | ENTERPRISE POS HUB</h1>
         </div>
         <div class="role-badge">
             <span id="roleLabel">ACTIVE USER: NOT LOGGED IN</span>
-            <button class="btn-sec" onclick="openLoginModal()">SWITCH / LOGIN USER</button>
+            <button class="btn-sec" onclick="openLoginModal()" style="padding: 6px 12px; font-size: 10px;">SWITCH USER</button>
         </div>
     </div>
 
@@ -156,22 +261,23 @@
         <button class="tab-btn" id="btnTab7" onclick="switchTab('tab7')">7. RETURNS & DAMAGES</button>
     </div>
 
+    <!-- TAB 1: ENTERPRISE POS TERMINAL WITH BATCH CART -->
     <div id="tab1" class="tab-content active">
         <div class="section-title">POS Dispatch / Terminal Checkout</div>
         
         <div class="scan-bar-grid">
             <div class="form-group">
                 <label>Scan Barcode / Type SKU</label>
-                <div style="display: flex; gap: 8px;">
+                <div style="display: flex; gap: 10px;">
                     <input type="text" id="posBarcodeScan" class="form-control" placeholder="Scan Barcode or Type Item No..." oninput="handleBarcodeScanInput()" autofocus>
                     <button type="button" class="btn-sec" onclick="toggleCameraScanner()" style="white-space: nowrap;">📷 Scan Camera</button>
                 </div>
             </div>
         </div>
 
-        <div id="cameraScannerModal" style="display: none; background: #000; border: 1px solid var(--border-gold); padding: 12px; border-radius: 4px; margin-bottom: 16px; text-align: center;">
-            <div id="interactive-camera" style="width: 100%; max-width: 400px; margin: 0 auto;"></div>
-            <button type="button" class="btn-sec" onclick="stopCameraScanner()" style="margin-top: 10px; color: var(--red-light); border-color: var(--red-light);">Close Camera</button>
+        <div id="cameraScannerModal" style="display: none; background: rgba(0,0,0,0.6); border: 1px solid var(--border-glass); padding: 16px; border-radius: 16px; margin-bottom: 20px; text-align: center;">
+            <div id="interactive-camera" style="width: 100%; max-width: 400px; margin: 0 auto; border-radius: 12px; overflow: hidden;"></div>
+            <button type="button" class="btn-sec" onclick="stopCameraScanner()" style="margin-top: 12px; color: var(--red-alert); border-color: rgba(255,69,58,0.4);">Close Camera</button>
         </div>
 
         <div class="item-slots-grid">
@@ -232,7 +338,7 @@
                     </tr>
                 </thead>
                 <tbody id="cartTableBody">
-                    <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No items added to current transaction batch.</td></tr>
+                    <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No items added to current transaction batch.</td></tr>
                 </tbody>
             </table>
         </div>
@@ -246,14 +352,15 @@
                     <span class="slot-label">GRAND TOTAL (ZAR)</span>
                     <h2 class="grand-total-text" id="cartGrandTotal">R 0.00</h2>
                 </div>
-                <button type="button" class="btn-submit" style="padding: 16px 32px; font-size: 14px;" onclick="checkoutBatchOrder()">DISPATCH & PRINT RECEIPT</button>
+                <button type="button" class="btn-submit" style="padding: 16px 32px; font-size: 13px;" onclick="checkoutBatchOrder()">DISPATCH & PRINT RECEIPT</button>
             </div>
         </div>
     </div>
 
+    <!-- TAB 2: ENTERPRISE CONSIGNMENT STOCK INTAKE (BATCH SUPPORT) -->
     <div id="tab2" class="tab-content">
         <div class="section-title">Consignment Stock Intake & Batch Staging</div>
-        <form id="stockForm" onsubmit="addStockItemToBatch(event)" style="margin-bottom: 24px;">
+        <form id="stockForm" onsubmit="addStockItemToBatch(event)" style="margin-bottom: 28px;">
             <div class="form-group">
                 <label>Item Number / Barcode SKU (Optional - Auto Generated if Empty)</label>
                 <input type="text" id="stockSku" class="form-control" placeholder="e.g. 600123456789 or ITEM-101">
@@ -274,7 +381,7 @@
                 <label>Consignor / Wholesale Supplier Partner</label>
                 <input type="text" id="stockSupplier" class="form-control" required placeholder="e.g. Craft Master Wholesalers">
             </div>
-            <button type="submit" class="btn-submit" style="background: var(--gold-light); color: #000;">+ Stage Stock Line</button>
+            <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #fff 0%, #d4af37 100%); color: #000;">+ Stage Stock Line</button>
         </form>
 
         <div class="section-title">Batch Intake Staging Queue</div>
@@ -291,7 +398,7 @@
                     </tr>
                 </thead>
                 <tbody id="intakeBatchTableBody">
-                    <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No items staged for intake batch.</td></tr>
+                    <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No items staged for intake batch.</td></tr>
                 </tbody>
             </table>
         </div>
@@ -304,12 +411,13 @@
         </div>
     </div>
 
+    <!-- TAB 3: SETTLEMENT LEDGER -->
     <div id="tab3" class="tab-content">
         <div class="section-title">
             <span>Settlement Ledger & Supplier Split Breakdown</span>
-            <div>
-                <input type="date" id="filterStartDate" class="form-control" style="width: 130px; display: inline-block;" onchange="renderAdminOrders(cachedOrders)">
-                <input type="date" id="filterEndDate" class="form-control" style="width: 130px; display: inline-block;" onchange="renderAdminOrders(cachedOrders)">
+            <div style="display: flex; gap: 8px;">
+                <input type="date" id="filterStartDate" class="form-control" style="width: 140px; padding: 8px 12px;" onchange="renderAdminOrders(cachedOrders)">
+                <input type="date" id="filterEndDate" class="form-control" style="width: 140px; padding: 8px 12px;" onchange="renderAdminOrders(cachedOrders)">
                 <button class="btn-export" onclick="exportSupplierStatement()">Export CSV</button>
             </div>
         </div>
@@ -321,7 +429,7 @@
             </div>
             <div class="summary-card">
                 <div class="summary-label">Total Settled Payouts</div>
-                <div class="summary-val" id="adminSettled" style="color: var(--green-light);">R 0.00</div>
+                <div class="summary-val" id="adminSettled" style="color: var(--green-active);">R 0.00</div>
             </div>
             <div class="summary-card">
                 <div class="summary-label">Fixed Platform Fees (Store Retention)</div>
@@ -333,47 +441,53 @@
             </div>
         </div>
 
-        <table class="ledger-table">
-            <thead>
-                <tr>
-                    <th>Order Ref / Item</th>
-                    <th>Supplier</th>
-                    <th>Date</th>
-                    <th>Processed By</th>
-                    <th>Qty</th>
-                    <th>Wholesale Amount</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="adminOrderTable">
-                <tr><td colspan="8" style="color: var(--text-muted);">Loading ledger...</td></tr>
-            </tbody>
-        </table>
+        <div class="pos-table-container">
+            <table class="ledger-table">
+                <thead>
+                    <tr>
+                        <th>Order Ref / Item</th>
+                        <th>Supplier</th>
+                        <th>Date</th>
+                        <th>Processed By</th>
+                        <th>Qty</th>
+                        <th>Wholesale Amount</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="adminOrderTable">
+                    <tr><td colspan="8" style="color: var(--text-muted); padding: 24px;">Loading ledger...</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
+    <!-- TAB 4: STOCK ON-HAND -->
     <div id="tab4" class="tab-content">
         <div class="section-title">Active Stock Inventory Management</div>
-        <table class="ledger-table">
-            <thead>
-                <tr>
-                    <th>SKU / Barcode</th>
-                    <th>Product / Description</th>
-                    <th>Supplier Partner</th>
-                    <th>Intake Qty</th>
-                    <th>Unit Price (ZAR)</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="stockTableBody">
-                <tr><td colspan="6" style="color: var(--text-muted);">Loading captured stock...</td></tr>
-            </tbody>
-        </table>
+        <div class="pos-table-container">
+            <table class="ledger-table">
+                <thead>
+                    <tr>
+                        <th>SKU / Barcode</th>
+                        <th>Product / Description</th>
+                        <th>Supplier Partner</th>
+                        <th>Intake Qty</th>
+                        <th>Unit Price (ZAR)</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="stockTableBody">
+                    <tr><td colspan="6" style="color: var(--text-muted); padding: 24px;">Loading captured stock...</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
+    <!-- TAB 5: STAFF PROFILES -->
     <div id="tab5" class="tab-content">
         <div class="section-title">Staff Profile Management</div>
-        <form id="createStaffForm" onsubmit="handleCreateStaff(event)" style="margin-bottom: 24px;">
+        <form id="createStaffForm" onsubmit="handleCreateStaff(event)" style="margin-bottom: 28px;">
             <div class="form-group">
                 <label>Staff Member Full Name</label>
                 <input type="text" id="staffNameInput" class="form-control" required placeholder="e.g. Sipho Ndlovu">
@@ -385,52 +499,58 @@
             <div class="form-group">
                 <label>Access Role</label>
                 <select id="staffRoleSelect" class="form-control">
-                    <option value="staff">Staff (POS & Intake Only)</option>
-                    <option value="manager">Manager (Full Access & Ledger)</option>
+                    <option value="staff" style="background:#14161c;">Staff (POS & Intake Only)</option>
+                    <option value="manager" style="background:#14161c;">Manager (Full Access & Ledger)</option>
                 </select>
             </div>
             <button type="submit" class="btn-submit">Create User Profile</button>
         </form>
 
         <div class="section-title">Active Staff Accounts</div>
-        <table class="ledger-table">
-            <thead>
-                <tr>
-                    <th>Staff Name</th>
-                    <th>Role</th>
-                    <th>Created On</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="staffProfileTable">
-                <tr><td colspan="4" style="color: var(--text-muted);">Loading profiles...</td></tr>
-            </tbody>
-        </table>
+        <div class="pos-table-container">
+            <table class="ledger-table">
+                <thead>
+                    <tr>
+                        <th>Staff Name</th>
+                        <th>Role</th>
+                        <th>Created On</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="staffProfileTable">
+                    <tr><td colspan="4" style="color: var(--text-muted); padding: 24px;">Loading profiles...</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
+    <!-- TAB 6: AUDIT LOGS -->
     <div id="tab6" class="tab-content">
         <div class="section-title">System Audit Trail & Manager Activity History</div>
-        <table class="ledger-table">
-            <thead>
-                <tr>
-                    <th>Timestamp</th>
-                    <th>User</th>
-                    <th>Action Executed</th>
-                </tr>
-            </thead>
-            <tbody id="auditTableBody">
-                <tr><td colspan="3" style="color: var(--text-muted);">Loading audit logs...</td></tr>
-            </tbody>
-        </table>
+        <div class="pos-table-container">
+            <table class="ledger-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Action Executed</th>
+                    </tr>
+                </thead>
+                <tbody id="auditTableBody">
+                    <tr><td colspan="3" style="color: var(--text-muted); padding: 24px;">Loading audit logs...</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
+    <!-- TAB 7: RETURNS & DAMAGES -->
     <div id="tab7" class="tab-content">
         <div class="section-title">Customer Order Returns & Inventory Restock</div>
-        <form id="returnForm" onsubmit="handleReturnSubmit(event)" style="margin-bottom: 28px;">
+        <form id="returnForm" onsubmit="handleReturnSubmit(event)" style="margin-bottom: 32px;">
             <div class="form-group">
                 <label>Select Dispatched Order / Transaction</label>
                 <select id="returnOrderSelect" class="form-control" onchange="autofillReturnDetails()" required>
-                    <option value="">-- Choose Order to Return --</option>
+                    <option value="" style="background:#14161c;">-- Choose Order to Return --</option>
                 </select>
             </div>
             <div class="form-group">
@@ -440,82 +560,68 @@
             <div class="form-group">
                 <label>Reason for Return</label>
                 <select id="returnReason" class="form-control" required>
-                    <option value="Customer Change of Mind">Customer Change of Mind</option>
-                    <option value="Defective / Damaged Item">Defective / Damaged Item</option>
-                    <option value="Incorrect Item Dispatched">Incorrect Item Dispatched</option>
-                    <option value="Exchanged for Other Product">Exchanged for Other Product</option>
+                    <option value="Customer Change of Mind" style="background:#14161c;">Customer Change of Mind</option>
+                    <option value="Defective / Damaged Item" style="background:#14161c;">Defective / Damaged Item</option>
+                    <option value="Incorrect Item Dispatched" style="background:#14161c;">Incorrect Item Dispatched</option>
+                    <option value="Exchanged for Other Product" style="background:#14161c;">Exchanged for Other Product</option>
                 </select>
             </div>
             <div class="form-group">
                 <label>Inventory Restock Action</label>
                 <select id="restockAction" class="form-control" required>
-                    <option value="YES_RESTOCK">YES - Restock item back to active inventory</option>
-                    <option value="NO_RESTOCK">NO - Do not restock (Damaged / Written off)</option>
+                    <option value="YES_RESTOCK" style="background:#14161c;">YES - Restock item back to active inventory</option>
+                    <option value="NO_RESTOCK" style="background:#14161c;">NO - Do not restock (Damaged / Written off)</option>
                 </select>
             </div>
-            <button type="submit" class="btn-submit" style="background: var(--red-light); color: #fff;">Process Return & Adjust Stock</button>
+            <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #ff453a 0%, #c52820 100%); color: #fff;">Process Return & Adjust Stock</button>
         </form>
 
         <div class="section-title">Processed Returns Log</div>
-        <table class="ledger-table" style="margin-bottom: 30px;">
-            <thead>
-                <tr>
-                    <th>Return Date</th>
-                    <th>Order Ref / Item</th>
-                    <th>Qty</th>
-                    <th>Reason</th>
-                    <th>Restocked?</th>
-                    <th>Processed By</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="returnsLogTable">
-                <tr><td colspan="7" style="color: var(--text-muted);">Loading returns log...</td></tr>
-            </tbody>
-        </table>
-
-        <div class="section-title" style="color: var(--red-light);">Damaged & Written-Off Stock Log</div>
-        <table class="ledger-table">
-            <thead>
-                <tr>
-                    <th>Order Ref</th>
-                    <th>Item Name</th>
-                    <th>Qty Damaged</th>
-                    <th>Reason</th>
-                    <th>Logged By</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="damagedTableBody">
-                <tr><td colspan="6" style="color: var(--text-muted);">No damaged items logged.</td></tr>
-            </tbody>
-        </table>
+        <div class="pos-table-container" style="margin-bottom: 30px;">
+            <table class="ledger-table">
+                <thead>
+                    <tr>
+                        <th>Return Date</th>
+                        <th>Order Ref / Item</th>
+                        <th>Qty</th>
+                        <th>Reason</th>
+                        <th>Restocked?</th>
+                        <th>Processed By</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="returnsLogTable">
+                    <tr><td colspan="7" style="color: var(--text-muted); padding: 24px;">Loading returns log...</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
+    <!-- MODALS -->
     <div class="modal-overlay" id="loginModal">
         <div class="modal-card">
-            <h3 style="color: var(--gold-primary); margin-top: 0;">USER PROFILE LOGIN</h3>
-            <p style="font-size: 11px; color: var(--text-muted);">Enter PIN code for instant auto-login.</p>
+            <h3 style="color: var(--gold-primary); margin-top: 0; font-size: 16px; font-weight: 600; letter-spacing: 0.5px;">USER PROFILE LOGIN</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 24px;">Enter PIN code for instant secure access.</p>
             <div class="form-group">
-                <input type="password" id="userPinInput" class="form-control" style="text-align: center; font-size: 22px; letter-spacing: 6px;" maxlength="6" placeholder="••••" oninput="checkAutoLoginPin()" autofocus>
+                <input type="password" id="userPinInput" class="form-control" style="text-align: center; font-size: 24px; letter-spacing: 8px; padding: 14px;" maxlength="6" placeholder="••••" oninput="checkAutoLoginPin()" autofocus>
             </div>
             <button class="btn-submit" onclick="authenticateUserPin()">LOGIN SESSION</button>
         </div>
     </div>
 
     <div class="modal-overlay" id="receiptModal" style="display: none;">
-        <div class="modal-card" style="background: #fff; color: #000; text-align: left; font-family: monospace; width: 380px;">
-            <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;">
+        <div class="modal-card" style="background: #fff; color: #000; text-align: left; font-family: monospace; width: 380px; border-radius: 16px;">
+            <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 12px; margin-bottom: 12px;">
                 <h3 style="margin: 0; font-size: 16px;">NGUNI HOMEWARE</h3>
-                <p style="margin: 2px 0; font-size: 10px;">Consignment & Retail POS Hub</p>
+                <p style="margin: 4px 0 0 0; font-size: 10px;">Consignment & Retail POS Hub</p>
             </div>
             <div id="receiptContent" style="font-size: 11px; line-height: 1.6;"></div>
-            <div style="text-align: center; border-top: 1px dashed #000; padding-top: 10px; margin-top: 10px;">
+            <div style="text-align: center; border-top: 1px dashed #000; padding-top: 12px; margin-top: 12px;">
                 <p style="margin: 0; font-size: 10px;">Thank you for shopping local!</p>
             </div>
-            <div class="no-print" style="margin-top: 16px; text-align: center;">
-                <button class="btn-submit" onclick="window.print()">Print Thermal Slip</button>
-                <button class="btn-sec" style="color: #000; border-color: #000;" onclick="closeModal('receiptModal')">Close</button>
+            <div class="no-print" style="margin-top: 20px; text-align: center; display: flex; gap: 8px;">
+                <button class="btn-submit" onclick="window.print()" style="flex: 2; padding: 12px;">Print Slip</button>
+                <button class="btn-sec" style="flex: 1; color: #000; border-color: #000; background: #eee;" onclick="closeModal('receiptModal')">Close</button>
             </div>
         </div>
     </div>
@@ -653,7 +759,7 @@
             tbody.innerHTML = '';
 
             if (posCart.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No items added to current transaction batch.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No items added to current transaction batch.</td></tr>';
                 document.getElementById('cartItemCount').innerText = '0';
                 document.getElementById('cartGrandTotal').innerText = 'R 0.00';
                 return;
@@ -668,12 +774,12 @@
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td style="color: var(--gold-light); font-weight: bold;">${item.sku || 'N/A'}</td>
+                    <td style="color: var(--gold-light); font-weight: 600;">${item.sku || 'N/A'}</td>
                     <td>${item.name}</td>
                     <td>${item.supplier}</td>
                     <td>${item.qty}</td>
                     <td>R ${item.unitPrice.toFixed(2)}</td>
-                    <td style="color: var(--cyan-bright); font-weight: bold;">R ${item.subtotal.toFixed(2)}</td>
+                    <td style="color: var(--cyan-bright); font-weight: 600;">R ${item.subtotal.toFixed(2)}</td>
                     <td><button class="btn-action btn-delete" onclick="removeCartItem(${idx})">Remove</button></td>
                 `;
                 tbody.appendChild(tr);
@@ -785,7 +891,7 @@
             tbody.innerHTML = '';
 
             if (intakeBatch.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No items staged for intake batch.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No items staged for intake batch.</td></tr>';
                 document.getElementById('intakeBatchCount').innerText = '0';
                 return;
             }
@@ -793,7 +899,7 @@
             intakeBatch.forEach((item, idx) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td style="color: var(--gold-light); font-weight: bold;">${item.sku}</td>
+                    <td style="color: var(--gold-light); font-weight: 600;">${item.sku}</td>
                     <td>${item.item_name}</td>
                     <td>${item.supplier}</td>
                     <td>${item.quantity}</td>
@@ -948,11 +1054,12 @@
         function populateReturnsOrderDropdown(orders) {
             const select = document.getElementById('returnOrderSelect');
             if (!select) return;
-            select.innerHTML = '<option value="">-- Choose Order to Return --</option>';
+            select.innerHTML = '<option value="" style="background:#14161c;">-- Choose Order to Return --</option>';
 
             orders.filter(o => o.payout_status !== 'RETURNED / CANCELLED').forEach(order => {
                 const opt = document.createElement('option');
                 opt.value = order.id;
+                opt.style.background = '#14161c';
                 opt.dataset.itemName = order.item_name;
                 opt.dataset.qty = order.quantity_dispatched || 1;
                 opt.dataset.orderRef = order.order_number;
@@ -1000,12 +1107,12 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>
-                        <div style="font-weight: bold;">${order.item_name || 'Consignment Item'}</div>
+                        <div style="font-weight: 600;">${order.item_name || 'Consignment Item'}</div>
                         <div style="font-size: 11px; color: var(--text-muted);">${order.order_number || 'N/A'}</div>
                     </td>
                     <td>${order.supplier || 'Consignor'}</td>
                     <td>${new Date(order.created_at).toLocaleDateString()}</td>
-                    <td style="color: var(--gold-light); font-weight: bold;">${order.processed_by || 'Unassigned'}</td>
+                    <td style="color: var(--gold-light); font-weight: 600;">${order.processed_by || 'Unassigned'}</td>
                     <td>${qty}</td>
                     <td style="font-weight: 700;">R ${wholesaleVal.toFixed(2)}</td>
                     <td><span class="status-badge ${badgeClass}">${status}</span></td>
@@ -1029,7 +1136,7 @@
             tbody.innerHTML = '';
 
             if (inventory.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="color: var(--text-muted);">No inventory records captured yet.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="color: var(--text-muted); padding: 24px;">No inventory records captured yet.</td></tr>';
                 return;
             }
 
@@ -1039,7 +1146,7 @@
                 const qtyVal = item.quantity_allocated || item.quantity || 0;
 
                 tr.innerHTML = `
-                    <td style="color: var(--gold-light); font-weight: bold;">
+                    <td style="color: var(--gold-light); font-weight: 600;">
                         <input type="text" class="table-input" id="sku_${item.id}" value="${item.sku || ''}">
                     </td>
                     <td>
@@ -1155,17 +1262,17 @@
 
             tbody.innerHTML = '';
             if (list.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="color: var(--text-muted);">No returns processed yet.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="color: var(--text-muted); padding: 24px;">No returns processed yet.</td></tr>';
             } else {
                 list.forEach(r => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td>${new Date(r.created_at).toLocaleDateString()}</td>
-                        <td style="font-weight: bold;">#${r.order_ref} - ${r.item_name}</td>
+                        <td style="font-weight: 600;">#${r.order_ref} - ${r.item_name}</td>
                         <td>${r.return_qty}</td>
                         <td>${r.reason}</td>
-                        <td>${r.restocked ? '<span style="color: var(--green-light); font-weight: bold;">YES</span>' : '<span style="color: var(--red-light); font-weight: bold;">NO</span>'}</td>
-                        <td style="color: var(--gold-light); font-weight: bold;">${r.processed_by || 'Staff'}</td>
+                        <td>${r.restocked ? '<span style="color: var(--green-active); font-weight: 600;">YES</span>' : '<span style="color: var(--red-alert); font-weight: 600;">NO</span>'}</td>
+                        <td style="color: var(--gold-light); font-weight: 600;">${r.processed_by || 'Staff'}</td>
                         <td><button class="btn-action btn-delete" onclick="deleteReturnRecord('${r.id}')">Delete</button></td>
                     `;
                     tbody.appendChild(tr);
@@ -1189,7 +1296,7 @@
             profiles.forEach(p => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td style="font-weight: bold; color: var(--gold-light);">${p.full_name}</td>
+                    <td style="font-weight: 600; color: var(--gold-light);">${p.full_name}</td>
                     <td style="text-transform: uppercase;">${p.role}</td>
                     <td>${new Date(p.created_at).toLocaleDateString()}</td>
                     <td><button class="btn-action btn-delete" onclick="deleteStaffProfile('${p.id}')">Delete</button></td>
@@ -1228,14 +1335,14 @@
             if (!tbody) return;
             tbody.innerHTML = '';
             if (!logs || logs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="color: var(--text-muted);">No audit logs recorded.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" style="color: var(--text-muted); padding: 24px;">No audit logs recorded.</td></tr>';
                 return;
             }
             logs.forEach(l => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${new Date(l.created_at).toLocaleString()}</td>
-                    <td style="color: var(--gold-light); font-weight: bold;">${l.user_name}</td>
+                    <td style="color: var(--gold-light); font-weight: 600;">${l.user_name}</td>
                     <td>${l.action}</td>
                 `;
                 tbody.appendChild(tr);
