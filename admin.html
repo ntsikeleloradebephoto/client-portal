@@ -110,6 +110,7 @@
         <button class="tab-btn" id="btnTab6" style="display: none;" onclick="switchTab('tab6')">6. AUDIT LOGS</button>
     </div>
 
+    <!-- TAB 1: POS SCAN OUT -->
     <div id="tab1" class="tab-content active">
         <div class="section-title">POS Dispatch / Scan Out</div>
         <form id="posForm" onsubmit="handlePosSubmit(event)">
@@ -139,6 +140,7 @@
         </form>
     </div>
 
+    <!-- TAB 2: STOCK INTAKE -->
     <div id="tab2" class="tab-content">
         <div class="section-title">Consignment Stock Intake</div>
         <form id="stockForm" onsubmit="handleStockSubmit(event)">
@@ -162,6 +164,7 @@
         </form>
     </div>
 
+    <!-- TAB 3: SETTLEMENT LEDGER -->
     <div id="tab3" class="tab-content">
         <div class="section-title">
             <span>Settlement Ledger & Supplier Split Breakdown</span>
@@ -210,6 +213,7 @@
         </table>
     </div>
 
+    <!-- TAB 4: STOCK ON-HAND -->
     <div id="tab4" class="tab-content">
         <div class="section-title">Active Stock Levels & Reorder Thresholds</div>
         <table class="ledger-table">
@@ -229,6 +233,7 @@
         </table>
     </div>
 
+    <!-- TAB 5: STAFF PROFILES -->
     <div id="tab5" class="tab-content">
         <div class="section-title">Staff Profile Management</div>
         <form id="createStaffForm" onsubmit="handleCreateStaff(event)" style="margin-bottom: 24px;">
@@ -266,6 +271,7 @@
         </table>
     </div>
 
+    <!-- TAB 6: MANAGER AUDIT LOGS -->
     <div id="tab6" class="tab-content">
         <div class="section-title">System Audit Trail & Manager Activity History</div>
         <table class="ledger-table">
@@ -282,6 +288,7 @@
         </table>
     </div>
 
+    <!-- LOGIN MODAL -->
     <div class="modal-overlay" id="loginModal">
         <div class="modal-card">
             <h3 style="color: var(--gold-primary); margin-top: 0;">USER PROFILE LOGIN</h3>
@@ -293,6 +300,7 @@
         </div>
     </div>
 
+    <!-- RECEIPT SLIP MODAL -->
     <div class="modal-overlay" id="receiptModal" style="display: none;">
         <div class="modal-card" style="background: #fff; color: #000; text-align: left; font-family: monospace;">
             <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;">
@@ -355,9 +363,9 @@
                 return;
             }
 
-            const { data: staffList } = await supabaseClient.from('staff_profiles').select('*').eq('pin_code', enteredPin);
+            const { data: staffList, error } = await supabaseClient.from('staff_profiles').select('*').eq('pin_code', enteredPin);
 
-            if (!staffList || staffList.length === 0) {
+            if (error || !staffList || staffList.length === 0) {
                 alert('Invalid PIN code.');
                 return;
             }
@@ -607,29 +615,114 @@
             }
         }
 
+        // FAIL-SAFE AUDIT LOGGING FUNCTION
         async function logAuditAction(actionText) {
             if (!currentUser) return;
-            await supabaseClient.from('audit_logs').insert([{ user_name: currentUser.full_name, action: actionText }]);
+            try {
+                await supabaseClient.from('audit_logs').insert([{ 
+                    user_name: currentUser.full_name, 
+                    action: actionText 
+                }]);
+            } catch (err) {
+                console.warn('Audit logging bypassed:', err);
+            }
         }
 
         async function fetchAuditLogs() {
-            const { data: logs } = await supabaseClient.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(20);
-            const tbody = document.getElementById('auditTableBody');
-            tbody.innerHTML = '';
-            if (!logs || logs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="color: var(--text-muted);">No audit logs recorded.</td></tr>';
-                return;
+            try {
+                const { data: logs } = await supabaseClient.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(20);
+                const tbody = document.getElementById('auditTableBody');
+                tbody.innerHTML = '';
+                if (!logs || logs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="color: var(--text-muted);">No audit logs recorded.</td></tr>';
+                    return;
+                }
+                logs.forEach(l => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${new Date(l.created_at).toLocaleString()}</td>
+                        <td style="color: var(--gold-light); font-weight: bold;">${l.user_name}</td>
+                        <td>${l.action}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.warn('Unable to fetch audit logs:', err);
             }
-            logs.forEach(l => {
+        }
+
+        async function fetchStaffProfiles() {
+            const { data: profiles } = await supabaseClient.from('staff_profiles').select('*').order('created_at', { ascending: false });
+            const tbody = document.getElementById('staffProfileTable');
+            tbody.innerHTML = '';
+            if (!profiles) return;
+            profiles.forEach(p => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${new Date(l.created_at).toLocaleString()}</td>
-                    <td style="color: var(--gold-light); font-weight: bold;">${l.user_name}</td>
-                    <td>${l.action}</td>
+                    <td style="font-weight: bold; color: var(--gold-light);">${p.full_name}</td>
+                    <td style="text-transform: uppercase;">${p.role}</td>
+                    <td>${new Date(p.created_at).toLocaleDateString()}</td>
+                    <td><button class="btn-action btn-delete" onclick="deleteStaffProfile('${p.id}')">Delete</button></td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        async function fetchStaffProfiles() {
-            const { data: profiles } = await supabaseClient.from('staff_profiles').select('*').order('
+        async function handleCreateStaff(e) {
+            e.preventDefault();
+            const name = document.getElementById('staffNameInput').value;
+            const pin = document.getElementById('staffPinInput').value;
+            const role = document.getElementById('staffRoleSelect').value;
+
+            const { error } = await supabaseClient.from('staff_profiles').insert([{ full_name: name, pin_code: pin, role: role }]);
+            if (error) alert('Error: ' + error.message);
+            else {
+                logAuditAction(`Created user profile (${name})`);
+                alert('Staff profile created!');
+                document.getElementById('createStaffForm').reset();
+                fetchStaffProfiles();
+            }
+        }
+
+        async function deleteStaffProfile(id) {
+            if (!confirm('Delete staff profile?')) return;
+            await supabaseClient.from('staff_profiles').delete().eq('id', id);
+            fetchStaffProfiles();
+        }
+
+        async function updateStatus(orderId, newStatus) {
+            await supabaseClient.from('orders').update({ payout_status: newStatus }).eq('id', orderId);
+            logAuditAction(`Updated order status to ${newStatus}`);
+            fetchAdminOrders();
+        }
+
+        async function deleteOrder(orderId) {
+            if (!confirm('Delete order record?')) return;
+            await supabaseClient.from('orders').delete().eq('id', orderId);
+            logAuditAction('Deleted order record');
+            fetchAdminOrders();
+        }
+
+        function exportSupplierStatement() {
+            if (cachedOrders.length === 0) return alert('No orders to export.');
+            let csv = "data:text/csv;charset=utf-8,Order Ref,Item,Supplier,Date,Processed By,Quantity,Wholesale Amount (ZAR),Status\n";
+            cachedOrders.forEach(o => {
+                csv += `"${o.order_number || ''}","${o.item_name || ''}","${o.supplier || ''}","${o.created_at || ''}","${o.processed_by || ''}",${o.quantity_dispatched || 1},${o.wholesale_floor_zar || 0},"${o.payout_status || ''}"\n`;
+            });
+            const link = document.createElement("a");
+            link.setAttribute("href", encodeURI(csv));
+            link.setAttribute("download", `Nguni_Supplier_Ledger_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        openLoginModal();
+        fetchAdminOrders();
+
+        supabaseClient.channel('admin_realtime').on('postgres_changes', { event: '*', schema: 'public' }, () => {
+            fetchAdminOrders();
+        }).subscribe();
+    </script>
+</body>
+</html>
