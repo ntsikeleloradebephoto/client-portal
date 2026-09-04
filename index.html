@@ -3,375 +3,417 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nguni Homeware | Supplier Trade Ledger</title>
+    <title>Nguni Homeware | Curated Storefront (tvOS Edition)</title>
     <link rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --bg-dark: #0b0c0e;
-            --panel-dark: #121417;
+            --bg-dark: #07080a;
+            --panel-glass: rgba(18, 20, 26, 0.75);
+            --panel-solid: #12141a;
             --gold-primary: #d4af37;
             --gold-light: #f3c649;
-            --text-light: #f5f5f5;
-            --text-muted: #a0a5ad;
-            --border-gold: #3a3219;
-            --green-active: #2e7d32;
-            --green-light: #81c784;
+            --text-light: #f5f5f7;
+            --text-muted: #86868b;
+            --border-glass: rgba(212, 175, 55, 0.15);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --green-active: #30d158;
+            --cyan-bright: #64d2ff;
+            --blur-radius: blur(20px);
         }
 
         body {
-            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-dark);
             color: var(--text-light);
             margin: 0;
-            padding: 24px;
+            padding: 32px;
+            -webkit-font-smoothing: antialiased;
         }
 
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid var(--border-gold);
-            padding-bottom: 16px;
-            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 20px;
+            margin-bottom: 36px;
+            backdrop-filter: var(--blur-radius);
         }
 
-        .header-title {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        .header-title { display: flex; align-items: center; gap: 14px; }
+        .header h1 { font-size: 15px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold-primary); margin: 0; }
+        
+        .cart-trigger { 
+            background: rgba(255, 255, 255, 0.05); 
+            border: 1px solid var(--border-glass); 
+            color: var(--gold-light); 
+            padding: 10px 20px; 
+            border-radius: 980px; 
+            font-size: 12px; 
+            font-weight: 600; 
+            cursor: pointer;
+            display: flex; 
+            align-items: center; 
+            gap: 10px;
+            backdrop-filter: var(--blur-radius);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            transition: all 0.2s ease;
         }
+        .cart-trigger:hover { background: rgba(255,255,255,0.09); transform: scale(1.02); }
 
-        .header h1 {
-            font-size: 18px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: var(--gold-primary);
-            margin: 0;
+        .hero-banner {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(18, 20, 26, 0.6) 100%);
+            border: 1px solid var(--border-glass);
+            border-radius: 24px;
+            padding: 48px;
+            margin-bottom: 40px;
+            backdrop-filter: var(--blur-radius);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
         }
+        .hero-banner h2 { font-size: 32px; font-weight: 700; margin: 0 0 12px 0; letter-spacing: -0.5px; color: #fff; }
+        .hero-banner p { font-size: 15px; color: var(--text-muted); margin: 0; max-width: 600px; line-height: 1.5; }
 
-        .sync-badge {
-            background: rgba(46, 125, 50, 0.2);
-            border: 1px solid var(--green-active);
-            color: var(--green-light);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 11px;
+        .section-title { 
+            font-size: 12px; 
             font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            text-transform: uppercase; 
+            letter-spacing: 1.2px; 
+            color: var(--gold-primary); 
+            margin-bottom: 24px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
         }
 
-        .dot {
-            width: 8px;
-            height: 8px;
-            background-color: var(--green-light);
-            border-radius: 50%;
-        }
-
-        .metrics-grid {
+        /* PRODUCT GRID (tvOS CARDS) */
+        .product-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        @media (max-width: 900px) {
-            .metrics-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-
-        .card {
-            background: var(--panel-dark);
-            border: 1px solid var(--border-gold);
-            padding: 20px;
-            border-radius: 6px;
-        }
-
-        .card-label {
-            font-size: 10px;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            letter-spacing: 1px;
-        }
-
-        .card-val {
-            font-size: 28px;
-            font-weight: 700;
-            margin-top: 8px;
-            color: var(--text-light);
-        }
-
-        .main-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 24px;
+            margin-bottom: 48px;
         }
 
-        @media (max-width: 1000px) {
-            .main-grid { grid-template-columns: 1fr; }
-        }
-
-        .panel {
-            background: var(--panel-dark);
-            border: 1px solid var(--border-gold);
-            padding: 20px;
-            border-radius: 6px;
-        }
-
-        .panel-title {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--gold-primary);
-            margin-top: 0;
-            margin-bottom: 16px;
-        }
-
-        .manifest-list {
+        .product-card {
+            background: var(--panel-glass);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 24px;
+            backdrop-filter: var(--blur-radius);
+            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+        .product-card:hover {
+            transform: translateY(-6px) scale(1.01);
+            border-color: var(--border-glass);
+            box-shadow: 0 20px 40px rgba(212, 175, 55, 0.15);
         }
 
-        .manifest-item {
+        .product-tag { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 8px; }
+        .product-name { font-size: 16px; font-weight: 600; color: #fff; margin: 0 0 8px 0; letter-spacing: -0.3px; }
+        .product-supplier { font-size: 12px; color: var(--gold-light); margin-bottom: 16px; }
+        
+        .product-footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px;
-            background: #08090a;
-            border: 1px solid #1f2228;
-            border-radius: 4px;
+            border-top: 1px solid var(--border-subtle);
+            padding-top: 16px;
+            margin-top: 16px;
         }
-
-        .item-title {
+        .product-price { font-size: 18px; font-weight: 700; color: var(--cyan-bright); letter-spacing: -0.5px; }
+        
+        .btn-add {
+            background: linear-gradient(135deg, #f3c649 0%, #d4af37 100%);
+            color: #000;
             font-weight: 700;
-            font-size: 14px;
-            text-transform: capitalize;
-        }
-
-        .item-sub {
-            font-size: 11px;
-            color: var(--text-muted);
-            margin-top: 2px;
-        }
-
-        .item-price {
-            font-weight: 700;
-            color: var(--gold-light);
-            text-align: right;
-        }
-
-        .badge-status {
-            font-size: 9px;
-            font-weight: 700;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
             text-transform: uppercase;
-            margin-top: 2px;
-            text-align: right;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.25);
+        }
+        .btn-add:hover { transform: scale(1.04); box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4); }
+
+        /* MODAL / CART DRAWER */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(25px); display: none; justify-content: center; align-items: center; z-index: 999; animation: fadeIn 0.2s ease; }
+        .modal-card { background: #14161c; border: 1px solid var(--border-glass); padding: 36px; border-radius: 24px; width: 440px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); max-height: 90vh; overflow-y: auto; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .status-escrow { color: var(--gold-light); }
-        .status-settled { color: var(--green-light); }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 11px; font-weight: 500; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 0.5px; }
+        .form-control { 
+            width: 100%; 
+            padding: 12px 16px; 
+            background: rgba(0, 0, 0, 0.4); 
+            border: 1px solid var(--border-subtle); 
+            color: #fff; 
+            border-radius: 12px; 
+            box-sizing: border-box; 
+            font-size: 13px;
+            font-family: inherit;
+        }
+        .form-control:focus { outline: none; border-color: var(--gold-primary); box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15); }
+
+        .btn-submit { 
+            background: linear-gradient(135deg, #f3c649 0%, #d4af37 100%); 
+            color: #000; 
+            font-weight: 700; 
+            padding: 14px 24px; 
+            border: none; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            text-transform: uppercase; 
+            letter-spacing: 0.8px; 
+            width: 100%; 
+            font-size: 12px;
+            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+        }
+        .btn-sec { background: rgba(255,255,255,0.06); border: 1px solid var(--border-subtle); color: var(--gold-light); cursor: pointer; padding: 10px 16px; border-radius: 10px; font-size: 11px; font-weight: 600; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <div class="header-title">
-            <img src="logo.png" alt="Nguni Logo" style="height: 36px;" onerror="this.style.display='none'">
-            <h1>NGUNI HOMEWARE | SUPPLIER TRADE LEDGER</h1>
+            <img src="logo.png" alt="Nguni Logo" style="height: 34px;" onerror="this.style.display='none'">
+            <h1>NGUNI HOMEWARE | STOREFRONT</h1>
         </div>
-        <div class="sync-badge">
-            <span class="dot"></span> Realtime Sync Active
-        </div>
+        <button class="cart-trigger" onclick="openCartModal()">
+            🛍️ Bag (<span id="cartItemCount">0</span>)
+        </button>
     </div>
 
-    <!-- METRICS CARDS -->
-    <div class="metrics-grid">
-        <div class="card">
-            <div class="card-label">Total Units Consigned & Sold</div>
-            <div class="card-val" id="cardUnits">0 Units</div>
-        </div>
-        <div class="card">
-            <div class="card-label">Locked Wholesale Payout Owed</div>
-            <div class="card-val" id="cardOwed" style="color: var(--gold-light);">R 0</div>
-        </div>
-        <div class="card">
-            <div class="card-label">Active Pilot SKUs</div>
-            <div class="card-val" id="cardSkus">5 Lines</div>
-        </div>
-        <div class="card">
-            <div class="card-label">Settlement Cycle</div>
-            <div class="card-val">15–30 Days</div>
-        </div>
+    <div class="hero-banner">
+        <h2>Handcrafted Masterpieces & Homeware</h2>
+        <p>Explore our exclusive collection of luxury local craft and designer homeware, sourced directly from master artisans and available for direct acquisition.</p>
     </div>
 
-    <!-- MAIN DASHBOARD CONTENT -->
-    <div class="main-grid">
-        
-        <!-- LEFT: VELOCITY CHART -->
-        <div class="panel">
-            <div class="panel-title">Weekly Unit Sales Velocity</div>
-            <div style="height: 320px;">
-                <canvas id="velocityChart"></canvas>
-            </div>
-        </div>
+    <div class="section-title">
+        <span>Available Catalog Inventory</span>
+        <span id="catalogCount" style="color: var(--text-muted); font-size: 11px;">Loading items...</span>
+    </div>
 
-        <!-- RIGHT: CONSIGNMENT SALES MANIFEST -->
-        <div class="panel">
-            <div class="panel-title">Consignment Sales Manifest</div>
-            <div class="manifest-list" id="manifestList">
-                <div style="color: var(--text-muted); font-size: 12px;">Loading sales manifest...</div>
-            </div>
-        </div>
+    <div class="product-grid" id="productGrid">
+        <!-- Dynamic Inventory Render -->
+        <div style="color: var(--text-muted); grid-column: 1 / -1; padding: 40px; text-align: center;">Loading live inventory catalog...</div>
+    </div>
 
+    <!-- SHOPPING BAG / CHECKOUT MODAL -->
+    <div class="modal-overlay" id="cartModal">
+        <div class="modal-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h3 style="color: var(--gold-primary); margin: 0; font-size: 16px; font-weight: 600;">YOUR SHOPPING BAG</h3>
+                <button class="btn-sec" onclick="closeCartModal()" style="padding: 6px 12px;">Close</button>
+            </div>
+
+            <div id="cartItemsList" style="margin-bottom: 24px; max-height: 250px; overflow-y: auto;">
+                <p style="color: var(--text-muted); text-align: center; font-size: 13px;">Your bag is currently empty.</p>
+            </div>
+
+            <div style="border-top: 1px solid var(--border-subtle); padding-top: 16px; margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 700;">
+                    <span>Total:</span>
+                    <span id="cartGrandTotal" style="color: var(--cyan-bright);">R 0.00</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Customer Full Name</label>
+                <input type="text" id="customerName" class="form-control" placeholder="e.g. Lerato Khumalo">
+            </div>
+            <div class="form-group">
+                <label>Contact Phone / Email</label>
+                <input type="text" id="customerContact" class="form-control" placeholder="e.g. 082 123 4567">
+            </div>
+
+            <button class="btn-submit" onclick="submitOrderCheckout()">COMPLETE ORDER</button>
+        </div>
     </div>
 
     <script>
         const SUPABASE_URL = 'https://aivsmcdhxfdccsbqmejt.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_NDE9uLsqMD2QiIa6LMw-Lw_IBOmeebV';
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        let velocityChart = null;
-
-        async function fetchLedgerData() {
-            try {
-                // Fetch Orders from Supabase
-                const { data: ordersData, error } = await supabaseClient
-                    .from('orders')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-
-                if (error) {
-                    console.error("Supabase fetch error:", error);
-                    return;
-                }
-
-                // Check inventory count if available, otherwise set 5 Pilot Lines
-                const { data: invData } = await supabaseClient.from('inventory').select('id');
-                const skuCount = (invData && invData.length > 0) ? invData.length : 5;
-                document.getElementById('cardSkus').innerText = `${skuCount} Lines`;
-
-                if (ordersData) {
-                    renderDashboard(ordersData);
-                }
-            } catch (err) {
-                console.error("Execution error:", err);
-            }
+        
+        let supabaseClient;
+        try {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        } catch (e) {
+            console.error("Supabase load error", e);
         }
 
-        function renderDashboard(orders) {
-            // 1. Total Units Sold
-            let totalUnits = 0;
-            orders.forEach(o => {
-                totalUnits += (parseInt(o.quantity_dispatched) || 1);
+        let cachedInventory = [];
+        let shoppingCart = [];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchStorefrontInventory();
+        });
+
+        async function fetchStorefrontInventory() {
+            if (!supabaseClient) return;
+            const { data: inventory } = await supabaseClient.from('inventory').select('*').order('created_at', { ascending: false });
+            cachedInventory = inventory || [];
+            renderStorefrontGrid(cachedInventory);
+        }
+
+        function renderStorefrontGrid(items) {
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = '';
+
+            document.getElementById('catalogCount').innerText = `${items.length} items available`;
+
+            if (items.length === 0) {
+                grid.innerHTML = '<div style="color: var(--text-muted); grid-column: 1 / -1; padding: 40px; text-align: center;">No inventory items currently listed.</div>';
+                return;
+            }
+
+            items.forEach(item => {
+                const name = item.item_name || item.item_description || 'Exclusive Homeware Item';
+                const supplier = item.supplier || 'Master Wholesaler';
+                const price = parseFloat(item.wholesale_floor_zar || item.unit_price || item.cost_price || 0);
+                const qty = parseInt(item.quantity_allocated || item.quantity || 0);
+
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div>
+                        <div class="product-tag">${item.sku || 'NGUNI-ART'}</div>
+                        <h3 class="product-name">${name}</h3>
+                        <div class="product-supplier">By ${supplier}</div>
+                        <div style="font-size: 11px; color: ${qty > 0 ? 'var(--green-active)' : 'var(--text-muted)'}; margin-bottom: 8px;">
+                            ${qty > 0 ? `In Stock (${qty} available)` : 'Sold Out'}
+                        </div>
+                    </div>
+                    <div class="product-footer">
+                        <span class="product-price">R ${price.toFixed(2)}</span>
+                        ${qty > 0 ? `<button class="btn-add" onclick="addToBag('${item.id}')">+ Add to Bag</button>` : '<span style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">Unavailable</span>'}
+                    </div>
+                `;
+                grid.appendChild(card);
             });
-            document.getElementById('cardUnits').innerText = `${totalUnits} Units`;
+        }
 
-            // 2. Locked Wholesale Payout Owed (ONLY counts ESCROW PENDING)
-            const totalOwed = orders
-                .filter(order => order.payout_status === 'ESCROW PENDING')
-                .reduce((sum, order) => sum + (parseFloat(order.wholesale_floor_zar) || 0), 0);
+        function addToBag(itemId) {
+            const item = cachedInventory.find(i => i.id === itemId);
+            if (!item) return;
 
-            document.getElementById('cardOwed').innerText = `R ${Math.round(totalOwed).toLocaleString()}`;
-
-            // 3. Render Consignment Sales Manifest List
-            const manifestList = document.getElementById('manifestList');
-            manifestList.innerHTML = '';
-
-            if (orders.length === 0) {
-                manifestList.innerHTML = '<div style="color: var(--text-muted); font-size: 12px;">No orders found.</div>';
+            const existing = shoppingCart.find(i => i.id === itemId);
+            if (existing) {
+                existing.qty += 1;
             } else {
-                orders.forEach(order => {
-                    const isSettled = order.payout_status === 'SETTLED';
-                    
-                    let dateStr = '03 Sept 2026';
-                    if (order.created_at) {
-                        const parsedDate = new Date(order.created_at);
-                        if (!isNaN(parsedDate.getTime())) {
-                            dateStr = parsedDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-                        }
-                    }
-
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'manifest-item';
-                    itemDiv.innerHTML = `
-                        <div>
-                            <div class="item-title">${order.item_name || 'Consignment Item'}</div>
-                            <div class="item-sub">Order Ref: ${order.order_number || 'N/A'} • ${dateStr}</div>
-                        </div>
-                        <div>
-                            <div class="item-price">R ${Math.round(parseFloat(order.wholesale_floor_zar) || 0)}</div>
-                            <div class="badge-status ${isSettled ? 'status-settled' : 'status-escrow'}">
-                                ${order.payout_status || 'ESCROW PENDING'}
-                            </div>
-                        </div>
-                    `;
-                    manifestList.appendChild(itemDiv);
+                shoppingCart.push({
+                    id: item.id,
+                    sku: item.sku || 'N/A',
+                    name: item.item_name || item.item_description || 'Item',
+                    supplier: item.supplier || 'General Wholesaler',
+                    price: parseFloat(item.wholesale_floor_zar || item.unit_price || 0),
+                    qty: 1
                 });
             }
 
-            // 4. Render Velocity Chart
-            renderChart(orders);
+            updateBagBadge();
+            openCartModal();
         }
 
-        function renderChart(orders) {
-            const dateMap = {};
-            
-            // Group sales by date
-            orders.slice().reverse().forEach(o => {
-                let dateKey = '03 Sept 2026';
-                if (o.created_at) {
-                    const parsedDate = new Date(o.created_at);
-                    if (!isNaN(parsedDate.getTime())) {
-                        dateKey = parsedDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-                    }
-                }
-                dateMap[dateKey] = (dateMap[dateKey] || 0) + (parseInt(o.quantity_dispatched) || 1);
-            });
+        function updateBagBadge() {
+            const totalCount = shoppingCart.reduce((sum, item) => sum + item.qty, 0);
+            document.getElementById('cartItemCount').innerText = totalCount;
+        }
 
-            const labels = Object.keys(dateMap);
-            const dataPoints = Object.values(dateMap);
+        function openCartModal() {
+            renderCartModalList();
+            document.getElementById('cartModal').style.display = 'flex';
+        }
 
-            const ctx = document.getElementById('velocityChart').getContext('2d');
+        function closeCartModal() {
+            document.getElementById('cartModal').style.display = 'none';
+        }
 
-            if (velocityChart) {
-                velocityChart.destroy();
+        function renderCartModalList() {
+            const container = document.getElementById('cartItemsList');
+            container.innerHTML = '';
+
+            if (shoppingCart.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); text-align: center; font-size: 13px;">Your bag is currently empty.</p>';
+                document.getElementById('cartGrandTotal').innerText = 'R 0.00';
+                return;
             }
 
-            velocityChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels.length ? labels : ['No Data'],
-                    datasets: [{
-                        label: 'Units Dispatched',
-                        data: dataPoints.length ? dataPoints : [0],
-                        borderColor: '#d4af37',
-                        backgroundColor: 'rgba(212, 175, 55, 0.1)',
-                        fill: true,
-                        tension: 0.2,
-                        pointBackgroundColor: '#d4af37',
-                        pointRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { grid: { color: '#1f2228' }, ticks: { color: '#a0a5ad', font: { size: 10 } } },
-                        y: { grid: { color: '#1f2228' }, ticks: { color: '#a0a5ad', font: { size: 10 } }, beginAtZero: true }
-                    }
-                }
+            let grandTotal = 0;
+            shoppingCart.forEach((item, idx) => {
+                const subtotal = item.price * item.qty;
+                grandTotal += subtotal;
+
+                const div = document.createElement('div');
+                div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 8px;';
+                div.innerHTML = `
+                    <div>
+                        <div style="font-weight: 600; color: #fff;">${item.name}</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">${item.qty}x @ R ${item.price.toFixed(2)}</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="color: var(--cyan-bright); font-weight: 600;">R ${subtotal.toFixed(2)}</span>
+                        <button onclick="removeFromBag(${idx})" style="background: rgba(255,69,58,0.2); color: #ff453a; border: none; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 10px;">✕</button>
+                    </div>
+                `;
+                container.appendChild(div);
             });
+
+            document.getElementById('cartGrandTotal').innerText = `R ${grandTotal.toFixed(2)}`;
         }
 
-        // Initialize & Listen for Realtime Updates from Supabase
-        fetchLedgerData();
-        supabaseClient.channel('public_realtime').on('postgres_changes', { event: '*', schema: 'public' }, () => {
-            fetchLedgerData();
-        }).subscribe();
+        function removeFromBag(idx) {
+            shoppingCart.splice(idx, 1);
+            updateBagBadge();
+            renderCartModalList();
+        }
+
+        async function submitOrderCheckout() {
+            if (shoppingCart.length === 0) return alert('Your shopping bag is empty.');
+            const name = document.getElementById('customerName').value.trim();
+            const contact = document.getElementById('customerContact').value.trim();
+
+            if (!name) return alert('Please enter your full name for order dispatch.');
+
+            const orderRef = `WEB-${Math.floor(100000 + Math.random() * 900000)}`;
+            const inserts = shoppingCart.map(item => ({
+                item_name: `${item.name} (Online: ${name})`,
+                order_number: orderRef,
+                quantity_dispatched: item.qty,
+                wholesale_floor_zar: item.price * item.qty,
+                supplier: item.supplier,
+                marketplace: 'Online Storefront',
+                payout_status: 'ESCROW PENDING',
+                processed_by: `Customer (${name})`
+            }));
+
+            const { error } = await supabaseClient.from('orders').insert(inserts);
+
+            if (error) {
+                alert('Order Submission Error: ' + error.message);
+            } else {
+                alert(`Order #${orderRef} successfully placed! Thank you for shopping with Nguni Homeware.`);
+                shoppingCart = [];
+                updateBagBadge();
+                closeCartModal();
+                document.getElementById('customerName').value = '';
+                document.getElementById('customerContact').value = '';
+                fetchStorefrontInventory();
+            }
+        }
     </script>
 </body>
 </html>
