@@ -1,125 +1,372 @@
-<script>
-    const SUPABASE_URL = 'https://aivsmcdhxfdccsbqmejt.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_NDE9uLsqMD2QiIa6LMw-Lw_IBOmeebV';
-    
-    let supabaseClient;
-    try {
-        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    } catch (e) {
-        console.error("Supabase load error", e);
-    }
-
-    let allOrders = [];
-    let allInventory = [];
-
-    window.addEventListener('DOMContentLoaded', () => {
-        fetchSupplierData();
-
-        if (supabaseClient) {
-            supabaseClient.channel('supplier_realtime').on('postgres_changes', { event: '*', schema: 'public' }, () => {
-                fetchSupplierData();
-            }).subscribe();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nguni Homeware | Supplier Trade Ledger (tvOS Edition)</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <style>
+        :root {
+            --bg-dark: #07080a;
+            --panel-glass: rgba(18, 20, 26, 0.75);
+            --panel-solid: #12141a;
+            --gold-primary: #d4af37;
+            --gold-light: #f3c649;
+            --text-light: #f5f5f7;
+            --text-muted: #86868b;
+            --border-glass: rgba(212, 175, 55, 0.15);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --green-active: #30d158;
+            --cyan-bright: #64d2ff;
+            --blur-radius: blur(20px);
         }
-    });
 
-    async function fetchSupplierData() {
-        if (!supabaseClient) return;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            margin: 0;
+            padding: 32px;
+            -webkit-font-smoothing: antialiased;
+        }
 
-        // Select ONLY wholesale columns to prevent any retail/selling_price leak
-        const { data: orders } = await supabaseClient
-            .from('orders')
-            .select('id, item_name, quantity_dispatched, wholesale_floor_zar, payout_status, supplier, created_at, order_number')
-            .order('created_at', { ascending: false });
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 20px;
+            margin-bottom: 32px;
+            backdrop-filter: var(--blur-radius);
+        }
 
-        const { data: inventory } = await supabaseClient
-            .from('inventory')
-            .select('id, item_name, wholesale_floor_zar, supplier, created_at')
-            .order('created_at', { ascending: false });
-
-        allOrders = orders || [];
-        allInventory = inventory || [];
-
-        populateSupplierDropdown(allOrders);
-        renderSupplierPortal('ALL');
-    }
-
-    function populateSupplierDropdown(orders) {
-        const select = document.getElementById('supplierSelect');
-        const suppliers = [...new Set(orders.map(o => o.supplier).filter(Boolean))];
+        .header-title { display: flex; align-items: center; gap: 14px; }
+        .header h1 { font-size: 15px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold-primary); margin: 0; }
         
-        select.innerHTML = '<option value="ALL" style="background:#14161c;">-- All Suppliers / Master View --</option>';
+        .sync-badge { 
+            background: rgba(48, 209, 88, 0.12); 
+            border: 1px solid rgba(48, 209, 88, 0.3); 
+            color: var(--green-active); 
+            padding: 8px 16px; 
+            border-radius: 980px; 
+            font-size: 11px; 
+            font-weight: 600; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px;
+            backdrop-filter: var(--blur-radius);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+        .sync-dot { width: 8px; height: 8px; background: var(--green-active); border-radius: 50%; box-shadow: 0 0 8px var(--green-active); }
+
+        /* KPI METRIC CARDS */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .metric-card {
+            background: var(--panel-glass);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 24px;
+            backdrop-filter: var(--blur-radius);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+        .metric-label { font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1.2px; margin-bottom: 12px; }
+        .metric-value { font-size: 28px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+
+        /* DASHBOARD SPLIT CONTENT */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 24px;
+        }
+
+        .panel-box {
+            background: var(--panel-glass);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 28px;
+            backdrop-filter: var(--blur-radius);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+
+        .panel-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--gold-primary);
+            margin-top: 0;
+            margin-bottom: 24px;
+        }
+
+        /* MANIFEST LIST ITEMS */
+        .manifest-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 520px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .manifest-item {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+        .manifest-item:hover { border-color: var(--border-glass); background: rgba(0, 0, 0, 0.6); }
+
+        .manifest-item-name { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+        .manifest-item-meta { font-size: 11px; color: var(--text-muted); }
         
-        suppliers.forEach(supp => {
-            const opt = document.createElement('option');
-            opt.value = supp;
-            opt.style.background = '#14161c';
-            opt.innerText = supp;
-            select.appendChild(opt);
-        });
-    }
+        .manifest-item-price { text-align: right; }
+        .manifest-amount { font-size: 15px; font-weight: 700; color: var(--gold-light); margin-bottom: 4px; }
+        
+        .status-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 3px 8px; border-radius: 980px; display: inline-block; }
+        .status-pending { color: var(--gold-light); background: rgba(212, 175, 55, 0.12); border: 1px solid rgba(212, 175, 55, 0.3); }
+        .status-settled { color: var(--green-active); background: rgba(48, 209, 88, 0.12); border: 1px solid rgba(48, 209, 88, 0.3); }
 
-    function filterSupplierLedger() {
-        const selectedSupplier = document.getElementById('supplierSelect').value;
-        document.getElementById('activeSupplierName').innerText = selectedSupplier === 'ALL' ? 'All Consignment Partners' : selectedSupplier;
-        renderSupplierPortal(selectedSupplier);
-    }
+        /* SUPPLIER SELECTOR BAR */
+        .supplier-filter-bar {
+            background: var(--panel-glass);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 16px 24px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .form-control {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border-subtle);
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+        .form-control:focus { outline: none; border-color: var(--gold-primary); }
 
-    function renderSupplierPortal(supplierFilter) {
-        const filteredOrders = supplierFilter === 'ALL' 
-            ? allOrders 
-            : allOrders.filter(o => o.supplier === supplierFilter);
+        @media (max-width: 1024px) {
+            .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+            .dashboard-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
 
-        const filteredInventory = supplierFilter === 'ALL'
-            ? allInventory
-            : allInventory.filter(i => i.supplier === supplierFilter);
+    <div class="header">
+        <div class="header-title">
+            <img src="logo.png" alt="Nguni Logo" style="height: 34px;" onerror="this.style.display='none'">
+            <h1>NGUNI HOMEWARE | SUPPLIER TRADE LEDGER</h1>
+        </div>
+        <div class="sync-badge">
+            <div class="sync-dot"></div>
+            <span>Realtime Sync Active</span>
+        </div>
+    </div>
 
-        // Calculate Metrics STRICTLY using wholesale_floor_zar
-        let totalUnits = 0;
-        let totalOwed = 0;
+    <!-- SUPPLIER FILTER / IDENTIFIER -->
+    <div class="supplier-filter-bar">
+        <div>
+            <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; display: block; margin-bottom: 4px;">Viewing Partner Ledger</span>
+            <span id="activeSupplierName" style="font-size: 16px; font-weight: 600; color: var(--gold-light);">All Consignment Partners</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <label style="font-size: 11px; text-transform: uppercase; color: var(--text-muted);">Select Partner:</label>
+            <select id="supplierSelect" class="form-control" onchange="filterSupplierLedger()">
+                <option value="ALL" style="background:#14161c;">-- All Suppliers / Master View --</option>
+            </select>
+        </div>
+    </div>
 
-        filteredOrders.forEach(order => {
-            if (order.payout_status !== 'RETURNED / CANCELLED') {
-                totalUnits += (parseInt(order.quantity_dispatched) || 1);
-                if (order.payout_status === 'ESCROW PENDING' || !order.payout_status) {
-                    // Strictly use wholesale floor price
-                    totalOwed += (parseFloat(order.wholesale_floor_zar) || 0);
-                }
+    <!-- METRICS GRID -->
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-label">Total Units Consigned & Sold</div>
+            <div class="metric-value" id="metricUnits">0 Units</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Locked Wholesale Payout Owed</div>
+            <div class="metric-value" id="metricOwed" style="color: var(--gold-light);">R 0.00</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Active Pilot SKUs</div>
+            <div class="metric-value" id="metricSkus" style="color: var(--cyan-bright);">0 Lines</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Settlement Cycle</div>
+            <div class="metric-value" style="font-size: 24px;">15–30 Days</div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD SPLIT VIEW -->
+    <div class="dashboard-grid">
+        <!-- LEFT: VELOCITY CHART / ANALYTICS PANEL -->
+        <div class="panel-box">
+            <div class="panel-title">Weekly Unit Sales Velocity</div>
+            <div style="height: 280px; display: flex; flex-direction: column; justify-content: flex-end; position: relative; border-bottom: 1px solid var(--border-subtle); border-left: 1px solid var(--border-subtle); padding: 10px;">
+                <!-- Simulated Apple-style SVG Trend Chart -->
+                <svg style="position: absolute; top: 10px; left: 10px; right: 10px; bottom: 10px; width: calc(100% - 20px); height: calc(100% - 20px); overflow: visible;" viewBox="0 0 500 200" preserveAspectRatio="none">
+                    <defs>
+                        <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="rgba(212, 175, 55, 0.3)" />
+                            <stop offset="100%" stop-color="rgba(212, 175, 55, 0.0)" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M 0 40 Q 250 120 500 100 L 500 200 L 0 200 Z" fill="url(#chartGradient)" />
+                    <path d="M 0 40 Q 250 120 500 100" fill="none" stroke="var(--gold-primary)" stroke-width="3" />
+                    <circle cx="0" cy="40" r="5" fill="var(--gold-light)" />
+                    <circle cx="500" cy="100" r="5" fill="var(--gold-light)" />
+                </svg>
+                <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-top: 10px; position: relative; z-index: 2;">
+                    <span id="chartStartDate">03 Sept 2026</span>
+                    <span id="chartEndDate">04 Sept 2026</span>
+                </div>
+            </div>
+            <p style="font-size: 11px; color: var(--text-muted); margin-top: 16px; line-height: 1.5;">
+                Velocity tracking reflects aggregated daily sell-through rates across retail storefront and live POS terminal checkouts.
+            </p>
+        </div>
+
+        <!-- RIGHT: CONSIGNMENT SALES MANIFEST -->
+        <div class="panel-box">
+            <div class="panel-title">Consignment Sales Manifest</div>
+            <div class="manifest-list" id="manifestList">
+                <div style="color: var(--text-muted); text-align: center; padding: 40px;">Loading live manifest records...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://aivsmcdhxfdccsbqmejt.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_NDE9uLsqMD2QiIa6LMw-Lw_IBOmeebV';
+        
+        let supabaseClient;
+        try {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        } catch (e) {
+            console.error("Supabase load error", e);
+        }
+
+        let allOrders = [];
+        let allInventory = [];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchSupplierData();
+
+            if (supabaseClient) {
+                supabaseClient.channel('supplier_realtime').on('postgres_changes', { event: '*', schema: 'public' }, () => {
+                    fetchSupplierData();
+                }).subscribe();
             }
         });
 
-        document.getElementById('metricUnits').innerText = `${totalUnits} Units`;
-        document.getElementById('metricOwed').innerText = `R ${totalOwed.toFixed(2)}`;
-        document.getElementById('metricSkus').innerText = `${filteredInventory.length} Lines`;
+        async function fetchSupplierData() {
+            if (!supabaseClient) return;
 
-        // Render Manifest List
-        const manifestList = document.getElementById('manifestList');
-        manifestList.innerHTML = '';
+            const { data: orders } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
+            const { data: inventory } = await supabaseClient.from('inventory').select('*').order('created_at', { ascending: false });
 
-        if (filteredOrders.length === 0) {
-            manifestList.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 40px;">No transaction records found for this partner.</div>';
-            return;
+            allOrders = orders || [];
+            allInventory = inventory || [];
+
+            populateSupplierDropdown(allOrders);
+            renderSupplierPortal('ALL');
         }
 
-        filteredOrders.forEach(order => {
-            // Strictly pull wholesale floor price
-            const wholesaleAmount = parseFloat(order.wholesale_floor_zar) || 0;
-            const status = order.payout_status || 'ESCROW PENDING';
-            const badgeClass = status === 'SETTLED' ? 'status-settled' : 'status-pending';
-            const dateStr = order.created_at ? new Date(order.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent';
+        function populateSupplierDropdown(orders) {
+            const select = document.getElementById('supplierSelect');
+            const suppliers = [...new Set(orders.map(o => o.supplier).filter(Boolean))];
+            
+            // Keep the default "ALL" option
+            select.innerHTML = '<option value="ALL" style="background:#14161c;">-- All Suppliers / Master View --</option>';
+            
+            suppliers.forEach(supp => {
+                const opt = document.createElement('option');
+                opt.value = supp;
+                opt.style.background = '#14161c';
+                opt.innerText = supp;
+                select.appendChild(opt);
+            });
+        }
 
-            const div = document.createElement('div');
-            div.className = 'manifest-item';
-            div.innerHTML = `
-                <div>
-                    <div class="manifest-item-name">${order.item_name || 'Consigned Item'}</div>
-                    <div class="manifest-item-meta">Order Ref: #${order.order_number || order.id.slice(0, 8)} • ${dateStr}</div>
-                </div>
-                <div class="manifest-item-price">
-                    <div class="manifest-amount">R ${wholesaleAmount.toFixed(2)}</div>
-                    <span class="status-badge ${badgeClass}">${status}</span>
-                </div>
-            `;
-            manifestList.appendChild(div);
-        });
-    }
-</script>
+        function filterSupplierLedger() {
+            const selectedSupplier = document.getElementById('supplierSelect').value;
+            document.getElementById('activeSupplierName').innerText = selectedSupplier === 'ALL' ? 'All Consignment Partners' : selectedSupplier;
+            renderSupplierPortal(selectedSupplier);
+        }
+
+        function renderSupplierPortal(supplierFilter) {
+            const filteredOrders = supplierFilter === 'ALL' 
+                ? allOrders 
+                : allOrders.filter(o => o.supplier === supplierFilter);
+
+            const filteredInventory = supplierFilter === 'ALL'
+                ? allInventory
+                : allInventory.filter(i => i.supplier === supplierFilter);
+
+            // Compute Metrics
+            let totalUnits = 0;
+            let totalOwed = 0;
+
+            filteredOrders.forEach(order => {
+                if (order.payout_status !== 'RETURNED / CANCELLED') {
+                    totalUnits += (parseInt(order.quantity_dispatched) || 1);
+                    if (order.payout_status === 'ESCROW PENDING' || !order.payout_status) {
+                        // EXCLUSIVELY USE WHOLESALE FLOOR PRICE FOR METRICS
+                        totalOwed += (parseFloat(order.wholesale_floor_zar) || 0);
+                    }
+                }
+            });
+
+            document.getElementById('metricUnits').innerText = `${totalUnits} Units`;
+            document.getElementById('metricOwed').innerText = `R ${totalOwed.toFixed(2)}`;
+            document.getElementById('metricSkus').innerText = `${filteredInventory.length} Lines`;
+
+            // Render Manifest List
+            const manifestList = document.getElementById('manifestList');
+            manifestList.innerHTML = '';
+
+            if (filteredOrders.length === 0) {
+                manifestList.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 40px;">No transaction records found for this partner.</div>';
+                return;
+            }
+
+            filteredOrders.forEach(order => {
+                // EXCLUSIVELY USE WHOLESALE FLOOR PRICE (wholesale_floor_zar) FOR MANIFEST AMOUNT
+                const amount = parseFloat(order.wholesale_floor_zar) || 0;
+                const status = order.payout_status || 'ESCROW PENDING';
+                const badgeClass = status === 'SETTLED' ? 'status-settled' : 'status-pending';
+                const dateStr = order.created_at ? new Date(order.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent';
+
+                const div = document.createElement('div');
+                div.className = 'manifest-item';
+                div.innerHTML = `
+                    <div>
+                        <div class="manifest-item-name">${order.item_name || 'Consigned Item'}</div>
+                        <div class="manifest-item-meta">Order Ref: #${order.order_number || order.id.slice(0, 8)} • ${dateStr}</div>
+                    </div>
+                    <div class="manifest-item-price">
+                        <div class="manifest-amount">R ${amount.toFixed(2)}</div>
+                        <span class="status-badge ${badgeClass}">${status}</span>
+                    </div>
+                `;
+                manifestList.appendChild(div);
+            });
+        }
+    </script>
+</body>
+</html>
