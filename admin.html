@@ -42,8 +42,8 @@
         .header h1 { font-size: 18px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold-primary); margin: 0; }
         .role-badge { background: #08090a; border: 1px solid var(--border-gold); color: var(--gold-light); padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; display: flex; align-items: center; gap: 10px; }
 
-        .tabs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 24px; }
-        .tab-btn { background: var(--panel-dark); border: 1px solid var(--border-gold); color: var(--text-muted); padding: 12px; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; border-radius: 4px; transition: all 0.2s ease; }
+        .tabs { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 24px; }
+        .tab-btn { background: var(--panel-dark); border: 1px solid var(--border-gold); color: var(--text-muted); padding: 12px 6px; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; border-radius: 4px; transition: all 0.2s ease; text-align: center; }
         .tab-btn.active { background: var(--gold-primary); color: #000; border-color: var(--gold-light); }
 
         .tab-content { display: none; background: var(--panel-dark); border: 1px solid var(--border-gold); padding: 24px; border-radius: 6px; }
@@ -63,6 +63,7 @@
         .status-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; }
         .status-pending { color: var(--gold-light); background: rgba(212, 175, 55, 0.1); }
         .status-settled { color: var(--green-light); background: rgba(46, 125, 50, 0.2); }
+        .status-returned { color: var(--red-light); background: rgba(211, 47, 47, 0.2); }
 
         .btn-action { padding: 6px 10px; font-size: 10px; font-weight: 700; text-transform: uppercase; border: none; border-radius: 3px; cursor: pointer; margin-right: 4px; }
         .btn-pending { background: #d4af37; color: #000; }
@@ -109,6 +110,7 @@
         <button class="tab-btn" id="btnTab4" style="display: none;" onclick="switchTab('tab4')">4. STOCK ON-HAND</button>
         <button class="tab-btn" id="btnTab5" style="display: none;" onclick="switchTab('tab5')">5. STAFF PROFILES</button>
         <button class="tab-btn" id="btnTab6" style="display: none;" onclick="switchTab('tab6')">6. AUDIT LOGS</button>
+        <button class="tab-btn" id="btnTab7" onclick="switchTab('tab7')">7. RETURNS & RESTOCK</button>
     </div>
 
     <!-- TAB 1: POS SCAN OUT -->
@@ -297,6 +299,57 @@
         </table>
     </div>
 
+    <!-- TAB 7: RETURNS & RESTOCK HUB -->
+    <div id="tab7" class="tab-content">
+        <div class="section-title">Customer Order Returns & Inventory Restock</div>
+        <form id="returnForm" onsubmit="handleReturnSubmit(event)" style="margin-bottom: 28px;">
+            <div class="form-group">
+                <label>Select Dispatched Order / Transaction</label>
+                <select id="returnOrderSelect" class="form-control" onchange="autofillReturnDetails()" required>
+                    <option value="">-- Choose Order to Return --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Return Quantity</label>
+                <input type="number" id="returnQty" class="form-control" value="1" min="1" required>
+            </div>
+            <div class="form-group">
+                <label>Reason for Return</label>
+                <select id="returnReason" class="form-control" required>
+                    <option value="Customer Change of Mind">Customer Change of Mind</option>
+                    <option value="Defective / Damaged Item">Defective / Damaged Item</option>
+                    <option value="Incorrect Item Dispatched">Incorrect Item Dispatched</option>
+                    <option value="Exchanged for Other Product">Exchanged for Other Product</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Inventory Restock Action</label>
+                <select id="restockAction" class="form-control" required>
+                    <option value="YES_RESTOCK">YES - Restock item back to active inventory</option>
+                    <option value="NO_RESTOCK">NO - Do not restock (Damaged / Written off)</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-submit" style="background: var(--red-light); color: #fff;">Process Return & Adjust Stock</button>
+        </form>
+
+        <div class="section-title">Processed Returns Log</div>
+        <table class="ledger-table">
+            <thead>
+                <tr>
+                    <th>Return Date</th>
+                    <th>Order Ref / Item</th>
+                    <th>Qty</th>
+                    <th>Reason</th>
+                    <th>Restocked?</th>
+                    <th>Processed By</th>
+                </tr>
+            </thead>
+            <tbody id="returnsLogTable">
+                <tr><td colspan="6" style="color: var(--text-muted);">Loading returns log...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
     <!-- LOGIN MODAL -->
     <div class="modal-overlay" id="loginModal">
         <div class="modal-card">
@@ -443,9 +496,11 @@
             cachedInventory = inventory || [];
 
             populatePosItemDropdown(cachedInventory, cachedOrders);
+            populateReturnsOrderDropdown(cachedOrders);
             renderAdminOrders(cachedOrders);
             renderStockTable(cachedInventory);
             fetchAuditLogs();
+            fetchReturnsLog();
         }
 
         function populatePosItemDropdown(inventory, orders) {
@@ -483,7 +538,30 @@
             });
         }
 
-        /* AUTO RETRIEVE PRODUCT ON BARCODE / ITEM NO SCAN */
+        function populateReturnsOrderDropdown(orders) {
+            const select = document.getElementById('returnOrderSelect');
+            if (!select) return;
+            select.innerHTML = '<option value="">-- Choose Order to Return --</option>';
+
+            orders.filter(o => o.payout_status !== 'RETURNED / CANCELLED').forEach(order => {
+                const opt = document.createElement('option');
+                opt.value = order.id;
+                opt.dataset.itemName = order.item_name;
+                opt.dataset.qty = order.quantity_dispatched || 1;
+                opt.dataset.orderRef = order.order_number;
+                opt.innerText = `#${order.order_number || order.id} - ${order.item_name} (Qty: ${order.quantity_dispatched || 1})`;
+                select.appendChild(opt);
+            });
+        }
+
+        function autofillReturnDetails() {
+            const select = document.getElementById('returnOrderSelect');
+            const selected = select.options[select.selectedIndex];
+            if (selected && selected.value) {
+                document.getElementById('returnQty').value = selected.dataset.qty || 1;
+            }
+        }
+
         function handleBarcodeScanInput() {
             const val = document.getElementById('posBarcodeScan').value.trim().toLowerCase();
             if (!val) return;
@@ -538,6 +616,8 @@
                 if (status === 'SETTLED') settledSum += wholesaleVal;
                 else if (status === 'ESCROW PENDING') pendingSum += wholesaleVal;
 
+                const badgeClass = status === 'SETTLED' ? 'status-settled' : (status === 'RETURNED / CANCELLED' ? 'status-returned' : 'status-pending');
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>
@@ -549,7 +629,7 @@
                     <td style="color: var(--gold-light); font-weight: bold;">${order.processed_by || 'Unassigned'}</td>
                     <td>${qty}</td>
                     <td style="font-weight: 700;">R ${wholesaleVal.toFixed(2)}</td>
-                    <td><span class="status-badge ${status === 'SETTLED' ? 'status-settled' : 'status-pending'}">${status}</span></td>
+                    <td><span class="status-badge ${badgeClass}">${status}</span></td>
                     <td>
                         <button class="btn-action ${status === 'SETTLED' ? 'btn-pending' : 'btn-settled'}" onclick="updateStatus('${order.id}', '${status === 'SETTLED' ? 'ESCROW PENDING' : 'SETTLED'}')">${status === 'SETTLED' ? 'Pending' : 'Settle'}</button>
                         <button class="btn-action btn-delete" onclick="deleteOrder('${order.id}')">Delete</button>
@@ -564,7 +644,6 @@
             document.getElementById('adminNet').innerText = `R ${netPayout.toFixed(2)}`;
         }
 
-        /* CAPTURED STOCK SLOT WITH EDIT AND DELETE CONTROLS */
         function renderStockTable(inventory) {
             const tbody = document.getElementById('stockTableBody');
             if (!tbody) return;
@@ -603,6 +682,88 @@
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        async function handleReturnSubmit(e) {
+            e.preventDefault();
+            if (!currentUser) return openLoginModal();
+
+            const orderSelect = document.getElementById('returnOrderSelect');
+            const selectedOpt = orderSelect.options[orderSelect.selectedIndex];
+            if (!selectedOpt || !selectedOpt.value) return alert('Select an order to return.');
+
+            const orderId = selectedOpt.value;
+            const itemName = selectedOpt.dataset.itemName;
+            const orderRef = selectedOpt.dataset.orderRef;
+            const returnQty = parseInt(document.getElementById('returnQty').value) || 1;
+            const reason = document.getElementById('returnReason').value;
+            const restockAction = document.getElementById('restockAction').value;
+
+            const { error: updateError } = await supabaseClient
+                .from('orders')
+                .update({ payout_status: 'RETURNED / CANCELLED' })
+                .eq('id', orderId);
+
+            if (updateError) return alert('Error cancelling order: ' + updateError.message);
+
+            if (restockAction === 'YES_RESTOCK') {
+                const stockMatch = cachedInventory.find(i => (i.item_name || i.item_description || '').trim() === itemName.trim());
+                if (stockMatch) {
+                    const currentQty = parseInt(stockMatch.quantity_allocated || stockMatch.quantity) || 0;
+                    await supabaseClient.from('inventory').update({
+                        quantity_allocated: currentQty + returnQty,
+                        quantity: currentQty + returnQty
+                    }).eq('id', stockMatch.id);
+                }
+            }
+
+            try {
+                await supabaseClient.from('returns').insert([{
+                    order_id: orderId,
+                    order_ref: orderRef,
+                    item_name: itemName,
+                    return_qty: returnQty,
+                    reason: reason,
+                    restocked: restockAction === 'YES_RESTOCK',
+                    processed_by: currentUser.full_name
+                }]);
+            } catch (err) {
+                console.warn('Returns log bypassed:', err);
+            }
+
+            logAuditAction(`Processed Return for Order #${orderRef} (${itemName}, Restocked: ${restockAction}) by ${currentUser.full_name}`);
+            alert(`Return processed successfully! Order #${orderRef} marked as RETURNED / CANCELLED.`);
+            document.getElementById('returnForm').reset();
+            fetchAdminOrders();
+        }
+
+        async function fetchReturnsLog() {
+            if (!supabaseClient) return;
+            const tbody = document.getElementById('returnsLogTable');
+            if (!tbody) return;
+
+            try {
+                const { data: returns } = await supabaseClient.from('returns').select('*').order('created_at', { ascending: false });
+                tbody.innerHTML = '';
+                if (!returns || returns.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="color: var(--text-muted);">No returns processed yet.</td></tr>';
+                    return;
+                }
+                returns.forEach(r => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${new Date(r.created_at).toLocaleDateString()}</td>
+                        <td style="font-weight: bold;">#${r.order_ref} - ${r.item_name}</td>
+                        <td>${r.return_qty}</td>
+                        <td>${r.reason}</td>
+                        <td>${r.restocked ? '<span style="color: var(--green-light); font-weight: bold;">YES</span>' : '<span style="color: var(--red-light); font-weight: bold;">NO</span>'}</td>
+                        <td style="color: var(--gold-light); font-weight: bold;">${r.processed_by || 'Staff'}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="6" style="color: var(--text-muted);">Returns table not initialized in database.</td></tr>';
+            }
         }
 
         async function saveStockEdit(stockId) {
