@@ -236,29 +236,40 @@
         let velocityChart = null;
 
         async function fetchLedgerData() {
-            // Fetch Inventory count
-            const { data: invData } = await supabaseClient.from('inventory').select('id');
-            const skuCount = invData ? invData.length : 0;
-            document.getElementById('cardSkus').innerText = `${skuCount} Lines`;
+            try {
+                // Fetch Inventory count
+                const { data: invData } = await supabaseClient.from('inventory').select('id');
+                const skuCount = invData ? invData.length : 0;
+                document.getElementById('cardSkus').innerText = `${skuCount} Lines`;
 
-            // Fetch Orders
-            const { data: ordersData, error } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
+                // Fetch Orders
+                const { data: ordersData, error } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
 
-            if (!error && ordersData) {
-                renderDashboard(ordersData);
+                if (error) {
+                    console.error("Supabase fetch error:", error);
+                    return;
+                }
+
+                if (ordersData) {
+                    renderDashboard(ordersData);
+                }
+            } catch (err) {
+                console.error("Execution error:", err);
             }
         }
 
         function renderDashboard(orders) {
             // 1. Total Units Sold
             let totalUnits = 0;
-            orders.forEach(o => totalUnits += (o.quantity_dispatched || 1));
+            orders.forEach(o => {
+                totalUnits += (parseInt(o.quantity_dispatched) || 1);
+            });
             document.getElementById('cardUnits').innerText = `${totalUnits} Units`;
 
-            // 2. Locked Wholesale Payout Owed (FILTERED ONLY FOR 'ESCROW PENDING')
+            // 2. Locked Wholesale Payout Owed (Summing ONLY 'ESCROW PENDING')
             const totalOwed = orders
                 .filter(order => order.payout_status === 'ESCROW PENDING')
-                .reduce((sum, order) => sum + parseFloat(order.wholesale_floor_zar || 0), 0);
+                .reduce((sum, order) => sum + (parseFloat(order.wholesale_floor_zar) || 0), 0);
 
             document.getElementById('cardOwed').innerText = `R ${Math.round(totalOwed).toLocaleString()}`;
 
@@ -266,26 +277,37 @@
             const manifestList = document.getElementById('manifestList');
             manifestList.innerHTML = '';
 
-            orders.forEach(order => {
-                const isSettled = order.payout_status === 'SETTLED';
-                const dateStr = order.created_at ? new Date(order.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'Short', year: 'numeric' }) : '';
+            if (orders.length === 0) {
+                manifestList.innerHTML = '<div style="color: var(--text-muted); font-size: 12px;">No orders found.</div>';
+            } else {
+                orders.forEach(order => {
+                    const isSettled = order.payout_status === 'SETTLED';
+                    
+                    let dateStr = 'Recent';
+                    if (order.created_at) {
+                        const parsedDate = new Date(order.created_at);
+                        if (!isNaN(parsedDate.getTime())) {
+                            dateStr = parsedDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                        }
+                    }
 
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'manifest-item';
-                itemDiv.innerHTML = `
-                    <div>
-                        <div class="item-title">${order.item_name}</div>
-                        <div class="item-sub">Order Ref: ${order.order_number} • ${dateStr}</div>
-                    </div>
-                    <div>
-                        <div class="item-price">R ${Math.round(order.wholesale_floor_zar)}</div>
-                        <div class="badge-status ${isSettled ? 'status-settled' : 'status-escrow'}">
-                            ${order.payout_status}
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'manifest-item';
+                    itemDiv.innerHTML = `
+                        <div>
+                            <div class="item-title">${order.item_name || 'Consignment Item'}</div>
+                            <div class="item-sub">Order Ref: ${order.order_number || 'N/A'} • ${dateStr}</div>
                         </div>
-                    </div>
-                `;
-                manifestList.appendChild(itemDiv);
-            });
+                        <div>
+                            <div class="item-price">R ${Math.round(parseFloat(order.wholesale_floor_zar) || 0)}</div>
+                            <div class="badge-status ${isSettled ? 'status-settled' : 'status-escrow'}">
+                                ${order.payout_status || 'ESCROW PENDING'}
+                            </div>
+                        </div>
+                    `;
+                    manifestList.appendChild(itemDiv);
+                });
+            }
 
             // 4. Render Velocity Chart
             renderChart(orders);
@@ -296,8 +318,14 @@
             
             // Group sales by date
             orders.slice().reverse().forEach(o => {
-                const dateKey = o.created_at ? new Date(o.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'Short', year: 'numeric' }) : 'Recent';
-                dateMap[dateKey] = (dateMap[dateKey] || 0) + (o.quantity_dispatched || 1);
+                let dateKey = 'Recent';
+                if (o.created_at) {
+                    const parsedDate = new Date(o.created_at);
+                    if (!isNaN(parsedDate.getTime())) {
+                        dateKey = parsedDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                    }
+                }
+                dateMap[dateKey] = (dateMap[dateKey] || 0) + (parseInt(o.quantity_dispatched) || 1);
             });
 
             const labels = Object.keys(dateMap);
