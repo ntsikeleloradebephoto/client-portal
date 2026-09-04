@@ -79,6 +79,8 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 999; }
         .modal-card { background: var(--panel-dark); border: 2px solid var(--border-gold); padding: 30px; border-radius: 6px; width: 340px; text-align: center; }
 
+        .table-input { background: #08090a; border: 1px solid #333; color: #fff; padding: 6px; border-radius: 3px; font-size: 12px; width: 90%; }
+
         @media print {
             body * { visibility: hidden; }
             #receiptModal, #receiptModal * { visibility: visible; }
@@ -114,8 +116,8 @@
         <div class="section-title">POS Dispatch / Scan Out</div>
         <form id="posForm" onsubmit="handlePosSubmit(event)">
             <div class="form-group">
-                <label>Scan Barcode / Item Number (Auto-Selects Item)</label>
-                <input type="text" id="posBarcodeScan" class="form-control" placeholder="Scan Barcode or Type Item No..." oninput="handleBarcodeScanInput()">
+                <label>Scan Barcode / Item Number (Auto-Retrieves Details)</label>
+                <input type="text" id="posBarcodeScan" class="form-control" placeholder="Scan Barcode or Type Item No..." oninput="handleBarcodeScanInput()" autofocus>
             </div>
             <div class="form-group">
                 <label>Select Inventory Item (Live Stock)</label>
@@ -220,23 +222,22 @@
         </table>
     </div>
 
-    <!-- TAB 4: STOCK ON-HAND -->
+    <!-- TAB 4: STOCK ON-HAND & EDITING -->
     <div id="tab4" class="tab-content">
-        <div class="section-title">Active Stock Levels & Reorder Thresholds</div>
+        <div class="section-title">Active Stock Inventory Management</div>
         <table class="ledger-table">
             <thead>
                 <tr>
-                    <th>Item No / SKU</th>
+                    <th>SKU / Barcode</th>
                     <th>Product / Description</th>
                     <th>Supplier Partner</th>
-                    <th>Total Intake</th>
-                    <th>Dispatched</th>
-                    <th>Stock On-Hand</th>
-                    <th>Status</th>
+                    <th>Intake Qty</th>
+                    <th>Unit Price (ZAR)</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody id="stockTableBody">
-                <tr><td colspan="7" style="color: var(--text-muted);">Calculating stock...</td></tr>
+                <tr><td colspan="6" style="color: var(--text-muted);">Loading captured stock...</td></tr>
             </tbody>
         </table>
     </div>
@@ -436,14 +437,14 @@
         async function fetchAdminOrders() {
             if (!supabaseClient) return;
             const { data: orders } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
-            const { data: inventory } = await supabaseClient.from('inventory').select('*');
+            const { data: inventory } = await supabaseClient.from('inventory').select('*').order('created_at', { ascending: false });
 
             cachedOrders = orders || [];
             cachedInventory = inventory || [];
 
             populatePosItemDropdown(cachedInventory, cachedOrders);
             renderAdminOrders(cachedOrders);
-            renderStockTable(cachedInventory, cachedOrders);
+            renderStockTable(cachedInventory);
             fetchAuditLogs();
         }
 
@@ -482,6 +483,7 @@
             });
         }
 
+        /* AUTO RETRIEVE PRODUCT ON BARCODE / ITEM NO SCAN */
         function handleBarcodeScanInput() {
             const val = document.getElementById('posBarcodeScan').value.trim().toLowerCase();
             if (!val) return;
@@ -495,6 +497,7 @@
                 if (optSku === val || optName === val) {
                     select.selectedIndex = i;
                     autofillPosDetails();
+                    document.getElementById('posQty').focus();
                     break;
                 }
             }
@@ -561,41 +564,90 @@
             document.getElementById('adminNet').innerText = `R ${netPayout.toFixed(2)}`;
         }
 
-        function renderStockTable(inventory, orders) {
+        /* CAPTURED STOCK SLOT WITH EDIT AND DELETE CONTROLS */
+        function renderStockTable(inventory) {
             const tbody = document.getElementById('stockTableBody');
             if (!tbody) return;
             tbody.innerHTML = '';
-            const stockMap = {};
+
+            if (inventory.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="color: var(--text-muted);">No inventory records captured yet.</td></tr>';
+                return;
+            }
 
             inventory.forEach(item => {
-                const name = (item.item_name || item.item_description || item.sku || 'Unknown').trim();
-                const sku = item.sku || 'N/A';
-                stockMap[name] = stockMap[name] || { name: name, sku: sku, supplier: item.supplier || 'General', intake: 0, dispatched: 0 };
-                stockMap[name].intake += (parseInt(item.quantity_allocated || item.quantity) || 0);
-            });
-
-            orders.forEach(order => {
-                if (order.payout_status !== 'RETURNED / CANCELLED') {
-                    const name = (order.item_name || 'Unknown').trim();
-                    if (stockMap[name]) stockMap[name].dispatched += (parseInt(order.quantity_dispatched) || 1);
-                }
-            });
-
-            Object.keys(stockMap).forEach(k => {
-                const item = stockMap[k];
-                const onHand = item.intake - item.dispatched;
                 const tr = document.createElement('tr');
+                const priceVal = item.wholesale_floor_zar || item.unit_price || item.cost_price || 0;
+                const qtyVal = item.quantity_allocated || item.quantity || 0;
+
                 tr.innerHTML = `
-                    <td style="color: var(--gold-light); font-weight: bold;">${item.sku}</td>
-                    <td style="font-weight: bold;">${item.name}</td>
-                    <td>${item.supplier}</td>
-                    <td>${item.intake} Units</td>
-                    <td>${item.dispatched} Units</td>
-                    <td style="font-weight: bold; font-size: 14px;">${onHand} Units</td>
-                    <td>${onHand <= 0 ? '<span style="color: var(--red-light); font-weight: bold;">OUT OF STOCK</span>' : '<span style="color: var(--green-light); font-weight: bold;">HEALTHY</span>'}</td>
+                    <td style="color: var(--gold-light); font-weight: bold;">
+                        <input type="text" class="table-input" id="sku_${item.id}" value="${item.sku || ''}">
+                    </td>
+                    <td>
+                        <input type="text" class="table-input" id="name_${item.id}" value="${item.item_name || item.item_description || ''}">
+                    </td>
+                    <td>
+                        <input type="text" class="table-input" id="supplier_${item.id}" value="${item.supplier || ''}">
+                    </td>
+                    <td>
+                        <input type="number" class="table-input" id="qty_${item.id}" style="width: 70px;" value="${qtyVal}">
+                    </td>
+                    <td>
+                        <input type="number" class="table-input" id="price_${item.id}" style="width: 90px;" value="${priceVal}">
+                    </td>
+                    <td>
+                        <button class="btn-action btn-settled" onclick="saveStockEdit('${item.id}')">Save</button>
+                        <button class="btn-action btn-delete" onclick="deleteStockItem('${item.id}')">Delete</button>
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        async function saveStockEdit(stockId) {
+            if (!currentUser) return openLoginModal();
+
+            const sku = document.getElementById(`sku_${stockId}`).value.trim();
+            const itemName = document.getElementById(`name_${stockId}`).value.trim();
+            const supplier = document.getElementById(`supplier_${stockId}`).value.trim();
+            const qty = parseInt(document.getElementById(`qty_${stockId}`).value) || 0;
+            const price = parseFloat(document.getElementById(`price_${stockId}`).value) || 0;
+
+            const { error } = await supabaseClient.from('inventory').update({
+                sku: sku,
+                item_name: itemName,
+                item_description: itemName,
+                supplier: supplier,
+                quantity_allocated: qty,
+                quantity: qty,
+                unit_price: price,
+                cost_price: price,
+                wholesale_floor_zar: price
+            }).eq('id', stockId);
+
+            if (error) {
+                alert('Failed to update stock: ' + error.message);
+            } else {
+                logAuditAction(`Updated Stock Item [${sku}] ${itemName} by ${currentUser.full_name}`);
+                alert('Stock item details successfully updated!');
+                fetchAdminOrders();
+            }
+        }
+
+        async function deleteStockItem(stockId) {
+            if (!currentUser) return openLoginModal();
+            if (!confirm('Are you sure you want to permanently delete this inventory line?')) return;
+
+            const { error } = await supabaseClient.from('inventory').delete().eq('id', stockId);
+
+            if (error) {
+                alert('Failed to delete stock item: ' + error.message);
+            } else {
+                logAuditAction(`Deleted Stock Item ID ${stockId} by ${currentUser.full_name}`);
+                alert('Stock item removed from inventory.');
+                fetchAdminOrders();
+            }
         }
 
         async function handlePosSubmit(e) {
@@ -634,6 +686,7 @@
                 showReceipt(orderRef, itemName, qty, wholesale, currentUser.full_name);
                 document.getElementById('posForm').reset();
                 document.getElementById('posBarcodeScan').value = '';
+                document.getElementById('posBarcodeScan').focus();
                 fetchAdminOrders();
             }
         }
@@ -686,13 +739,10 @@
                 added_by: currentUser.full_name
             };
 
-            console.log("Submitting inventory payload:", payload);
-
             const { data, error } = await supabaseClient.from('inventory').insert([payload]);
 
             if (error) {
-                console.error("Supabase Stock Insert Error:", error);
-                alert(`Stock Intake Failed: ${error.message} (${error.details || error.code})`);
+                alert(`Stock Intake Failed: ${error.message}`);
             } else {
                 logAuditAction(`Added stock ${stockName} [${generatedSku}] (${qty} units) by ${currentUser.full_name}`);
                 alert(`Success: ${qty} units of "${stockName}" [SKU: ${generatedSku}] added to inventory!`);
