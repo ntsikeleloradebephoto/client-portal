@@ -199,7 +199,7 @@
         </div>
         <div class="card">
             <div class="card-label">Active Pilot SKUs</div>
-            <div class="card-val" id="cardSkus">0 Lines</div>
+            <div class="card-val" id="cardSkus">5 Lines</div>
         </div>
         <div class="card">
             <div class="card-label">Settlement Cycle</div>
@@ -248,17 +248,12 @@
                     return;
                 }
 
-                // Check optional inventory table count; fallback to distinct product names
+                // Check inventory count if available, otherwise set 5 Pilot Lines
                 const { data: invData } = await supabaseClient.from('inventory').select('id');
-                let skuCount = invData && invData.length > 0 ? invData.length : 0;
+                const skuCount = (invData && invData.length > 0) ? invData.length : 5;
+                document.getElementById('cardSkus').innerText = `${skuCount} Lines`;
 
                 if (ordersData) {
-                    if (skuCount === 0) {
-                        const uniqueSkus = new Set(ordersData.map(o => o.item_name ? o.item_name.toLowerCase().trim() : 'item'));
-                        skuCount = Math.max(uniqueSkus.size, 5); // Default to 5 active lines
-                    }
-                    document.getElementById('cardSkus').innerText = `${skuCount} Lines`;
-
                     renderDashboard(ordersData);
                 }
             } catch (err) {
