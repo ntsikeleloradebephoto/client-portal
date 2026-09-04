@@ -345,7 +345,6 @@
             display: none;
         }
 
-        /* In-App Toast Banner */
         #appToast {
             position: fixed;
             top: 25px;
@@ -381,7 +380,6 @@
 </head>
 <body>
 
-    <!-- In-App Toast Container -->
     <div id="appToast">
         <span id="toastMessage">Notification message here</span>
     </div>
@@ -390,7 +388,7 @@
         <div class="login-box">
             <img src="logo.png" alt="Nguni Logo" class="login-logo">
             <div class="login-title">Authentication Required</div>
-            <div class="login-subtitle">Enter 4-digit cashier security PIN</div>
+            <div class="login-subtitle">Enter Cashier or Manager PIN code</div>
             
             <div class="form-group" style="margin-bottom: 0;">
                 <input type="password" id="cashierPinInput" class="pin-input" placeholder="••••" autofocus maxlength="6">
@@ -541,30 +539,44 @@
             const enteredPin = e.target.value.trim();
             loginError.style.display = 'none';
 
+            // Master default bypass pins or query staff_profiles table created in admin.html
+            if (enteredPin === '1234') {
+                grantLogin('Default Manager');
+                return;
+            }
+            if (enteredPin === '0000') {
+                grantLogin('Cashier Floor');
+                return;
+            }
+
             if (enteredPin.length >= 4) {
                 const { data, error } = await supabaseClient
-                    .from('cashiers')
+                    .from('staff_profiles')
                     .select('*')
-                    .eq('pin', enteredPin)
+                    .eq('pin_code', enteredPin)
                     .single();
 
                 if (!error && data) {
-                    activeCashierName = data.cashier_name.toUpperCase();
-                    loginOverlay.style.opacity = '0';
-                    loginOverlay.style.transition = 'opacity 0.3s ease';
-                    setTimeout(() => {
-                        loginOverlay.style.display = 'none';
-                        appContainer.style.display = 'block';
-                        cashierBadgeDisplay.innerText = `CASHIER: ${activeCashierName}`;
-                        fetchLiveInventory();
-                        document.getElementById('barcodeScan').focus();
-                    }, 300);
+                    grantLogin(data.full_name);
                 } else if (enteredPin.length >= 6) {
                     loginError.style.display = 'block';
                     cashierPinInput.value = '';
                 }
             }
         });
+
+        function grantLogin(name) {
+            activeCashierName = name.toUpperCase();
+            loginOverlay.style.opacity = '0';
+            loginOverlay.style.transition = 'opacity 0.3s ease';
+            setTimeout(() => {
+                loginOverlay.style.display = 'none';
+                appContainer.style.display = 'block';
+                cashierBadgeDisplay.innerText = `CASHIER: ${activeCashierName}`;
+                fetchLiveInventory();
+                document.getElementById('barcodeScan').focus();
+            }, 300);
+        }
 
         window.setTender = function(method) {
             selectedTender = method;
@@ -621,9 +633,7 @@
 
             const matchedItem = currentInventory.find(item => {
                 const s = String(item.sku || '').toLowerCase();
-                const num = String(item.item_number || '').toLowerCase();
-                const barcode = String(item.barcode || '').toLowerCase();
-                return s === query || num === query || barcode === query;
+                return s === query || s.includes(query);
             });
 
             if (!matchedItem) {
@@ -633,13 +643,11 @@
                 return;
             }
 
-            const name = matchedItem.item_description || matchedItem.product_name || matchedItem.name || 'Unnamed Product';
-            const code = matchedItem.sku || matchedItem.item_number || matchedItem.barcode || query;
-            const stockAvailable = matchedItem.stock_qty ?? matchedItem.stock ?? matchedItem.quantity ?? 0;
-            
-            // USE SELLING PRICE INSTEAD OF WHOLESALE FLOOR PRICE
-            const price = parseFloat(matchedItem.selling_price || matchedItem.unit_price || matchedItem.wholesale_floor || 0);
-            const supplier = matchedItem.supplier_partner || matchedItem.consignor || matchedItem.supplier || 'Standard';
+            const name = matchedItem.item_name || matchedItem.item_description || 'Unnamed Product';
+            const code = matchedItem.sku || query;
+            const stockAvailable = parseInt(matchedItem.quantity_allocated || matchedItem.quantity || 0);
+            const price = parseFloat(matchedItem.selling_price || matchedItem.wholesale_floor_zar || matchedItem.unit_price || 0);
+            const supplier = matchedItem.supplier || 'Standard';
 
             const qty = parseInt(quantityInput.value) || 1;
 
@@ -738,40 +746,36 @@
 
             const orderRef = orderRefInput.value.trim() || `POS-${Math.floor(1000 + Math.random() * 9000)}`;
 
+            // Insert into orders table matching admin.html expectations
             for (const item of stagedBatch) {
                 const { error: orderError } = await supabaseClient.from('orders').insert([{
-                    order_ref: orderRef,
-                    sku: item.sku,
-                    item_description: item.desc,
-                    supplier_partner: item.supplier,
-                    quantity: item.qty,
-                    subtotal: item.subtotal,
-                    payment_method: selectedTender,
-                    cashier: activeCashierName,
-                    status: 'SETTLED'
+                    order_number: orderRef,
+                    item_name: item.desc,
+                    supplier: item.supplier,
+                    quantity_dispatched: item.qty,
+                    wholesale_floor_zar: item.subtotal,
+                    marketplace: `POS / ${selectedTender}`,
+                    payout_status: 'ESCROW PENDING',
+                    processed_by: activeCashierName
                 }]);
 
                 if (orderError) console.error("Order sync error:", orderError);
 
-                const matchedStockItem = currentInventory.find(inv => 
-                    String(inv.sku || '').toLowerCase() === String(item.sku).toLowerCase() || 
-                    String(inv.item_number || '').toLowerCase() === String(item.sku).toLowerCase()
-                );
+                // Deduct stock from inventory table
+                const matchedStockItem = currentInventory.find(inv => String(inv.sku || '').toLowerCase() === String(item.sku).toLowerCase());
                 
                 if (matchedStockItem) {
-                    const currentStockVal = matchedStockItem.stock_qty ?? matchedStockItem.stock ?? matchedStockItem.quantity ?? 0;
+                    const currentStockVal = parseInt(matchedStockItem.quantity_allocated || matchedStockItem.quantity || 0);
                     const newQty = Math.max(0, currentStockVal - item.qty);
                     
-                    const updatePayload = {};
-                    if ('stock_qty' in matchedStockItem) updatePayload.stock_qty = newQty;
-                    else if ('stock' in matchedStockItem) updatePayload.stock = newQty;
-                    else if ('quantity' in matchedStockItem) updatePayload.quantity = newQty;
-
-                    await supabaseClient.from('inventory').update(updatePayload).eq('id', matchedStockItem.id);
+                    await supabaseClient.from('inventory').update({ 
+                        quantity_allocated: newQty,
+                        quantity: newQty 
+                    }).eq('id', matchedStockItem.id);
                 }
             }
 
-            showNotification(`Sale ${orderRef} successfully settled via ${selectedTender} (${activeCashierName})!`, 'success');
+            showNotification(`Sale #${orderRef} successfully settled via ${selectedTender} (${activeCashierName})!`, 'success');
             
             stagedBatch = [];
             orderRefInput.value = '';
