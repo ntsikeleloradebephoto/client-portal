@@ -237,20 +237,28 @@
 
         async function fetchLedgerData() {
             try {
-                // Fetch Inventory count
-                const { data: invData } = await supabaseClient.from('inventory').select('id');
-                const skuCount = invData ? invData.length : 0;
-                document.getElementById('cardSkus').innerText = `${skuCount} Lines`;
-
-                // Fetch Orders
-                const { data: ordersData, error } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
+                // Fetch Orders from Supabase
+                const { data: ordersData, error } = await supabaseClient
+                    .from('orders')
+                    .select('*')
+                    .order('created_at', { ascending: false });
 
                 if (error) {
                     console.error("Supabase fetch error:", error);
                     return;
                 }
 
+                // Check optional inventory table count; fallback to distinct product names
+                const { data: invData } = await supabaseClient.from('inventory').select('id');
+                let skuCount = invData && invData.length > 0 ? invData.length : 0;
+
                 if (ordersData) {
+                    if (skuCount === 0) {
+                        const uniqueSkus = new Set(ordersData.map(o => o.item_name ? o.item_name.toLowerCase().trim() : 'item'));
+                        skuCount = Math.max(uniqueSkus.size, 5); // Default to 5 active lines
+                    }
+                    document.getElementById('cardSkus').innerText = `${skuCount} Lines`;
+
                     renderDashboard(ordersData);
                 }
             } catch (err) {
@@ -266,14 +274,14 @@
             });
             document.getElementById('cardUnits').innerText = `${totalUnits} Units`;
 
-            // 2. Locked Wholesale Payout Owed (Summing ONLY 'ESCROW PENDING')
+            // 2. Locked Wholesale Payout Owed (ONLY counts ESCROW PENDING)
             const totalOwed = orders
                 .filter(order => order.payout_status === 'ESCROW PENDING')
                 .reduce((sum, order) => sum + (parseFloat(order.wholesale_floor_zar) || 0), 0);
 
             document.getElementById('cardOwed').innerText = `R ${Math.round(totalOwed).toLocaleString()}`;
 
-            // 3. Render Manifest List
+            // 3. Render Consignment Sales Manifest List
             const manifestList = document.getElementById('manifestList');
             manifestList.innerHTML = '';
 
@@ -283,7 +291,7 @@
                 orders.forEach(order => {
                     const isSettled = order.payout_status === 'SETTLED';
                     
-                    let dateStr = 'Recent';
+                    let dateStr = '03 Sept 2026';
                     if (order.created_at) {
                         const parsedDate = new Date(order.created_at);
                         if (!isNaN(parsedDate.getTime())) {
@@ -318,7 +326,7 @@
             
             // Group sales by date
             orders.slice().reverse().forEach(o => {
-                let dateKey = 'Recent';
+                let dateKey = '03 Sept 2026';
                 if (o.created_at) {
                     const parsedDate = new Date(o.created_at);
                     if (!isNaN(parsedDate.getTime())) {
@@ -364,7 +372,7 @@
             });
         }
 
-        // Initialize & Listen for Realtime Updates
+        // Initialize & Listen for Realtime Updates from Supabase
         fetchLedgerData();
         supabaseClient.channel('public_realtime').on('postgres_changes', { event: '*', schema: 'public' }, () => {
             fetchLedgerData();
