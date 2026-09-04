@@ -446,7 +446,7 @@
             const stockMap = {};
             inventory.forEach(item => {
                 const name = (item.item_name || item.item_description || item.sku || 'Unknown Item').trim();
-                stockMap[name] = stockMap[name] || { name: name, intake: 0, dispatched: 0, supplier: item.supplier || 'General', price: item.unit_price || item.cost_price || 0 };
+                stockMap[name] = stockMap[name] || { name: name, intake: 0, dispatched: 0, supplier: item.supplier || 'General', price: item.wholesale_floor_zar || item.unit_price || item.cost_price || 0 };
                 stockMap[name].intake += (parseInt(item.quantity_allocated || item.quantity) || 0);
             });
 
@@ -647,6 +647,7 @@
                 quantity: qty,
                 unit_price: unitPrice,
                 cost_price: unitPrice,
+                wholesale_floor_zar: unitPrice, // Added to fix NOT-NULL constraint
                 supplier: supplier,
                 added_by: currentUser.full_name
             };
