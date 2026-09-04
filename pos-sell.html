@@ -439,7 +439,7 @@
                             <input type="number" id="stockAvail" readonly value="0">
                         </div>
                         <div class="form-group">
-                            <label for="unitPrice">Unit Price (ZAR)</label>
+                            <label for="unitPrice">Selling Price (ZAR)</label>
                             <input type="number" id="unitPrice" readonly value="0.00">
                         </div>
                     </div>
@@ -608,7 +608,6 @@
             }
         }
 
-        // FULLY AUTOMATED SCANNING & STAGING ON ENTER KEY
         barcodeInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -620,7 +619,6 @@
             const query = barcodeInput.value.trim().toLowerCase();
             if (!query) return;
 
-            // Find matching item in inventory database
             const matchedItem = currentInventory.find(item => {
                 const s = String(item.sku || '').toLowerCase();
                 const num = String(item.item_number || '').toLowerCase();
@@ -638,7 +636,9 @@
             const name = matchedItem.item_description || matchedItem.product_name || matchedItem.name || 'Unnamed Product';
             const code = matchedItem.sku || matchedItem.item_number || matchedItem.barcode || query;
             const stockAvailable = matchedItem.stock_qty ?? matchedItem.stock ?? matchedItem.quantity ?? 0;
-            const price = parseFloat(matchedItem.wholesale_floor || matchedItem.unit_price || matchedItem.price || 0);
+            
+            // USE SELLING PRICE INSTEAD OF WHOLESALE FLOOR PRICE
+            const price = parseFloat(matchedItem.selling_price || matchedItem.unit_price || matchedItem.wholesale_floor || 0);
             const supplier = matchedItem.supplier_partner || matchedItem.consignor || matchedItem.supplier || 'Standard';
 
             const qty = parseInt(quantityInput.value) || 1;
@@ -650,7 +650,6 @@
                 return;
             }
 
-            // Update UI feedback for the last scanned item
             itemDescInput.value = name;
             barcodeDisplay.value = code;
             stockAvailInput.value = stockAvailable;
@@ -659,7 +658,6 @@
 
             const subtotal = qty * price;
 
-            // Check if item is already in the staged batch to increment quantity, or add new row
             const existingBatchIndex = stagedBatch.findIndex(i => i.sku.toLowerCase() === code.toLowerCase());
             if (existingBatchIndex > -1) {
                 stagedBatch[existingBatchIndex].qty += qty;
@@ -678,7 +676,6 @@
 
             renderBatchCart();
 
-            // Clear input and refocus instantly for the next barcode
             barcodeInput.value = '';
             quantityInput.value = '1';
             barcodeInput.focus();
