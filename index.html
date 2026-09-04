@@ -237,7 +237,7 @@
                 </div>
             </div>
             <p style="font-size: 11px; color: var(--text-muted); margin-top: 16px; line-height: 1.5;">
-                Velocity tracking reflects aggregated daily sell-through rates across retail storefront and live POS terminal checkouts.
+                Velocity tracking reflects aggregated sell-through rates and consignment unit dispatch activity.
             </p>
         </div>
 
@@ -291,7 +291,6 @@
             const select = document.getElementById('supplierSelect');
             const suppliers = [...new Set(orders.map(o => o.supplier).filter(Boolean))];
             
-            // Keep the default "ALL" option
             select.innerHTML = '<option value="ALL" style="background:#14161c;">-- All Suppliers / Master View --</option>';
             
             suppliers.forEach(supp => {
@@ -318,7 +317,6 @@
                 ? allInventory
                 : allInventory.filter(i => i.supplier === supplierFilter);
 
-            // Compute Metrics
             let totalUnits = 0;
             let totalOwed = 0;
 
@@ -326,7 +324,6 @@
                 if (order.payout_status !== 'RETURNED / CANCELLED') {
                     totalUnits += (parseInt(order.quantity_dispatched) || 1);
                     if (order.payout_status === 'ESCROW PENDING' || !order.payout_status) {
-                        // EXCLUSIVELY USE WHOLESALE FLOOR PRICE FOR METRICS
                         totalOwed += (parseFloat(order.wholesale_floor_zar) || 0);
                     }
                 }
@@ -336,7 +333,6 @@
             document.getElementById('metricOwed').innerText = `R ${totalOwed.toFixed(2)}`;
             document.getElementById('metricSkus').innerText = `${filteredInventory.length} Lines`;
 
-            // Render Manifest List
             const manifestList = document.getElementById('manifestList');
             manifestList.innerHTML = '';
 
@@ -346,7 +342,6 @@
             }
 
             filteredOrders.forEach(order => {
-                // EXCLUSIVELY USE WHOLESALE FLOOR PRICE (wholesale_floor_zar) FOR MANIFEST AMOUNT
                 const amount = parseFloat(order.wholesale_floor_zar) || 0;
                 const status = order.payout_status || 'ESCROW PENDING';
                 const badgeClass = status === 'SETTLED' ? 'status-settled' : 'status-pending';
