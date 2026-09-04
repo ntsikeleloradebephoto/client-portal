@@ -3,62 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nguni Homeware | Supplier Trade Ledger (tvOS Edition)</title>
+    <title>Nguni Homeware | Supplier Trade Ledger (tvOS Glass Edition)</title>
     <link rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <style>
         :root {
-            --bg-dark: #07080a;
-            --panel-glass: rgba(18, 20, 26, 0.75);
+            --bg-dark: #000000;
+            --panel-glass: rgba(22, 24, 32, 0.45);
             --panel-solid: #12141a;
             --gold-primary: #d4af37;
             --gold-light: #f3c649;
             --text-light: #f5f5f7;
-            --text-muted: #86868b;
-            --border-glass: rgba(212, 175, 55, 0.15);
-            --border-subtle: rgba(255, 255, 255, 0.08);
+            --text-muted: rgba(235, 235, 245, 0.6);
+            --border-glass: rgba(212, 175, 55, 0.2);
+            --border-subtle: rgba(255, 255, 255, 0.12);
             --green-active: #30d158;
             --cyan-bright: #64d2ff;
-            --blur-radius: blur(20px);
+            --glass-blur: blur(40px) saturate(190%);
+            --glass-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-dark);
+            background: radial-gradient(circle at 50% 0%, #151821 0%, #000000 70%);
+            background-attachment: fixed;
             color: var(--text-light);
             margin: 0;
             padding: 32px;
             -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
         }
 
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid var(--border-subtle);
-            padding-bottom: 20px;
+            padding: 20px 28px;
             margin-bottom: 32px;
-            backdrop-filter: var(--blur-radius);
+            background: var(--panel-glass);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            box-shadow: var(--glass-shadow);
         }
 
         .header-title { display: flex; align-items: center; gap: 14px; }
-        .header h1 { font-size: 15px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold-primary); margin: 0; }
+        .header h1 { font-size: 15px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: var(--gold-primary); margin: 0; }
         
         .sync-badge { 
-            background: rgba(48, 209, 88, 0.12); 
-            border: 1px solid rgba(48, 209, 88, 0.3); 
+            background: rgba(48, 209, 88, 0.15); 
+            border: 1px solid rgba(48, 209, 88, 0.35); 
             color: var(--green-active); 
-            padding: 8px 16px; 
+            padding: 8px 18px; 
             border-radius: 980px; 
             font-size: 11px; 
             font-weight: 600; 
             display: flex; 
             align-items: center; 
             gap: 8px;
-            backdrop-filter: var(--blur-radius);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
         }
-        .sync-dot { width: 8px; height: 8px; background: var(--green-active); border-radius: 50%; box-shadow: 0 0 8px var(--green-active); }
+        .sync-dot { width: 8px; height: 8px; background: var(--green-active); border-radius: 50%; box-shadow: 0 0 10px var(--green-active); }
 
         /* KPI METRIC CARDS */
         .metrics-grid {
@@ -71,12 +79,15 @@
         .metric-card {
             background: var(--panel-glass);
             border: 1px solid var(--border-subtle);
-            border-radius: 20px;
+            border-radius: 24px;
             padding: 24px;
-            backdrop-filter: var(--blur-radius);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            box-shadow: var(--glass-shadow);
+            transition: transform 0.25s ease, border-color 0.25s ease;
         }
-        .metric-label { font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1.2px; margin-bottom: 12px; }
+        .metric-card:hover { transform: translateY(-2px); border-color: var(--border-glass); }
+        .metric-label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1.2px; margin-bottom: 12px; }
         .metric-value { font-size: 28px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
 
         /* DASHBOARD SPLIT CONTENT */
@@ -89,17 +100,18 @@
         .panel-box {
             background: var(--panel-glass);
             border: 1px solid var(--border-subtle);
-            border-radius: 20px;
+            border-radius: 28px;
             padding: 28px;
-            backdrop-filter: var(--blur-radius);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            box-shadow: var(--glass-shadow);
         }
 
         .panel-title {
             font-size: 12px;
-            font-weight: 600;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 1.2px;
+            letter-spacing: 1.5px;
             color: var(--gold-primary);
             margin-top: 0;
             margin-bottom: 24px;
@@ -116,16 +128,17 @@
         }
 
         .manifest-item {
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.35);
             border: 1px solid var(--border-subtle);
-            border-radius: 14px;
+            border-radius: 16px;
             padding: 16px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: all 0.2s ease;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(10px);
         }
-        .manifest-item:hover { border-color: var(--border-glass); background: rgba(0, 0, 0, 0.6); }
+        .manifest-item:hover { border-color: var(--border-glass); background: rgba(0, 0, 0, 0.55); transform: scale(1.01); }
 
         .manifest-item-name { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 4px; }
         .manifest-item-meta { font-size: 11px; color: var(--text-muted); }
@@ -133,31 +146,36 @@
         .manifest-item-price { text-align: right; }
         .manifest-amount { font-size: 15px; font-weight: 700; color: var(--gold-light); margin-bottom: 4px; }
         
-        .status-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 3px 8px; border-radius: 980px; display: inline-block; }
-        .status-pending { color: var(--gold-light); background: rgba(212, 175, 55, 0.12); border: 1px solid rgba(212, 175, 55, 0.3); }
-        .status-settled { color: var(--green-active); background: rgba(48, 209, 88, 0.12); border: 1px solid rgba(48, 209, 88, 0.3); }
+        .status-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 980px; display: inline-block; backdrop-filter: blur(10px); }
+        .status-pending { color: var(--gold-light); background: rgba(212, 175, 55, 0.18); border: 1px solid rgba(212, 175, 55, 0.35); }
+        .status-settled { color: var(--green-active); background: rgba(48, 209, 88, 0.18); border: 1px solid rgba(48, 209, 88, 0.35); }
 
         /* SUPPLIER SELECTOR BAR */
         .supplier-filter-bar {
             background: var(--panel-glass);
             border: 1px solid var(--border-subtle);
-            border-radius: 16px;
-            padding: 16px 24px;
-            margin-bottom: 24px;
+            border-radius: 20px;
+            padding: 18px 26px;
+            margin-bottom: 28px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            box-shadow: var(--glass-shadow);
         }
         .form-control {
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.45);
             border: 1px solid var(--border-subtle);
             color: #fff;
             padding: 10px 16px;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 13px;
             font-family: inherit;
+            backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
         }
-        .form-control:focus { outline: none; border-color: var(--gold-primary); }
+        .form-control:focus { outline: none; border-color: var(--gold-primary); box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2); }
 
         @media (max-width: 1024px) {
             .metrics-grid { grid-template-columns: repeat(2, 1fr); }
@@ -222,7 +240,7 @@
                 <svg style="position: absolute; top: 10px; left: 10px; right: 10px; bottom: 10px; width: calc(100% - 20px); height: calc(100% - 20px); overflow: visible;" viewBox="0 0 500 200" preserveAspectRatio="none">
                     <defs>
                         <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="rgba(212, 175, 55, 0.3)" />
+                            <stop offset="0%" stop-color="rgba(212, 175, 55, 0.35)" />
                             <stop offset="100%" stop-color="rgba(212, 175, 55, 0.0)" />
                         </linearGradient>
                     </defs>
@@ -237,7 +255,7 @@
                 </div>
             </div>
             <p style="font-size: 11px; color: var(--text-muted); margin-top: 16px; line-height: 1.5;">
-                Velocity tracking reflects aggregated sell-through rates and consignment unit dispatch activity.
+                Velocity tracking reflects aggregated daily sell-through rates across retail storefront and live POS terminal checkouts.
             </p>
         </div>
 
@@ -291,6 +309,7 @@
             const select = document.getElementById('supplierSelect');
             const suppliers = [...new Set(orders.map(o => o.supplier).filter(Boolean))];
             
+            // Keep the default "ALL" option
             select.innerHTML = '<option value="ALL" style="background:#14161c;">-- All Suppliers / Master View --</option>';
             
             suppliers.forEach(supp => {
@@ -317,6 +336,7 @@
                 ? allInventory
                 : allInventory.filter(i => i.supplier === supplierFilter);
 
+            // Compute Metrics
             let totalUnits = 0;
             let totalOwed = 0;
 
@@ -333,6 +353,7 @@
             document.getElementById('metricOwed').innerText = `R ${totalOwed.toFixed(2)}`;
             document.getElementById('metricSkus').innerText = `${filteredInventory.length} Lines`;
 
+            // Render Manifest List
             const manifestList = document.getElementById('manifestList');
             manifestList.innerHTML = '';
 
