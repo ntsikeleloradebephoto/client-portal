@@ -68,7 +68,7 @@
         /* TABS NAVIGATION */
         .tabs {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 12px;
             margin-bottom: 24px;
         }
@@ -249,7 +249,7 @@
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85);
-            display: none;
+            display: flex;
             justify-content: center;
             align-items: center;
             z-index: 999;
@@ -260,7 +260,7 @@
             border: 2px solid var(--border-gold);
             padding: 30px;
             border-radius: 6px;
-            width: 320px;
+            width: 340px;
             text-align: center;
         }
     </style>
@@ -273,8 +273,8 @@
             <h1>NGUNI HOMEWARE | CONTROL & POS HUB</h1>
         </div>
         <div class="role-badge">
-            <span id="roleLabel">MODE: STAFF POS</span>
-            <button class="btn-sec" onclick="openAuthModal()">AUTHENTICATE MANAGER</button>
+            <span id="roleLabel">ACTIVE USER: NOT LOGGED IN</span>
+            <button class="btn-sec" onclick="openLoginModal()">SWITCH / LOGIN USER</button>
         </div>
     </div>
 
@@ -282,8 +282,9 @@
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('tab1')">1. POS SCAN OUT</button>
         <button class="tab-btn" onclick="switchTab('tab2')">2. STOCK IN INTAKE</button>
-        <button class="tab-btn" id="btnTab3" style="display: none;" onclick="switchTab('tab3')">3. SETTLEMENT & ORDER MANAGER</button>
-        <button class="tab-btn" id="btnTab4" style="display: none;" onclick="switchTab('tab4')">4. STOCK ON-HAND & ALERTS</button>
+        <button class="tab-btn" id="btnTab3" style="display: none;" onclick="switchTab('tab3')">3. SETTLEMENT & ORDERS</button>
+        <button class="tab-btn" id="btnTab4" style="display: none;" onclick="switchTab('tab4')">4. STOCK ON-HAND</button>
+        <button class="tab-btn" id="btnTab5" style="display: none;" onclick="switchTab('tab5')">5. STAFF PROFILES</button>
     </div>
 
     <!-- TAB 1: POS SCAN OUT -->
@@ -329,11 +330,8 @@
     <!-- TAB 3: SETTLEMENT & ORDER MANAGER -->
     <div id="tab3" class="tab-content">
         <div class="section-title">
-            <span>Settlement Ledger & Order Actions</span>
-            <div>
-                <button class="btn-sec" onclick="openPasscodeChangeModal()" style="margin-right: 8px;">CHANGE PASSCODE</button>
-                <button class="btn-export" onclick="exportSupplierStatement()">Download Supplier Statement (CSV)</button>
-            </div>
+            <span>Settlement Ledger & Order Audit</span>
+            <button class="btn-export" onclick="exportSupplierStatement()">Download Supplier Statement (CSV)</button>
         </div>
 
         <div class="summary-grid">
@@ -346,7 +344,7 @@
                 <div class="summary-val" id="adminSettled" style="color: var(--green-light);">R 0.00</div>
             </div>
             <div class="summary-card">
-                <div class="summary-label">Net Settlement (After R230 Platform Fee)</div>
+                <div class="summary-label">Net Settlement (After Platform Fee)</div>
                 <div class="summary-val" id="adminNet" style="color: #fff;">R 0.00</div>
             </div>
         </div>
@@ -356,6 +354,7 @@
                 <tr>
                     <th>Order Ref / Item</th>
                     <th>Date</th>
+                    <th>Processed By</th>
                     <th>Qty / Dispatched</th>
                     <th>Wholesale Amount</th>
                     <th>Status</th>
@@ -363,7 +362,7 @@
                 </tr>
             </thead>
             <tbody id="adminOrderTable">
-                <tr><td colspan="6" style="color: var(--text-muted);">Loading ledger orders...</td></tr>
+                <tr><td colspan="7" style="color: var(--text-muted);">Loading ledger orders...</td></tr>
             </tbody>
         </table>
     </div>
@@ -387,33 +386,53 @@
         </table>
     </div>
 
-    <!-- AUTHENTICATION MODAL -->
-    <div class="modal-overlay" id="authModal">
-        <div class="modal-card">
-            <h3 style="color: var(--gold-primary); margin-top: 0;">MANAGER AUTHENTICATION</h3>
-            <p style="font-size: 11px; color: var(--text-muted);">Enter 4-digit Manager PIN to unlock Settlement Manager & Inventory Audit tabs.</p>
+    <!-- TAB 5: STAFF PROFILES MANAGEMENT -->
+    <div id="tab5" class="tab-content">
+        <div class="section-title">Staff Profile & Access PIN Management</div>
+        <form id="createStaffForm" onsubmit="handleCreateStaff(event)" style="margin-bottom: 24px;">
             <div class="form-group">
-                <input type="password" id="managerPinInput" class="form-control" style="text-align: center; font-size: 20px; letter-spacing: 4px;" maxlength="8" placeholder="••••">
+                <label>Staff Member Full Name</label>
+                <input type="text" id="staffNameInput" class="form-control" required placeholder="e.g. Sipho Ndlovu">
             </div>
-            <button class="btn-submit" style="width: 100%;" onclick="verifyManagerPin()">UNLOCK ACCESS</button>
-            <button class="btn-sec" style="width: 100%; margin-top: 8px;" onclick="closeModal('authModal')">CANCEL</button>
-        </div>
+            <div class="form-group">
+                <label>4-Digit Login PIN</label>
+                <input type="password" id="staffPinInput" class="form-control" maxlength="6" required placeholder="e.g. 5678">
+            </div>
+            <div class="form-group">
+                <label>Access Role</label>
+                <select id="staffRoleSelect" class="form-control">
+                    <option value="staff">Staff (POS & Intake Only)</option>
+                    <option value="manager">Manager (Full Access & Ledger)</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-submit">Create User Profile</button>
+        </form>
+
+        <div class="section-title">Active Staff Accounts</div>
+        <table class="ledger-table">
+            <thead>
+                <tr>
+                    <th>Staff Name</th>
+                    <th>Role</th>
+                    <th>Created On</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="staffProfileTable">
+                <tr><td colspan="4" style="color: var(--text-muted);">Loading user profiles...</td></tr>
+            </tbody>
+        </table>
     </div>
 
-    <!-- CHANGE PASSCODE MODAL -->
-    <div class="modal-overlay" id="changePassModal">
+    <!-- LOGIN / AUTHENTICATION MODAL -->
+    <div class="modal-overlay" id="loginModal">
         <div class="modal-card">
-            <h3 style="color: var(--gold-primary); margin-top: 0;">UPDATE MANAGER PASSCODE</h3>
+            <h3 style="color: var(--gold-primary); margin-top: 0;">USER PROFILE LOGIN</h3>
+            <p style="font-size: 11px; color: var(--text-muted);">Enter your assigned 4-Digit PIN to log into your active session.</p>
             <div class="form-group">
-                <label>Current Passcode</label>
-                <input type="password" id="oldPinInput" class="form-control" placeholder="Current PIN">
+                <input type="password" id="userPinInput" class="form-control" style="text-align: center; font-size: 22px; letter-spacing: 6px;" maxlength="6" placeholder="••••">
             </div>
-            <div class="form-group">
-                <label>New Passcode</label>
-                <input type="password" id="newPinInput" class="form-control" placeholder="New PIN">
-            </div>
-            <button class="btn-submit" style="width: 100%;" onclick="saveNewPasscode()">SAVE NEW PASSCODE</button>
-            <button class="btn-sec" style="width: 100%; margin-top: 8px;" onclick="closeModal('changePassModal')">CANCEL</button>
+            <button class="btn-submit" style="width: 100%;" onclick="authenticateUserPin()">LOGIN SESSION</button>
         </div>
     </div>
 
@@ -422,70 +441,49 @@
         const SUPABASE_KEY = 'sb_publishable_NDE9uLsqMD2QiIa6LMw-Lw_IBOmeebV';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const PLATFORM_FEE = 230;
-        let isManagerAuthenticated = false;
+        const PLATFORM_FEE = 230; // Managed default platform fee
+        let currentUser = null;
         let cachedOrders = [];
         let cachedInventory = [];
 
-        function getStoredPin() {
-            return localStorage.getItem('nguni_manager_pin') || '1234';
-        }
-
-        function openAuthModal() {
-            if (isManagerAuthenticated) {
-                isManagerAuthenticated = false;
-                document.getElementById('roleLabel').innerText = 'MODE: STAFF POS';
-                document.getElementById('btnTab3').style.display = 'none';
-                document.getElementById('btnTab4').style.display = 'none';
-                switchTab('tab1');
-                alert('Manager session logged out.');
-                return;
-            }
-            document.getElementById('managerPinInput').value = '';
-            document.getElementById('authModal').style.display = 'flex';
-        }
-
-        function openPasscodeChangeModal() {
-            document.getElementById('oldPinInput').value = '';
-            document.getElementById('newPinInput').value = '';
-            document.getElementById('changePassModal').style.display = 'flex';
+        function openLoginModal() {
+            document.getElementById('userPinInput').value = '';
+            document.getElementById('loginModal').style.display = 'flex';
         }
 
         function closeModal(id) {
             document.getElementById(id).style.display = 'none';
         }
 
-        function verifyManagerPin() {
-            const entered = document.getElementById('managerPinInput').value;
-            if (entered === getStoredPin()) {
-                isManagerAuthenticated = true;
-                document.getElementById('roleLabel').innerText = 'MODE: MANAGER FULL ACCESS';
+        async function authenticateUserPin() {
+            const enteredPin = document.getElementById('userPinInput').value;
+
+            const { data: staffList, error } = await supabaseClient
+                .from('staff_profiles')
+                .select('*')
+                .eq('pin_code', enteredPin);
+
+            if (error || !staffList || staffList.length === 0) {
+                alert('Invalid PIN code. Please try again.');
+                return;
+            }
+
+            currentUser = staffList[0];
+            document.getElementById('roleLabel').innerText = `USER: ${currentUser.full_name.toUpperCase()} (${currentUser.role.toUpperCase()})`;
+
+            if (currentUser.role === 'manager') {
                 document.getElementById('btnTab3').style.display = 'block';
                 document.getElementById('btnTab4').style.display = 'block';
-                closeModal('authModal');
-                switchTab('tab3');
+                document.getElementById('btnTab5').style.display = 'block';
             } else {
-                alert('Invalid Manager Passcode.');
-            }
-        }
-
-        function saveNewPasscode() {
-            const oldPin = document.getElementById('oldPinInput').value;
-            const newPin = document.getElementById('newPinInput').value;
-
-            if (oldPin !== getStoredPin()) {
-                alert('Current passcode incorrect.');
-                return;
+                document.getElementById('btnTab3').style.display = 'none';
+                document.getElementById('btnTab4').style.display = 'none';
+                document.getElementById('btnTab5').style.display = 'none';
+                switchTab('tab1');
             }
 
-            if (!newPin || newPin.length < 4) {
-                alert('New passcode must be at least 4 characters long.');
-                return;
-            }
-
-            localStorage.setItem('nguni_manager_pin', newPin);
-            alert('Manager Passcode updated successfully!');
-            closeModal('changePassModal');
+            closeModal('loginModal');
+            fetchStaffProfiles();
         }
 
         function switchTab(tabId) {
@@ -495,6 +493,60 @@
             document.getElementById(tabId).classList.add('active');
             const targetBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
             if (targetBtn) targetBtn.classList.add('active');
+        }
+
+        async function fetchStaffProfiles() {
+            const { data: profiles } = await supabaseClient
+                .from('staff_profiles')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            const tbody = document.getElementById('staffProfileTable');
+            tbody.innerHTML = '';
+
+            if (!profiles || profiles.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted);">No staff profiles registered.</td></tr>';
+                return;
+            }
+
+            profiles.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: bold; color: var(--gold-light);">${p.full_name}</td>
+                    <td style="text-transform: uppercase;">${p.role}</td>
+                    <td>${new Date(p.created_at).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn-action btn-delete" onclick="deleteStaffProfile('${p.id}')">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function handleCreateStaff(e) {
+            e.preventDefault();
+            const name = document.getElementById('staffNameInput').value;
+            const pin = document.getElementById('staffPinInput').value;
+            const role = document.getElementById('staffRoleSelect').value;
+
+            const { error } = await supabaseClient
+                .from('staff_profiles')
+                .insert([{ full_name: name, pin_code: pin, role: role }]);
+
+            if (error) {
+                alert('Error creating staff user: ' + error.message);
+            } else {
+                alert('Staff profile created successfully!');
+                document.getElementById('createStaffForm').reset();
+                fetchStaffProfiles();
+            }
+        }
+
+        async function deleteStaffProfile(profileId) {
+            if (!confirm('Remove this staff profile?')) return;
+            const { error } = await supabaseClient.from('staff_profiles').delete().eq('id', profileId);
+            if (error) alert('Error: ' + error.message);
+            else fetchStaffProfiles();
         }
 
         async function fetchAdminOrders() {
@@ -522,7 +574,7 @@
             tbody.innerHTML = '';
 
             if (orders.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="color: var(--text-muted);">No orders in database.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="color: var(--text-muted);">No orders in database.</td></tr>';
                 document.getElementById('adminOwed').innerText = 'R 0.00';
                 document.getElementById('adminSettled').innerText = 'R 0.00';
                 document.getElementById('adminNet').innerText = 'R 0.00';
@@ -534,23 +586,11 @@
                 const qty = parseInt(order.quantity_dispatched) || 1;
                 const status = order.payout_status || 'ESCROW PENDING';
 
-                if (status === 'SETTLED') {
-                    settledSum += wholesaleVal;
-                } else if (status === 'ESCROW PENDING') {
-                    pendingSum += wholesaleVal;
-                }
+                if (status === 'SETTLED') settledSum += wholesaleVal;
+                else if (status === 'ESCROW PENDING') pendingSum += wholesaleVal;
 
-                let dateStr = 'N/A';
-                if (order.created_at) {
-                    const parsedDate = new Date(order.created_at);
-                    if (!isNaN(parsedDate.getTime())) {
-                        dateStr = parsedDate.toLocaleDateString('en-US');
-                    }
-                }
-
-                let statusClass = 'status-pending';
-                if (status === 'SETTLED') statusClass = 'status-settled';
-                if (status === 'RETURNED / CANCELLED') statusClass = 'status-returned';
+                let dateStr = order.created_at ? new Date(order.created_at).toLocaleDateString() : 'N/A';
+                let statusClass = status === 'SETTLED' ? 'status-settled' : (status === 'RETURNED / CANCELLED' ? 'status-returned' : 'status-pending');
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -559,19 +599,15 @@
                         <div class="item-code">${order.order_number || 'N/A'}</div>
                     </td>
                     <td>${dateStr}</td>
-                    <td style="font-weight: 700;">${qty} ${qty > 1 ? 'Units' : 'Unit'}</td>
+                    <td style="color: var(--gold-light); font-weight: bold;">${order.processed_by || 'Unassigned'}</td>
+                    <td style="font-weight: 700;">${qty} Units</td>
                     <td style="font-weight: 700;">R ${wholesaleVal.toFixed(2)}</td>
-                    <td>
-                        <span class="status-badge ${statusClass}">
-                            ${status}
-                        </span>
-                    </td>
+                    <td><span class="status-badge ${statusClass}">${status}</span></td>
                     <td>
                         ${status === 'SETTLED' 
-                            ? `<button class="btn-action btn-pending" onclick="updateStatus('${order.id}', 'ESCROW PENDING')">Mark Pending</button>`
-                            : `<button class="btn-action btn-settled" onclick="updateStatus('${order.id}', 'SETTLED')">Mark Settled</button>`
+                            ? `<button class="btn-action btn-pending" onclick="updateStatus('${order.id}', 'ESCROW PENDING')">Pending</button>`
+                            : `<button class="btn-action btn-settled" onclick="updateStatus('${order.id}', 'SETTLED')">Settle</button>`
                         }
-                        <button class="btn-action btn-return" onclick="updateStatus('${order.id}', 'RETURNED / CANCELLED')">Return</button>
                         <button class="btn-action btn-delete" onclick="deleteOrder('${order.id}')">Delete</button>
                     </td>
                 `;
@@ -579,7 +615,6 @@
             });
 
             const netPayout = Math.max(0, pendingSum - PLATFORM_FEE);
-
             document.getElementById('adminOwed').innerText = `R ${pendingSum.toFixed(2)}`;
             document.getElementById('adminSettled').innerText = `R ${settledSum.toFixed(2)}`;
             document.getElementById('adminNet').innerText = `R ${netPayout.toFixed(2)}`;
@@ -588,7 +623,6 @@
         function renderStockTable(inventory, orders) {
             const tbody = document.getElementById('stockTableBody');
             tbody.innerHTML = '';
-
             const stockMap = {};
 
             inventory.forEach(item => {
@@ -615,12 +649,8 @@
                 const item = stockMap[k];
                 const onHand = item.intake - item.dispatched;
                 let statusHtml = '<span style="color: var(--green-light); font-weight: bold;">HEALTHY</span>';
-
-                if (onHand <= 5 && onHand > 0) {
-                    statusHtml = '<span style="color: var(--gold-light); font-weight: bold;">LOW STOCK ALERT</span>';
-                } else if (onHand <= 0) {
-                    statusHtml = '<span style="color: var(--red-light); font-weight: bold;">OUT OF STOCK</span>';
-                }
+                if (onHand <= 5 && onHand > 0) statusHtml = '<span style="color: var(--gold-light); font-weight: bold;">LOW STOCK ALERT</span>';
+                else if (onHand <= 0) statusHtml = '<span style="color: var(--red-light); font-weight: bold;">OUT OF STOCK</span>';
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -634,70 +664,14 @@
             });
         }
 
-        async function updateStatus(orderId, newStatus) {
-            const { error } = await supabaseClient
-                .from('orders')
-                .update({ payout_status: newStatus })
-                .eq('id', orderId);
-
-            if (error) {
-                alert('Error updating status: ' + error.message);
-            } else {
-                fetchAdminOrders();
-            }
-        }
-
-        async function deleteOrder(orderId) {
-            if (!confirm('Are you sure you want to delete this order record?')) return;
-
-            const { error } = await supabaseClient
-                .from('orders')
-                .delete()
-                .eq('id', orderId);
-
-            if (error) {
-                alert('Error deleting order: ' + error.message);
-            } else {
-                fetchAdminOrders();
-            }
-        }
-
-        function exportSupplierStatement() {
-            if (cachedOrders.length === 0) {
-                alert('No orders available to export.');
+        async function handlePosSubmit(e) {
+            e.preventDefault();
+            if (!currentUser) {
+                alert('Please authenticate a user session before processing orders.');
+                openLoginModal();
                 return;
             }
 
-            let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "Order Ref,Item Name,Date,Quantity,Wholesale Amount (ZAR),Payout Status\n";
-
-            let grossPending = 0;
-
-            cachedOrders.forEach(o => {
-                const amount = parseFloat(o.wholesale_floor_zar) || 0;
-                const status = o.payout_status || 'ESCROW PENDING';
-                if (status === 'ESCROW PENDING') grossPending += amount;
-
-                csvContent += `"${o.order_number || ''}","${o.item_name || ''}","${o.created_at || ''}",${o.quantity_dispatched || 1},${amount},"${status}"\n`;
-            });
-
-            const netPayout = Math.max(0, grossPending - PLATFORM_FEE);
-            csvContent += `\n"SUMMARY","","","",""\n`;
-            csvContent += `"Gross Escrow Pending","","","",${grossPending}\n`;
-            csvContent += `"Platform Fee Deduction","","",,-${PLATFORM_FEE}\n`;
-            csvContent += `"Net Supplier Payout Owed","","","",${netPayout}\n`;
-
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `Nguni_Supplier_Statement_${new Date().toISOString().slice(0,10)}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        async function handlePosSubmit(e) {
-            e.preventDefault();
             const itemName = document.getElementById('posItemName').value;
             const orderRef = document.getElementById('posOrderRef').value;
             const qty = parseInt(document.getElementById('posQty').value);
@@ -709,7 +683,8 @@
                     order_number: orderRef,
                     quantity_dispatched: qty,
                     wholesale_floor_zar: wholesale,
-                    payout_status: 'ESCROW PENDING'
+                    payout_status: 'ESCROW PENDING',
+                    processed_by: currentUser.full_name
                 }
             ]);
 
@@ -717,30 +692,71 @@
                 alert('Error creating order: ' + error.message);
             } else {
                 document.getElementById('posForm').reset();
-                alert('Order dispatched successfully!');
+                alert(`Order dispatched successfully by ${currentUser.full_name}!`);
                 fetchAdminOrders();
             }
         }
 
         async function handleStockSubmit(e) {
             e.preventDefault();
+            if (!currentUser) {
+                alert('Please authenticate a user session.');
+                openLoginModal();
+                return;
+            }
+
             const stockName = document.getElementById('stockName').value;
             const qty = parseInt(document.getElementById('stockQty').value);
 
             const { error } = await supabaseClient.from('inventory').insert([
-                { item_description: stockName, quantity_allocated: qty }
+                { item_description: stockName, quantity_allocated: qty, added_by: currentUser.full_name }
             ]);
 
-            if (error) {
-                alert('Error adding inventory: ' + error.message);
-            } else {
-                alert('Inventory line added successfully!');
+            if (error) alert('Error: ' + error.message);
+            else {
+                alert('Inventory line added!');
                 document.getElementById('stockForm').reset();
                 fetchAdminOrders();
             }
         }
 
+        async function updateStatus(orderId, newStatus) {
+            const { error } = await supabaseClient.from('orders').update({ payout_status: newStatus }).eq('id', orderId);
+            if (error) alert('Error updating status: ' + error.message);
+            else fetchAdminOrders();
+        }
+
+        async function deleteOrder(orderId) {
+            if (!confirm('Delete order record?')) return;
+            const { error } = await supabaseClient.from('orders').delete().eq('id', orderId);
+            if (error) alert('Error: ' + error.message);
+            else fetchAdminOrders();
+        }
+
+        function exportSupplierStatement() {
+            if (cachedOrders.length === 0) return alert('No orders available to export.');
+            let csvContent = "data:text/csv;charset=utf-8,Order Ref,Item Name,Date,Processed By,Quantity,Wholesale Amount (ZAR),Payout Status\n";
+            let grossPending = 0;
+
+            cachedOrders.forEach(o => {
+                const amount = parseFloat(o.wholesale_floor_zar) || 0;
+                const status = o.payout_status || 'ESCROW PENDING';
+                if (status === 'ESCROW PENDING') grossPending += amount;
+                csvContent += `"${o.order_number || ''}","${o.item_name || ''}","${o.created_at || ''}","${o.processed_by || 'Unassigned'}",${o.quantity_dispatched || 1},${amount},"${status}"\n`;
+            });
+
+            const link = document.createElement("a");
+            link.setAttribute("href", encodeURI(csvContent));
+            link.setAttribute("download", `Nguni_Supplier_Statement_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Open login on page load
+        openLoginModal();
         fetchAdminOrders();
+
         supabaseClient.channel('admin_realtime').on('postgres_changes', { event: '*', schema: 'public' }, () => {
             fetchAdminOrders();
         }).subscribe();
