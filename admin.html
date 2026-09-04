@@ -64,8 +64,8 @@
 
         .tabs { 
             display: grid; 
-            grid-template-columns: repeat(7, 1fr); 
-            gap: 10px; 
+            grid-template-columns: repeat(8, 1fr); 
+            gap: 8px; 
             margin-bottom: 28px; 
             background: rgba(255, 255, 255, 0.05);
             padding: 6px;
@@ -77,9 +77,9 @@
             background: transparent; 
             border: none; 
             color: var(--text-muted); 
-            padding: 12px 8px; 
+            padding: 12px 6px; 
             font-weight: 600; 
-            font-size: 11px; 
+            font-size: 10px; 
             letter-spacing: 0.3px; 
             cursor: pointer; 
             border-radius: 12px; 
@@ -257,7 +257,8 @@
         <button class="tab-btn" id="btnTab4" style="display: none;" onclick="switchTab('tab4')">4. STOCK ON-HAND</button>
         <button class="tab-btn" id="btnTab5" style="display: none;" onclick="switchTab('tab5')">5. STAFF PROFILES</button>
         <button class="tab-btn" id="btnTab6" style="display: none;" onclick="switchTab('tab6')">6. AUDIT LOGS</button>
-        <button class="tab-btn" id="btnTab7" onclick="switchTab('tab7')">7. RETURNS & DAMAGES</button>
+        <button class="tab-btn" id="btnTab7" onclick="switchTab('tab7')">7. RETURNS</button>
+        <button class="tab-btn" id="btnTab8" style="display: none;" onclick="switchTab('tab8')">8. ACCOUNTING & POS SALES</button>
     </div>
 
     <!-- TAB 1: ENTERPRISE POS TERMINAL WITH BATCH CART -->
@@ -602,6 +603,57 @@
                 </thead>
                 <tbody id="returnsLogTable">
                     <tr><td colspan="7" style="color: var(--text-muted); padding: 24px;">Loading returns log...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 8: ACCOUNTING & POS SALES -->
+    <div id="tab8" class="tab-content">
+        <div class="section-title">
+            <span>Accounting & POS Sales Dashboard</span>
+            <div style="display: flex; gap: 8px;">
+                <input type="date" id="accFilterStart" class="form-control" style="width: 140px; padding: 8px 12px;" onchange="renderAccountingDashboard()">
+                <input type="date" id="accFilterEnd" class="form-control" style="width: 140px; padding: 8px 12px;" onchange="renderAccountingDashboard()">
+                <button class="btn-export" onclick="exportAccountingCSV()">Export CSV</button>
+            </div>
+        </div>
+
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-label">Gross Sales</div>
+                <div class="summary-val" id="accGrossSales" style="color: var(--cyan-bright);">R 0.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Platform Fees (Fixed)</div>
+                <div class="summary-val" id="accPlatformFees" style="color: var(--gold-primary);">R 230.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Net Revenue</div>
+                <div class="summary-val" id="accNetRevenue" style="color: var(--green-active);">R 0.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Total Units Sold</div>
+                <div class="summary-val" id="accUnitsSold" style="color: #fff;">0 Items</div>
+            </div>
+        </div>
+
+        <div class="section-title">Itemized POS Transaction Ledger</div>
+        <div class="pos-table-container">
+            <table class="ledger-table">
+                <thead>
+                    <tr>
+                        <th>Order ID / Ref</th>
+                        <th>Timestamp</th>
+                        <th>Product SKU / Name</th>
+                        <th>Qty Sold</th>
+                        <th>Unit Price</th>
+                        <th>Gross Total</th>
+                        <th>Fulfillment Channel</th>
+                    </tr>
+                </thead>
+                <tbody id="accountingTableBody">
+                    <tr><td colspan="7" style="color: var(--text-muted); padding: 24px;">Loading POS sales transactions...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -1023,12 +1075,12 @@
         function applyUserSession() {
             document.getElementById('roleLabel').innerText = `USER: ${currentUser.full_name.toUpperCase()} (${currentUser.role.toUpperCase()})`;
             if (currentUser.role === 'manager') {
-                ['btnTab3', 'btnTab4', 'btnTab5', 'btnTab6'].forEach(id => {
+                ['btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab8'].forEach(id => {
                     if (document.getElementById(id)) document.getElementById(id).style.display = 'block';
                 });
                 switchTab('tab1');
             } else {
-                ['btnTab3', 'btnTab4', 'btnTab5', 'btnTab6'].forEach(id => {
+                ['btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab8'].forEach(id => {
                     if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
                 });
                 switchTab('tab1');
@@ -1058,6 +1110,7 @@
             populateReturnsOrderDropdown(cachedOrders);
             renderAdminOrders(cachedOrders);
             renderStockTable(cachedInventory);
+            renderAccountingDashboard();
             fetchAuditLogs();
             fetchReturnsLog();
         }
@@ -1139,6 +1192,78 @@
             document.getElementById('adminOwed').innerText = `R ${pendingSum.toFixed(2)}`;
             document.getElementById('adminSettled').innerText = `R ${settledSum.toFixed(2)}`;
             document.getElementById('adminNet').innerText = `R ${netPayout.toFixed(2)}`;
+        }
+
+        function renderAccountingDashboard() {
+            const start = document.getElementById('accFilterStart')?.value;
+            const end = document.getElementById('accFilterEnd')?.value;
+            const tbody = document.getElementById('accountingTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            const filtered = cachedOrders.filter(o => {
+                if (o.payout_status === 'RETURNED / CANCELLED') return false;
+                if (!o.created_at) return true;
+                const d = o.created_at.slice(0, 10);
+                if (start && d < start) return false;
+                if (end && d > end) return false;
+                return true;
+            });
+
+            let grossSales = 0;
+            let totalUnits = 0;
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No transactions recorded for the selected range.</td></tr>';
+            } else {
+                filtered.forEach(order => {
+                    const qty = parseInt(order.quantity_dispatched) || 1;
+                    const amount = parseFloat(order.wholesale_floor_zar) || 0;
+                    grossSales += amount;
+                    totalUnits += qty;
+                    const unitPrice = qty > 0 ? amount / qty : amount;
+
+                    const matchInv = cachedInventory.find(i => (i.item_name || i.item_description || '').trim() === (order.item_name || '').trim());
+                    const sku = matchInv?.sku || order.order_number || 'N/A';
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="color: var(--gold-light); font-weight: 600;">#${order.order_number || order.id.slice(0,8)}</td>
+                        <td style="color: var(--text-muted);">${new Date(order.created_at).toLocaleString()}</td>
+                        <td style="font-weight: 600;">${order.item_name || 'Item'}</td>
+                        <td style="text-align: center;">${qty}</td>
+                        <td style="text-align: right;">R ${unitPrice.toFixed(2)}</td>
+                        <td style="text-align: right; color: var(--cyan-bright); font-weight: 700;">R ${amount.toFixed(2)}</td>
+                        <td><span class="status-badge status-settled">${order.marketplace || 'POS / In-Store'}</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            const netRevenue = Math.max(0, grossSales - PLATFORM_FEE);
+            document.getElementById('accGrossSales').innerText = `R ${grossSales.toFixed(2)}`;
+            document.getElementById('accPlatformFees').innerText = `R ${PLATFORM_FEE.toFixed(2)}`;
+            document.getElementById('accNetRevenue').innerText = `R ${netRevenue.toFixed(2)}`;
+            document.getElementById('accUnitsSold').innerText = `${totalUnits} Items`;
+        }
+
+        function exportAccountingCSV() {
+            if (cachedOrders.length === 0) return alert('No transaction data to export.');
+            let csv = "data:text/csv;charset=utf-8,Order ID,Timestamp,Product SKU / Name,Qty Sold,Unit Price (ZAR),Gross Total (ZAR),Fulfillment Channel\n";
+            cachedOrders.filter(o => o.payout_status !== 'RETURNED / CANCELLED').forEach(o => {
+                const qty = parseInt(o.quantity_dispatched) || 1;
+                const amount = parseFloat(o.wholesale_floor_zar) || 0;
+                const unitPrice = qty > 0 ? amount / qty : amount;
+                const matchInv = cachedInventory.find(i => (i.item_name || '').trim() === (o.item_name || '').trim());
+                const sku = matchInv?.sku || o.order_number || 'N/A';
+                csv += `"${o.order_number || o.id}","${o.created_at || ''}","${sku} - ${o.item_name || ''}",${qty},${unitPrice.toFixed(2)},${amount.toFixed(2)},"${o.marketplace || 'POS'}"\n`;
+            });
+            const link = document.createElement("a");
+            link.setAttribute("href", encodeURI(csv));
+            link.setAttribute("download", `Nguni_Accounting_POS_Ledger_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         function renderStockTable(inventory) {
