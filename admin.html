@@ -110,7 +110,7 @@
         <button class="tab-btn" id="btnTab4" style="display: none;" onclick="switchTab('tab4')">4. STOCK ON-HAND</button>
         <button class="tab-btn" id="btnTab5" style="display: none;" onclick="switchTab('tab5')">5. STAFF PROFILES</button>
         <button class="tab-btn" id="btnTab6" style="display: none;" onclick="switchTab('tab6')">6. AUDIT LOGS</button>
-        <button class="tab-btn" id="btnTab7" onclick="switchTab('tab7')">7. RETURNS & RESTOCK</button>
+        <button class="tab-btn" id="btnTab7" onclick="switchTab('tab7')">7. RETURNS & DAMAGES</button>
     </div>
 
     <!-- TAB 1: POS SCAN OUT -->
@@ -299,7 +299,7 @@
         </table>
     </div>
 
-    <!-- TAB 7: RETURNS & RESTOCK HUB -->
+    <!-- TAB 7: RETURNS & RESTOCK HUB WITH DAMAGES LOG -->
     <div id="tab7" class="tab-content">
         <div class="section-title">Customer Order Returns & Inventory Restock</div>
         <form id="returnForm" onsubmit="handleReturnSubmit(event)" style="margin-bottom: 28px;">
@@ -333,7 +333,7 @@
         </form>
 
         <div class="section-title">Processed Returns Log</div>
-        <table class="ledger-table">
+        <table class="ledger-table" style="margin-bottom: 30px;">
             <thead>
                 <tr>
                     <th>Return Date</th>
@@ -346,6 +346,23 @@
             </thead>
             <tbody id="returnsLogTable">
                 <tr><td colspan="6" style="color: var(--text-muted);">Loading returns log...</td></tr>
+            </tbody>
+        </table>
+
+        <!-- DAMAGED & WRITTEN-OFF STOCK LOG TABLE -->
+        <div class="section-title" style="color: var(--red-light);">Damaged & Written-Off Stock Log</div>
+        <table class="ledger-table">
+            <thead>
+                <tr>
+                    <th>Order Ref</th>
+                    <th>Item Name</th>
+                    <th>Qty Damaged</th>
+                    <th>Reason</th>
+                    <th>Logged By</th>
+                </tr>
+            </thead>
+            <tbody id="damagedTableBody">
+                <tr><td colspan="5" style="color: var(--text-muted);">No damaged items recorded.</td></tr>
             </tbody>
         </table>
     </div>
@@ -740,27 +757,53 @@
         async function fetchReturnsLog() {
             if (!supabaseClient) return;
             const tbody = document.getElementById('returnsLogTable');
+            const damagedTbody = document.getElementById('damagedTableBody');
             if (!tbody) return;
 
             try {
                 const { data: returns } = await supabaseClient.from('returns').select('*').order('created_at', { ascending: false });
+                
+                // Render Full Returns Log
                 tbody.innerHTML = '';
                 if (!returns || returns.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="6" style="color: var(--text-muted);">No returns processed yet.</td></tr>';
-                    return;
+                } else {
+                    returns.forEach(r => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${new Date(r.created_at).toLocaleDateString()}</td>
+                            <td style="font-weight: bold;">#${r.order_ref} - ${r.item_name}</td>
+                            <td>${r.return_qty}</td>
+                            <td>${r.reason}</td>
+                            <td>${r.restocked ? '<span style="color: var(--green-light); font-weight: bold;">YES</span>' : '<span style="color: var(--red-light); font-weight: bold;">NO</span>'}</td>
+                            <td style="color: var(--gold-light); font-weight: bold;">${r.processed_by || 'Staff'}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
                 }
-                returns.forEach(r => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${new Date(r.created_at).toLocaleDateString()}</td>
-                        <td style="font-weight: bold;">#${r.order_ref} - ${r.item_name}</td>
-                        <td>${r.return_qty}</td>
-                        <td>${r.reason}</td>
-                        <td>${r.restocked ? '<span style="color: var(--green-light); font-weight: bold;">YES</span>' : '<span style="color: var(--red-light); font-weight: bold;">NO</span>'}</td>
-                        <td style="color: var(--gold-light); font-weight: bold;">${r.processed_by || 'Staff'}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
+
+                // Filter non-restocked (damaged/defective) items for the damaged goods table
+                if (damagedTbody) {
+                    damagedTbody.innerHTML = '';
+                    const damagedItems = returns ? returns.filter(r => !r.restocked) : [];
+                    
+                    if (damagedItems.length === 0) {
+                        damagedTbody.innerHTML = '<tr><td colspan="5" style="color: var(--text-muted);">No damaged items logged.</td></tr>';
+                    } else {
+                        damagedItems.forEach(d => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>#${d.order_ref}</td>
+                                <td style="font-weight: bold; color: var(--red-light);">${d.item_name}</td>
+                                <td>${d.return_qty}</td>
+                                <td>${d.reason}</td>
+                                <td>${d.processed_by || 'Staff'}</td>
+                            `;
+                            damagedTbody.appendChild(tr);
+                        });
+                    }
+                }
+
             } catch (err) {
                 tbody.innerHTML = '<tr><td colspan="6" style="color: var(--text-muted);">Returns table not initialized in database.</td></tr>';
             }
