@@ -6,6 +6,7 @@
     <title>Nguni Homeware | Control & Enterprise POS Hub</title>
     <link rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <!-- HTML5 Barcode Camera Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root {
@@ -20,6 +21,7 @@
             --green-light: #81c784;
             --red-alert: #d32f2f;
             --red-light: #ef5350;
+            --cyan-bright: #00ffcc;
         }
 
         body {
@@ -52,6 +54,62 @@
 
         .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--gold-primary); margin-top: 0; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
 
+        /* POS SLOTS & ENTERPRISE LAYOUT */
+        .scan-bar-grid { margin-bottom: 16px; }
+        
+        .item-slots-grid {
+            display: grid;
+            grid-template-columns: 2fr 1.2fr 1fr 1fr 1.5fr;
+            gap: 12px;
+            background: #08090a;
+            padding: 16px;
+            border-radius: 6px;
+            border: 1px solid var(--border-gold);
+            margin-bottom: 16px;
+        }
+
+        .slot-box {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .slot-label {
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .slot-input {
+            background: #121417;
+            border: 1px solid #22252a;
+            color: #fff;
+            padding: 10px;
+            font-size: 13px;
+            border-radius: 4px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .slot-input.highlight-stock {
+            color: var(--cyan-bright);
+            font-weight: bold;
+        }
+
+        .slot-input.highlight-price {
+            color: var(--gold-light);
+            font-weight: bold;
+        }
+
+        .transaction-slots-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr 1.5fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
         .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
         .summary-card { background: #08090a; border: 1px solid #1f2228; padding: 16px; border-radius: 4px; }
         .summary-label { font-size: 9px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; }
@@ -76,7 +134,7 @@
         .form-group { margin-bottom: 16px; }
         .form-group label { display: block; font-size: 10px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
         .form-control { width: 100%; padding: 10px; background: #08090a; border: 1px solid #1f2228; color: #fff; border-radius: 4px; box-sizing: border-box; }
-        .btn-submit { background: var(--gold-primary); color: #000; font-weight: 700; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-submit { background: var(--gold-primary); color: #000; font-weight: 700; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; width: 100%; }
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 999; }
         .modal-card { background: var(--panel-dark); border: 2px solid var(--border-gold); padding: 30px; border-radius: 6px; width: 340px; text-align: center; }
@@ -114,48 +172,79 @@
         <button class="tab-btn" id="btnTab7" onclick="switchTab('tab7')">7. RETURNS & DAMAGES</button>
     </div>
 
+    <!-- TAB 1: POS SCAN OUT WITH SEPARATE INFORMATION SLOTS -->
     <div id="tab1" class="tab-content active">
-        <div class="section-title">POS Dispatch / Scan Out</div>
+        <div class="section-title">POS Dispatch / Terminal Checkout</div>
+        
         <form id="posForm" onsubmit="handlePosSubmit(event)">
-            <div class="form-group">
-                <label>Scan Barcode / Item Number (Auto-Retrieves Details)</label>
-                <div style="display: flex; gap: 8px;">
-                    <input type="text" id="posBarcodeScan" class="form-control" placeholder="Scan Barcode or Type Item No..." oninput="handleBarcodeScanInput()" autofocus>
-                    <button type="button" class="btn-sec" onclick="toggleCameraScanner()" style="white-space: nowrap; height: 42px;">📷 Scan with Camera</button>
+            <!-- TOP BAR: BARCODE SCANNER & CAMERA BUTTON -->
+            <div class="scan-bar-grid">
+                <div class="form-group">
+                    <label>Scan Barcode / Type SKU</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="posBarcodeScan" class="form-control" placeholder="Scan Barcode or Type Item No..." oninput="handleBarcodeScanInput()" autofocus>
+                        <button type="button" class="btn-sec" onclick="toggleCameraScanner()" style="white-space: nowrap; height: 42px;">📷 Scan with Camera</button>
+                    </div>
                 </div>
             </div>
 
+            <!-- CAMERA PREVIEW CONTAINER -->
             <div id="cameraScannerModal" style="display: none; background: #000; border: 1px solid var(--border-gold); padding: 12px; border-radius: 4px; margin-bottom: 16px; text-align: center;">
                 <div id="interactive-camera" style="width: 100%; max-width: 400px; margin: 0 auto;"></div>
                 <button type="button" class="btn-sec" onclick="stopCameraScanner()" style="margin-top: 10px; color: var(--red-light); border-color: var(--red-light);">Close Camera</button>
             </div>
 
-            <div class="form-group">
-                <label>Select Inventory Item (Live Stock)</label>
-                <select id="posItemSelect" class="form-control" onchange="autofillPosDetails()" required>
-                    <option value="">-- Choose Item from Inventory --</option>
-                </select>
+            <!-- SEPARATE PRODUCT INFORMATION SLOTS -->
+            <div class="item-slots-grid">
+                <div class="slot-box">
+                    <span class="slot-label">Product Name</span>
+                    <input type="text" id="slotProductName" class="slot-input" readonly placeholder="Waiting for barcode scan...">
+                </div>
+
+                <div class="slot-box">
+                    <span class="slot-label">Barcode / SKU</span>
+                    <input type="text" id="slotBarcode" class="slot-input" readonly placeholder="--">
+                </div>
+
+                <div class="slot-box">
+                    <span class="slot-label">Stock Available</span>
+                    <input type="text" id="slotStockOnHand" class="slot-input highlight-stock" readonly placeholder="0">
+                </div>
+
+                <div class="slot-box">
+                    <span class="slot-label">Unit Price (ZAR)</span>
+                    <input type="text" id="slotUnitPrice" class="slot-input highlight-price" readonly placeholder="R 0.00">
+                </div>
+
+                <div class="slot-box">
+                    <span class="slot-label">Consignor / Supplier</span>
+                    <input type="text" id="slotSupplier" class="slot-input" readonly placeholder="--">
+                </div>
             </div>
-            <div class="form-group">
-                <label>Order Reference / Transaction No.</label>
-                <input type="text" id="posOrderRef" class="form-control" required placeholder="e.g. #1043 or POS-8923">
+
+            <!-- TRANSACTION DETAILS & QTY SLOTS -->
+            <div class="transaction-slots-grid">
+                <div class="form-group">
+                    <label>Order Reference / Transaction No.</label>
+                    <input type="text" id="posOrderRef" class="form-control" required placeholder="e.g. #1043 or POS-8923">
+                </div>
+
+                <div class="form-group">
+                    <label>Quantity Dispatched</label>
+                    <input type="number" id="posQty" class="form-control" value="1" min="1" oninput="calculatePosTotal()" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Wholesale Total Amount (ZAR)</label>
+                    <input type="number" id="posWholesale" class="form-control" required placeholder="0.00">
+                </div>
             </div>
-            <div class="form-group">
-                <label>Quantity Dispatched</label>
-                <input type="number" id="posQty" class="form-control" value="1" min="1" required>
-            </div>
-            <div class="form-group">
-                <label>Wholesale Floor Amount (ZAR)</label>
-                <input type="number" id="posWholesale" class="form-control" required placeholder="0.00">
-            </div>
-            <div class="form-group">
-                <label>Consignor / Supplier Tag</label>
-                <input type="text" id="posSupplier" class="form-control" readonly style="color: var(--gold-light);" placeholder="Auto-populated from stock intake">
-            </div>
+
             <button type="submit" class="btn-submit">Dispatch Order & Print Receipt</button>
         </form>
     </div>
 
+    <!-- TAB 2: STOCK INTAKE -->
     <div id="tab2" class="tab-content">
         <div class="section-title">Consignment Stock Intake</div>
         <form id="stockForm" onsubmit="handleStockSubmit(event)">
@@ -183,6 +272,7 @@
         </form>
     </div>
 
+    <!-- TAB 3: SETTLEMENT LEDGER -->
     <div id="tab3" class="tab-content">
         <div class="section-title">
             <span>Settlement Ledger & Supplier Split Breakdown</span>
@@ -231,6 +321,7 @@
         </table>
     </div>
 
+    <!-- TAB 4: STOCK ON-HAND & EDITING -->
     <div id="tab4" class="tab-content">
         <div class="section-title">Active Stock Inventory Management</div>
         <table class="ledger-table">
@@ -250,6 +341,7 @@
         </table>
     </div>
 
+    <!-- TAB 5: STAFF PROFILES -->
     <div id="tab5" class="tab-content">
         <div class="section-title">Staff Profile Management</div>
         <form id="createStaffForm" onsubmit="handleCreateStaff(event)" style="margin-bottom: 24px;">
@@ -287,6 +379,7 @@
         </table>
     </div>
 
+    <!-- TAB 6: MANAGER AUDIT LOGS -->
     <div id="tab6" class="tab-content">
         <div class="section-title">System Audit Trail & Manager Activity History</div>
         <table class="ledger-table">
@@ -303,6 +396,7 @@
         </table>
     </div>
 
+    <!-- TAB 7: RETURNS & RESTOCK HUB -->
     <div id="tab7" class="tab-content">
         <div class="section-title">Customer Order Returns & Inventory Restock</div>
         <form id="returnForm" onsubmit="handleReturnSubmit(event)" style="margin-bottom: 28px;">
@@ -371,6 +465,7 @@
         </table>
     </div>
 
+    <!-- LOGIN MODAL -->
     <div class="modal-overlay" id="loginModal">
         <div class="modal-card">
             <h3 style="color: var(--gold-primary); margin-top: 0;">USER PROFILE LOGIN</h3>
@@ -378,10 +473,11 @@
             <div class="form-group">
                 <input type="password" id="userPinInput" class="form-control" style="text-align: center; font-size: 22px; letter-spacing: 6px;" maxlength="6" placeholder="••••" oninput="checkAutoLoginPin()" autofocus>
             </div>
-            <button class="btn-submit" style="width: 100%;" onclick="authenticateUserPin()">LOGIN SESSION</button>
+            <button class="btn-submit" onclick="authenticateUserPin()">LOGIN SESSION</button>
         </div>
     </div>
 
+    <!-- RECEIPT SLIP MODAL -->
     <div class="modal-overlay" id="receiptModal" style="display: none;">
         <div class="modal-card" style="background: #fff; color: #000; text-align: left; font-family: monospace;">
             <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;">
@@ -414,6 +510,7 @@
         let currentUser = null;
         let cachedOrders = [];
         let cachedInventory = [];
+        let activePosMatch = null;
         let idleTimer = null;
         let html5QrCodeScanner = null;
 
@@ -440,7 +537,7 @@
         document.onmousemove = resetIdleTimer;
         document.onkeypress = resetIdleTimer;
 
-        // --- CAMERA SCANNER FUNCTIONS ---
+        // --- CAMERA SCANNER LOGIC ---
         function toggleCameraScanner() {
             const modal = document.getElementById('cameraScannerModal');
             if (modal.style.display === 'none' || modal.style.display === '') {
@@ -485,7 +582,80 @@
             }
         }
 
-        // --- USER AUTHENTICATION & LOGIN ---
+        // --- BARCODE SCAN & SLOT AUTO-FILL LOGIC ---
+        function handleBarcodeScanInput() {
+            const query = document.getElementById('posBarcodeScan').value.trim().toLowerCase();
+            if (!query) {
+                clearPosSlots();
+                return;
+            }
+
+            // Calculate stock map to reflect accurate live stock on hand
+            const stockMap = {};
+            cachedInventory.forEach(item => {
+                const name = (item.item_name || item.item_description || item.sku || 'Unknown Item').trim();
+                const sku = item.sku || '';
+                stockMap[name] = stockMap[name] || { 
+                    name: name, 
+                    sku: sku, 
+                    intake: 0, 
+                    dispatched: 0, 
+                    supplier: item.supplier || 'General Wholesaler', 
+                    price: item.wholesale_floor_zar || item.unit_price || item.cost_price || 0 
+                };
+                stockMap[name].intake += (parseInt(item.quantity_allocated || item.quantity) || 0);
+            });
+
+            cachedOrders.forEach(order => {
+                if (order.payout_status !== 'RETURNED / CANCELLED') {
+                    const name = (order.item_name || '').trim();
+                    if (stockMap[name]) stockMap[name].dispatched += (parseInt(order.quantity_dispatched) || 1);
+                }
+            });
+
+            // Find matching product by barcode or name
+            let match = null;
+            Object.keys(stockMap).forEach(key => {
+                const item = stockMap[key];
+                if (item.sku.toLowerCase() === query || item.name.toLowerCase().includes(query)) {
+                    match = item;
+                }
+            });
+
+            if (match) {
+                activePosMatch = match;
+                const onHand = match.intake - match.dispatched;
+
+                document.getElementById('slotProductName').value = match.name;
+                document.getElementById('slotBarcode').value = match.sku || 'N/A';
+                document.getElementById('slotStockOnHand').value = onHand;
+                document.getElementById('slotUnitPrice').value = `R ${parseFloat(match.price).toFixed(2)}`;
+                document.getElementById('slotSupplier').value = match.supplier;
+
+                calculatePosTotal();
+            } else {
+                clearPosSlots();
+            }
+        }
+
+        function calculatePosTotal() {
+            if (!activePosMatch) return;
+            const qty = parseInt(document.getElementById('posQty').value) || 1;
+            const unitPrice = parseFloat(activePosMatch.price) || 0;
+            document.getElementById('posWholesale').value = (qty * unitPrice).toFixed(2);
+        }
+
+        function clearPosSlots() {
+            activePosMatch = null;
+            document.getElementById('slotProductName').value = '';
+            document.getElementById('slotBarcode').value = '';
+            document.getElementById('slotStockOnHand').value = '0';
+            document.getElementById('slotUnitPrice').value = 'R 0.00';
+            document.getElementById('slotSupplier').value = '';
+            document.getElementById('posWholesale').value = '';
+        }
+
+        // --- AUTHENTICATION & LOGIN ---
         function openLoginModal() {
             currentUser = null;
             document.getElementById('roleLabel').innerText = 'ACTIVE USER: NOT LOGGED IN';
@@ -588,47 +758,11 @@
             cachedOrders = orders || [];
             cachedInventory = inventory || [];
 
-            populatePosItemDropdown(cachedInventory, cachedOrders);
             populateReturnsOrderDropdown(cachedOrders);
             renderAdminOrders(cachedOrders);
             renderStockTable(cachedInventory);
             fetchAuditLogs();
             fetchReturnsLog();
-        }
-
-        function populatePosItemDropdown(inventory, orders) {
-            const select = document.getElementById('posItemSelect');
-            if (!select) return;
-            select.innerHTML = '<option value="">-- Choose Item from Inventory --</option>';
-
-            const stockMap = {};
-            inventory.forEach(item => {
-                const name = (item.item_name || item.item_description || item.sku || 'Unknown Item').trim();
-                const sku = item.sku || '';
-                stockMap[name] = stockMap[name] || { name: name, sku: sku, intake: 0, dispatched: 0, supplier: item.supplier || 'General', price: item.wholesale_floor_zar || item.unit_price || item.cost_price || 0 };
-                stockMap[name].intake += (parseInt(item.quantity_allocated || item.quantity) || 0);
-            });
-
-            orders.forEach(order => {
-                if (order.payout_status !== 'RETURNED / CANCELLED') {
-                    const name = (order.item_name || '').trim();
-                    if (stockMap[name]) stockMap[name].dispatched += (parseInt(order.quantity_dispatched) || 1);
-                }
-            });
-
-            Object.keys(stockMap).forEach(k => {
-                const item = stockMap[k];
-                const onHand = item.intake - item.dispatched;
-                const option = document.createElement('option');
-                option.value = item.name;
-                option.dataset.sku = item.sku;
-                option.dataset.price = item.price;
-                option.dataset.supplier = item.supplier;
-                option.dataset.onhand = onHand;
-                option.innerText = `[${item.sku || 'NO SKU'}] ${item.name} (${onHand} in stock) - R${item.price}`;
-                if (onHand <= 0) option.disabled = true;
-                select.appendChild(option);
-            });
         }
 
         function populateReturnsOrderDropdown(orders) {
@@ -652,34 +786,6 @@
             const selected = select.options[select.selectedIndex];
             if (selected && selected.value) {
                 document.getElementById('returnQty').value = selected.dataset.qty || 1;
-            }
-        }
-
-        function handleBarcodeScanInput() {
-            const val = document.getElementById('posBarcodeScan').value.trim().toLowerCase();
-            if (!val) return;
-
-            const select = document.getElementById('posItemSelect');
-            for (let i = 0; i < select.options.length; i++) {
-                const opt = select.options[i];
-                const optSku = (opt.dataset.sku || '').toLowerCase();
-                const optName = (opt.value || '').toLowerCase();
-
-                if (optSku === val || optName === val) {
-                    select.selectedIndex = i;
-                    autofillPosDetails();
-                    document.getElementById('posQty').focus();
-                    break;
-                }
-            }
-        }
-
-        function autofillPosDetails() {
-            const select = document.getElementById('posItemSelect');
-            const selected = select.options[select.selectedIndex];
-            if (selected && selected.value) {
-                document.getElementById('posWholesale').value = selected.dataset.price || 0;
-                document.getElementById('posSupplier').value = selected.dataset.supplier || 'General Wholesaler';
             }
         }
 
@@ -998,19 +1104,17 @@
             e.preventDefault();
             if (!currentUser) return openLoginModal();
 
-            const select = document.getElementById('posItemSelect');
-            const selected = select.options[select.selectedIndex];
-            if (!selected || !selected.value) return alert('Select an inventory item.');
+            const itemName = document.getElementById('slotProductName').value;
+            if (!itemName || !activePosMatch) return alert('Scan a valid barcode item first.');
 
-            const onHand = parseInt(selected.dataset.onhand);
+            const onHand = parseInt(document.getElementById('slotStockOnHand').value) || 0;
             const qty = parseInt(document.getElementById('posQty').value);
 
             if (qty > onHand) return alert(`Cannot dispatch ${qty} units. Only ${onHand} in stock.`);
 
-            const itemName = select.value;
             const orderRef = document.getElementById('posOrderRef').value;
             const wholesale = parseFloat(document.getElementById('posWholesale').value);
-            const supplier = document.getElementById('posSupplier').value;
+            const supplier = document.getElementById('slotSupplier').value;
 
             const { error } = await supabaseClient.from('orders').insert([{
                 item_name: itemName,
@@ -1030,6 +1134,7 @@
                 showReceipt(orderRef, itemName, qty, wholesale, currentUser.full_name);
                 document.getElementById('posForm').reset();
                 document.getElementById('posBarcodeScan').value = '';
+                clearPosSlots();
                 document.getElementById('posBarcodeScan').focus();
                 fetchAdminOrders();
             }
@@ -1043,8 +1148,8 @@
                 <p><strong>CASHIER:</strong> ${cashier}</p>
                 <hr style="border: 0; border-top: 1px dashed #000;">
                 <p><strong>ITEM:</strong> ${item}</p>
-                <p><strong>QTY:</strong> ${qty} x R${price.toFixed(2)}</p>
-                <p><strong>TOTAL PAID:</strong> R${(qty * price).toFixed(2)}</p>
+                <p><strong>QTY:</strong> ${qty} x R${(price / qty).toFixed(2)}</p>
+                <p><strong>TOTAL PAID:</strong> R${price.toFixed(2)}</p>
             `;
             document.getElementById('receiptModal').style.display = 'flex';
         }
