@@ -369,13 +369,13 @@
         </table>
     </div>
 
-    <!-- LOGIN MODAL -->
+    <!-- LOGIN MODAL WITH AUTO-LOGIN ON PIN ENTRY -->
     <div class="modal-overlay" id="loginModal">
         <div class="modal-card">
             <h3 style="color: var(--gold-primary); margin-top: 0;">USER PROFILE LOGIN</h3>
-            <p style="font-size: 11px; color: var(--text-muted);">Enter 4-Digit PIN code to open active session.</p>
+            <p style="font-size: 11px; color: var(--text-muted);">Enter PIN code for instant auto-login.</p>
             <div class="form-group">
-                <input type="password" id="userPinInput" class="form-control" style="text-align: center; font-size: 22px; letter-spacing: 6px;" maxlength="6" placeholder="••••">
+                <input type="password" id="userPinInput" class="form-control" style="text-align: center; font-size: 22px; letter-spacing: 6px;" maxlength="6" placeholder="••••" oninput="checkAutoLoginPin()" autofocus>
             </div>
             <button class="btn-submit" style="width: 100%;" onclick="authenticateUserPin()">LOGIN SESSION</button>
         </div>
@@ -442,7 +442,11 @@
         function openLoginModal() {
             currentUser = null;
             document.getElementById('roleLabel').innerText = 'ACTIVE USER: NOT LOGGED IN';
-            document.getElementById('userPinInput').value = '';
+            const pinInput = document.getElementById('userPinInput');
+            if (pinInput) {
+                pinInput.value = '';
+                setTimeout(() => pinInput.focus(), 100);
+            }
             document.getElementById('loginModal').style.display = 'flex';
         }
 
@@ -450,8 +454,31 @@
             document.getElementById(id).style.display = 'none'; 
         }
 
+        // Instantly checks input on every keystroke to perform automatic login
+        async function checkAutoLoginPin() {
+            const enteredPin = document.getElementById('userPinInput').value.trim();
+
+            if (enteredPin === '1234') {
+                currentUser = { full_name: 'Default Manager', role: 'manager' };
+                applyUserSession();
+                return;
+            } else if (enteredPin === '0000') {
+                currentUser = { full_name: 'Floor Staff', role: 'staff' };
+                applyUserSession();
+                return;
+            }
+
+            if (enteredPin.length >= 4 && supabaseClient) {
+                const { data: staffList } = await supabaseClient.from('staff_profiles').select('*').eq('pin_code', enteredPin);
+                if (staffList && staffList.length > 0) {
+                    currentUser = staffList[0];
+                    applyUserSession();
+                }
+            }
+        }
+
         async function authenticateUserPin() {
-            const enteredPin = document.getElementById('userPinInput').value;
+            const enteredPin = document.getElementById('userPinInput').value.trim();
 
             if (enteredPin === '1234') {
                 currentUser = { full_name: 'Default Manager', role: 'manager' };
@@ -808,7 +835,7 @@
                 });
             }
 
-            // Render Damaged & Written-Off Table (Queries damaged_stock table directly, falls back to non-restocked returns)
+            // Render Damaged & Written-Off Table
             if (damagedTbody) {
                 damagedTbody.innerHTML = '';
                 let damagedData = [];
@@ -822,7 +849,6 @@
                     console.warn('damaged_stock table fallback to returns filter', e);
                 }
 
-                // Fallback to filtering returns if dedicated table is empty or uninitialized
                 if (damagedData.length === 0) {
                     damagedData = returns.filter(r => !r.restocked).map(r => ({
                         id: r.id,
