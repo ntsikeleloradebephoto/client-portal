@@ -62,7 +62,6 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        /* tvOS Segmented Control Tabs */
         .tabs { 
             display: grid; 
             grid-template-columns: repeat(7, 1fr); 
@@ -123,7 +122,6 @@
             align-items: center; 
         }
 
-        /* APPLE INPUTS & CONTROLS */
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; font-size: 11px; font-weight: 500; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 0.5px; }
         
@@ -197,7 +195,6 @@
         .status-settled { color: var(--green-active); background: rgba(48, 209, 88, 0.15); border: 1px solid rgba(48, 209, 88, 0.35); }
         .status-returned { color: var(--red-alert); background: rgba(255, 69, 58, 0.15); border: 1px solid rgba(255, 69, 58, 0.35); }
 
-        /* BUTTONS */
         .btn-action { padding: 8px 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; border: none; border-radius: 8px; cursor: pointer; margin-right: 6px; transition: transform 0.15s ease; }
         .btn-action:hover { transform: scale(1.03); }
         .btn-pending { background: rgba(241, 196, 15, 0.25); color: var(--gold-light); border: 1px solid rgba(241, 196, 15, 0.45); }
@@ -207,8 +204,8 @@
         .btn-export { background: rgba(255,255,255,0.08); border: 1px solid var(--border-subtle); color: var(--text-light); font-weight: 600; cursor: pointer; padding: 10px 16px; border-radius: 12px; text-transform: uppercase; font-size: 11px; transition: background 0.2s; }
         .btn-export:hover { background: rgba(255,255,255,0.15); }
 
-        .btn-sec { background: rgba(255,255,255,0.08); border: 1px solid var(--border-subtle); color: var(--gold-light); cursor: pointer; padding: 10px 16px; border-radius: 12px; font-size: 11px; font-weight: 600; transition: all 0.2s; }
-        .btn-sec:hover { background: rgba(255,255,255,0.15); border-color: var(--gold-primary); }
+        .btn-sec { background: rgba(255,255,255,0.08); border: 1px solid var(--border-subtle); color: var(--gold-light); cursor: pointer; padding: 10px 16px; border-radius: 12px; font-size: 11px; font-weight: 600; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; }
+        .btn-sec:hover { background: rgba(255,255,255,0.15); border-color: var(--gold-primary); color: #fff; }
 
         .btn-submit { 
             background: linear-gradient(135deg, #f7dc6f 0%, #f1c40f 100%); 
@@ -228,7 +225,6 @@
         .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(241, 196, 15, 0.5); }
         .btn-submit:active { transform: translateY(1px); }
 
-        /* MODALS */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(35px); display: flex; justify-content: center; align-items: center; z-index: 999; animation: fadeIn 0.2s ease; }
         .modal-card { background: #1c1c1e; border: 1px solid var(--border-glass); padding: 36px; border-radius: 28px; width: 380px; text-align: center; box-shadow: 0 40px 80px rgba(0,0,0,0.9); }
 
@@ -249,6 +245,7 @@
         </div>
         <div class="role-badge">
             <span id="roleLabel">ACTIVE USER: NOT LOGGED IN</span>
+            <a href="pos-sell.html" class="btn-sec" style="padding: 6px 12px; font-size: 10px;">Front Desk POS &rarr;</a>
             <button class="btn-sec" onclick="openLoginModal()" style="padding: 6px 12px; font-size: 10px;">SWITCH USER</button>
         </div>
     </div>
@@ -363,7 +360,7 @@
         </div>
     </div>
 
-    <!-- TAB 2: ENTERPRISE CONSIGNMENT STOCK INTAKE (BATCH SUPPORT) -->
+    <!-- TAB 2: ENTERPRISE CONSIGNMENT STOCK INTAKE -->
     <div id="tab2" class="tab-content">
         <div class="section-title">Consignment Stock Intake & Batch Staging</div>
         <form id="stockForm" onsubmit="addStockItemToBatch(event)" style="margin-bottom: 28px;">
@@ -670,7 +667,6 @@
             }
         });
 
-        // --- TAB 1: SCANNER & SLOT FILL LOGIC ---
         function handleBarcodeScanInput() {
             const query = document.getElementById('posBarcodeScan').value.trim().toLowerCase();
             if (!query) {
@@ -744,7 +740,6 @@
             document.getElementById('slotLineTotal').value = 'R 0.00';
         }
 
-        // --- TAB 1: CART BATCH LOGIC ---
         function addItemToCart() {
             if (!activePosMatch) return alert('Scan or select an item first.');
 
@@ -872,7 +867,6 @@
             document.getElementById('receiptModal').style.display = 'flex';
         }
 
-        // --- TAB 2: INTAKE BATCH LOGIC ---
         function addStockItemToBatch(e) {
             e.preventDefault();
 
@@ -953,7 +947,6 @@
             }
         }
 
-        // --- CAMERA SCANNER ---
         function toggleCameraScanner() {
             const modal = document.getElementById('cameraScannerModal');
             if (modal.style.display === 'none' || modal.style.display === '') {
@@ -994,7 +987,6 @@
             }
         }
 
-        // --- AUTH & USER LOGINS ---
         function openLoginModal() {
             currentUser = null;
             document.getElementById('roleLabel').innerText = 'ACTIVE USER: NOT LOGGED IN';
@@ -1035,11 +1027,6 @@
                     if (document.getElementById(id)) document.getElementById(id).style.display = 'block';
                 });
                 switchTab('tab1');
-            } else if (currentUser.role === 'cashier') {
-                ['btnTab3', 'btnTab4', 'btnTab5', 'btnTab6'].forEach(id => {
-                    if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
-                });
-                switchTab('tab1');
             } else {
                 ['btnTab3', 'btnTab4', 'btnTab5', 'btnTab6'].forEach(id => {
                     if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
@@ -1060,7 +1047,6 @@
             if (targetBtn) targetBtn.classList.add('active');
         }
 
-        // --- FETCH INVENTORY & LEDGERS ---
         async function fetchAdminOrders() {
             if (!supabaseClient) return;
             const { data: orders } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
