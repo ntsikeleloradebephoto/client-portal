@@ -51,7 +51,6 @@
             justify-content: center;
             align-items: center;
             z-index: 1000;
-            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .login-box {
@@ -78,7 +77,6 @@
             font-size: 1.1rem;
             color: var(--text-main);
             font-weight: 600;
-            letter-spacing: -0.01em;
             margin-bottom: 8px;
         }
 
@@ -108,20 +106,9 @@
             background: rgba(0, 0, 0, 0.7);
         }
 
-        /* App Container (Hidden until authenticated) */
+        /* App Container */
         #appContainer {
             display: none;
-            animation: scaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes scaleIn {
-            from { opacity: 0; transform: scale(0.98); }
-            to { opacity: 1; transform: scale(1); }
         }
 
         header {
@@ -167,7 +154,7 @@
             padding: 10px 16px;
             border-radius: 10px;
             background: var(--card-bg);
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: all 0.2s ease;
         }
 
         .nav-link:hover {
@@ -183,7 +170,6 @@
             font-size: 0.8rem;
             font-weight: 600;
             color: var(--accent-gold);
-            letter-spacing: 0.03em;
         }
 
         .pos-container {
@@ -270,18 +256,13 @@
             text-transform: uppercase;
             font-size: 0.8rem;
             letter-spacing: 0.08em;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: all 0.2s ease;
             box-shadow: 0 4px 20px rgba(243, 198, 93, 0.25);
         }
 
         .btn-gold:hover {
             background-color: var(--accent-hover);
             transform: translateY(-1px);
-            box-shadow: 0 6px 24px rgba(243, 198, 93, 0.35);
-        }
-
-        .btn-gold:active {
-            transform: translateY(0);
         }
 
         table {
@@ -302,15 +283,14 @@
             font-size: 0.7rem;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.06em;
         }
 
         .total-section {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 25px;
-            padding-top: 20px;
+            margin-top: 20px;
+            padding-top: 15px;
             border-top: 1px solid var(--border-color);
             font-size: 1.2rem;
             font-weight: 600;
@@ -318,8 +298,32 @@
 
         .total-amount {
             color: var(--accent-gold);
-            font-feature-settings: "tnum";
-            font-variant-numeric: tabular-nums;
+        }
+
+        .tender-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .tender-btn {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+
+        .tender-btn.active {
+            border-color: var(--accent-gold);
+            background: rgba(243, 198, 93, 0.1);
+            color: var(--accent-gold);
         }
 
         .remove-btn {
@@ -328,9 +332,7 @@
             color: var(--danger);
             cursor: pointer;
             font-size: 0.8rem;
-            font-weight: 500;
             opacity: 0.8;
-            transition: opacity 0.2s;
         }
 
         .remove-btn:hover {
@@ -343,13 +345,6 @@
             font-weight: 500;
             margin-top: 14px;
             display: none;
-            animation: shake 0.4s ease-in-out;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-6px); }
-            40%, 80% { transform: translateX(6px); }
         }
     </style>
 </head>
@@ -370,7 +365,7 @@
         </div>
     </div>
 
-    <!-- Main POS Interface (Protected) -->
+    <!-- Main POS Interface -->
     <div id="appContainer">
         <header>
             <div class="brand-container">
@@ -384,14 +379,14 @@
         </header>
 
         <div class="pos-container">
-            <!-- Left Column: Barcode Scan & Staging Input -->
+            <!-- Left Column: Scan & Staging -->
             <div>
                 <div class="card">
                     <div class="card-title">Live Barcode Scan & Terminal Checkout</div>
                     
                     <div class="form-group">
                         <label for="barcodeScan">Scan Barcode / Type SKU</label>
-                        <input type="text" id="barcodeScan" placeholder="Scan barcode or type item number...">
+                        <input type="text" id="barcodeScan" placeholder="Scan barcode or type item number..." autofocus>
                     </div>
 
                     <div class="inline-fields">
@@ -436,12 +431,12 @@
                 </div>
             </div>
 
-            <!-- Right Column: Transaction Staged Batch & Grand Total -->
+            <!-- Right Column: Staged Batch & Tender Checkout -->
             <div>
                 <div class="card">
                     <div class="card-title">Staged Transaction Batch</div>
                     
-                    <div style="max-height: 380px; overflow-y: auto;">
+                    <div style="max-height: 240px; overflow-y: auto;">
                         <table>
                             <thead>
                                 <tr>
@@ -453,7 +448,7 @@
                             </thead>
                             <tbody id="cartTableBody">
                                 <tr>
-                                    <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 30px 0;">No items added to current transaction batch.</td>
+                                    <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px 0;">No items added yet.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -464,8 +459,25 @@
                         <span class="total-amount" id="grandTotalDisplay">R 0.00</span>
                     </div>
 
+                    <!-- Tender / Payment Section -->
                     <div style="margin-top: 20px;">
-                        <button class="btn-gold" id="checkoutBtn">Dispatch & Print Receipt</button>
+                        <label>Payment Tender Method</label>
+                        <div class="tender-options">
+                            <button class="tender-btn active" id="tenderCash" onclick="setTender('CASH')">Cash</button>
+                            <button class="tender-btn" id="tenderCard" onclick="setTender('CARD')">Card / POS</button>
+                        </div>
+
+                        <div class="form-group" id="cashTenderGroup">
+                            <label for="cashReceived">Cash Tendered (ZAR)</label>
+                            <input type="number" id="cashReceived" placeholder="0.00" oninput="calculateChange()">
+                        </div>
+
+                        <div class="form-group" id="changeDueGroup">
+                            <label for="changeDue">Change Due</label>
+                            <input type="text" id="changeDue" readonly value="R 0.00" style="color: var(--success); font-weight: 650;">
+                        </div>
+
+                        <button class="btn-gold" id="checkoutBtn" style="margin-top: 5px;">Complete & Sync Sale</button>
                     </div>
                 </div>
             </div>
@@ -483,12 +495,14 @@
         const loginError = document.getElementById('loginError');
         const cashierBadgeDisplay = document.getElementById('cashierBadgeDisplay');
 
-        // Auto-Verify PIN as soon as typing matches database record length
+        let activeCashierName = 'COUNTER-01';
+        let selectedTender = 'CASH';
+
+        // Auto-Verify PIN on input completion
         cashierPinInput.addEventListener('input', async (e) => {
             const enteredPin = e.target.value.trim();
             loginError.style.display = 'none';
 
-            // Trigger check once PIN reaches 4 characters or more
             if (enteredPin.length >= 4) {
                 const { data, error } = await supabaseClient
                     .from('cashiers')
@@ -497,23 +511,38 @@
                     .single();
 
                 if (!error && data) {
-                    // Success: Smooth glass fade-in out
+                    activeCashierName = data.cashier_name.toUpperCase();
                     loginOverlay.style.opacity = '0';
                     loginOverlay.style.transition = 'opacity 0.3s ease';
                     setTimeout(() => {
                         loginOverlay.style.display = 'none';
                         appContainer.style.display = 'block';
-                        cashierBadgeDisplay.innerText = `CASHIER: ${data.cashier_name.toUpperCase()}`;
+                        cashierBadgeDisplay.innerText = `CASHIER: ${activeCashierName}`;
                         fetchLiveInventory();
                         document.getElementById('barcodeScan').focus();
                     }, 300);
                 } else if (enteredPin.length >= 6) {
-                    // Show error feedback if it hits max length without matching
                     loginError.style.display = 'block';
                     cashierPinInput.value = '';
                 }
             }
         });
+
+        window.setTender = function(method) {
+            selectedTender = method;
+            document.getElementById('tenderCash').classList.toggle('active', method === 'CASH');
+            document.getElementById('tenderCard').classList.toggle('active', method === 'CARD');
+            
+            const cashGroup = document.getElementById('cashTenderGroup');
+            const changeGroup = document.getElementById('changeDueGroup');
+            if (method === 'CARD') {
+                cashGroup.style.display = 'none';
+                changeGroup.style.display = 'none';
+            } else {
+                cashGroup.style.display = 'block';
+                changeGroup.style.display = 'block';
+            }
+        }
 
         const barcodeInput = document.getElementById('barcodeScan');
         const itemDescInput = document.getElementById('itemDesc');
@@ -532,14 +561,11 @@
         let currentInventory = [];
         let stagedBatch = [];
         let activeScannedItem = null;
+        let currentGrandTotal = 0;
 
         async function fetchLiveInventory() {
             const { data, error } = await supabaseClient.from('inventory').select('*');
-            if (error) {
-                console.error('Error fetching inventory:', error);
-            } else {
-                currentInventory = data || [];
-            }
+            if (!error) currentInventory = data || [];
         }
 
         barcodeInput.addEventListener('input', (e) => {
@@ -596,16 +622,17 @@
 
         function renderBatchCart() {
             if (stagedBatch.length === 0) {
-                cartTableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 30px 0;">No items added to current transaction batch.</td></tr>`;
+                cartTableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px 0;">No items added yet.</td></tr>`;
+                currentGrandTotal = 0;
                 grandTotalDisplay.innerText = "R 0.00";
                 return;
             }
 
             let html = '';
-            let grandTotal = 0;
+            currentGrandTotal = 0;
 
             stagedBatch.forEach((item, index) => {
-                grandTotal += item.subtotal;
+                currentGrandTotal += item.subtotal;
                 html += `
                     <tr>
                         <td>${item.desc}<br><small style="color:var(--text-muted);">${item.sku}</small></td>
@@ -617,12 +644,20 @@
             });
 
             cartTableBody.innerHTML = html;
-            grandTotalDisplay.innerText = `R ${grandTotal.toFixed(2)}`;
+            grandTotalDisplay.innerText = `R ${currentGrandTotal.toFixed(2)}`;
+            calculateChange();
         }
 
         window.removeStagedItem = function(index) {
             stagedBatch.splice(index, 1);
             renderBatchCart();
+        }
+
+        window.calculateChange = function() {
+            if (selectedTender === 'CARD') return;
+            const cashReceived = parseFloat(document.getElementById('cashReceived').value) || 0;
+            const change = cashReceived - currentGrandTotal;
+            document.getElementById('changeDue').value = change >= 0 ? `R ${change.toFixed(2)}` : "Insufficient Cash";
         }
 
         function resetScanFields() {
@@ -643,9 +678,18 @@
                 return;
             }
 
+            if (selectedTender === 'CASH') {
+                const cashReceived = parseFloat(document.getElementById('cashReceived').value) || 0;
+                if (cashReceived < currentGrandTotal) {
+                    alert("Tendered cash is less than the grand total.");
+                    return;
+                }
+            }
+
             const orderRef = orderRefInput.value.trim() || `POS-${Math.floor(1000 + Math.random() * 9000)}`;
 
             for (const item of stagedBatch) {
+                // 1. Record order in Supabase
                 const { error: orderError } = await supabaseClient.from('orders').insert([{
                     order_ref: orderRef,
                     sku: item.sku,
@@ -653,19 +697,31 @@
                     supplier_partner: item.supplier,
                     quantity: item.qty,
                     subtotal: item.subtotal,
+                    payment_method: selectedTender,
+                    cashier: activeCashierName,
                     status: 'SETTLED'
                 }]);
 
-                if (orderError) {
-                    console.error("Failed to sync order:", orderError);
+                if (orderError) console.error("Order sync error:", orderError);
+
+                // 2. Deduct sold quantity from live inventory stock
+                const matchedStockItem = currentInventory.find(inv => (inv.sku === item.sku || inv.item_number === item.sku));
+                if (matchedStockItem) {
+                    const newQty = Math.max(0, (matchedStockItem.stock_qty || 0) - item.qty);
+                    await supabaseClient.from('inventory').update({ stock_qty: newQty }).eq('id', matchedStockItem.id);
                 }
             }
 
-            alert(`Transaction ${orderRef} successfully processed and synced! Printing receipt...`);
+            alert(`Sale ${orderRef} successfully settled via ${selectedTender} (${activeCashierName})! Receipt dispatched.`);
+            
+            // Reset everything for the next customer
             stagedBatch = [];
             orderRefInput.value = '';
+            document.getElementById('cashReceived').value = '';
+            document.getElementById('changeDue').value = 'R 0.00';
             renderBatchCart();
             fetchLiveInventory();
+            barcodeInput.focus();
         });
     </script>
 </body>
