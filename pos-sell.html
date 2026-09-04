@@ -33,6 +33,58 @@
             min-height: 100vh;
         }
 
+        /* Login Modal Overlay */
+        #loginOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 15, 15, 0.95);
+            backdrop-filter: blur(15px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .login-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 40px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+        }
+
+        .login-logo {
+            width: 64px;
+            height: 64px;
+            object-fit: contain;
+            margin-bottom: 20px;
+        }
+
+        .login-title {
+            font-size: 1rem;
+            color: var(--accent-gold);
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .login-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 25px;
+        }
+
+        /* App Container (Hidden until authenticated) */
+        #appContainer {
+            display: none;
+        }
+
         header {
             display: flex;
             justify-content: space-between;
@@ -234,108 +286,164 @@
         .remove-btn:hover {
             opacity: 1;
         }
+
+        .error-msg {
+            color: var(--danger);
+            font-size: 0.75srem;
+            margin-top: 10px;
+            display: none;
+        }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="brand-container">
-            <img src="logo.png" alt="Nguni Logo" class="brand-logo">
-            <h1>NGUNI HOMEWARE | RETAIL FRONT DESK</h1>
-        </div>
-        <div class="header-actions">
-            <a href="admin.html" class="nav-link">&larr; Admin Hub</a>
-            <div class="cashier-badge">CASHIER: COUNTER-01</div>
-        </div>
-    </header>
-
-    <div class="pos-container">
-        <div>
-            <div class="card">
-                <div class="card-title">Live Barcode Scan & Terminal Checkout</div>
-                
-                <div class="form-group">
-                    <label for="barcodeScan">Scan Barcode / Type SKU</label>
-                    <input type="text" id="barcodeScan" placeholder="Scan barcode or type item number..." autofocus>
-                </div>
-
-                <div class="inline-fields">
-                    <div class="form-group">
-                        <label for="itemDesc">Product Name</label>
-                        <input type="text" id="itemDesc" readonly placeholder="Waiting for barcode scan...">
-                    </div>
-                    <div class="form-group">
-                        <label for="barcodeDisplay">Barcode / SKU</label>
-                        <input type="text" id="barcodeDisplay" readonly value="--">
-                    </div>
-                </div>
-
-                <div class="inline-fields">
-                    <div class="form-group">
-                        <label for="stockAvail">Stock Available</label>
-                        <input type="number" id="stockAvail" readonly value="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="unitPrice">Unit Price (ZAR)</label>
-                        <input type="number" id="unitPrice" readonly value="0.00">
-                    </div>
-                </div>
-
-                <div class="inline-fields">
-                    <div class="form-group">
-                        <label for="orderRef">Order Reference / Transaction No.</label>
-                        <input type="text" id="orderRef" placeholder="e.g. #1043 or POS-8923">
-                    </div>
-                    <div class="form-group">
-                        <label for="quantity">Quantity</label>
-                        <input type="number" id="quantity" value="1" min="1">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="supplierTag">Consignor / Supplier</label>
-                    <input type="text" id="supplierTag" readonly value="--">
-                </div>
-
-                <button class="btn-gold" id="stageItemBtn">+ Stage Item to Batch</button>
+    <!-- Cashier PIN Login Screen -->
+    <div id="loginOverlay">
+        <div class="login-box">
+            <img src="logo.png" alt="Nguni Logo" class="login-logo">
+            <div class="login-title">Restricted POS Access</div>
+            <div class="login-subtitle">Enter Cashier PIN to unlock counter terminal</div>
+            
+            <div class="form-group">
+                <input type="password" id="cashierPinInput" placeholder="Enter Cashier PIN..." autofocus style="text-align: center; letter-spacing: 3px;">
             </div>
+            
+            <button class="btn-gold" id="loginBtn">Authorize Terminal</button>
+            <div id="loginError" class="error-msg" style="display:none; color: var(--danger); font-size: 0.8rem; margin-top: 10px;">Incorrect PIN. Access Denied.</div>
         </div>
+    </div>
 
-        <div>
-            <div class="card">
-                <div class="card-title">Staged Transaction Batch</div>
-                
-                <div style="max-height: 380px; overflow-y: auto;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Product</th>
-                                <th>Qty</th>
-                                <th>Subtotal</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody id="cartTableBody">
-                            <tr>
-                                <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 30px 0;">No items added to current transaction batch.</td>
-                            </tr>
-                        </tbody>
-                    </table>
+    <!-- Main POS Interface (Protected) -->
+    <div id="appContainer">
+        <header>
+            <div class="brand-container">
+                <img src="logo.png" alt="Nguni Logo" class="brand-logo">
+                <h1>NGUNI HOMEWARE | RETAIL FRONT DESK</h1>
+            </div>
+            <div class="header-actions">
+                <a href="admin.html" class="nav-link">&larr; Admin Hub</a>
+                <div class="cashier-badge">CASHIER: COUNTER-01</div>
+            </div>
+        </header>
+
+        <div class="pos-container">
+            <!-- Left Column: Barcode Scan & Staging Input -->
+            <div>
+                <div class="card">
+                    <div class="card-title">Live Barcode Scan & Terminal Checkout</div>
+                    
+                    <div class="form-group">
+                        <label for="barcodeScan">Scan Barcode / Type SKU</label>
+                        <input type="text" id="barcodeScan" placeholder="Scan barcode or type item number...">
+                    </div>
+
+                    <div class="inline-fields">
+                        <div class="form-group">
+                            <label for="itemDesc">Product Name</label>
+                            <input type="text" id="itemDesc" readonly placeholder="Waiting for barcode scan...">
+                        </div>
+                        <div class="form-group">
+                            <label for="barcodeDisplay">Barcode / SKU</label>
+                            <input type="text" id="barcodeDisplay" readonly value="--">
+                        </div>
+                    </div>
+
+                    <div class="inline-fields">
+                        <div class="form-group">
+                            <label for="stockAvail">Stock Available</label>
+                            <input type="number" id="stockAvail" readonly value="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="unitPrice">Unit Price (ZAR)</label>
+                            <input type="number" id="unitPrice" readonly value="0.00">
+                        </div>
+                    </div>
+
+                    <div class="inline-fields">
+                        <div class="form-group">
+                            <label for="orderRef">Order Reference / Transaction No.</label>
+                            <input type="text" id="orderRef" placeholder="e.g. #1043 or POS-8923">
+                        </div>
+                        <div class="form-group">
+                            <label for="quantity">Quantity</label>
+                            <input type="number" id="quantity" value="1" min="1">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="supplierTag">Consignor / Supplier</label>
+                        <input type="text" id="supplierTag" readonly value="--">
+                    </div>
+
+                    <button class="btn-gold" id="stageItemBtn">+ Stage Item to Batch</button>
                 </div>
+            </div>
 
-                <div class="total-section">
-                    <span>Grand Total:</span>
-                    <span class="total-amount" id="grandTotalDisplay">R 0.00</span>
-                </div>
+            <!-- Right Column: Transaction Staged Batch & Grand Total -->
+            <div>
+                <div class="card">
+                    <div class="card-title">Staged Transaction Batch</div>
+                    
+                    <div style="max-height: 380px; overflow-y: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Qty</th>
+                                    <th>Subtotal</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="cartTableBody">
+                                <tr>
+                                    <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 30px 0;">No items added to current transaction batch.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
 
-                <div style="margin-top: 20px;">
-                    <button class="btn-gold" id="checkoutBtn">Dispatch & Print Receipt</button>
+                    <div class="total-section">
+                        <span>Grand Total:</span>
+                        <span class="total-amount" id="grandTotalDisplay">R 0.00</span>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <button class="btn-gold" id="checkoutBtn">Dispatch & Print Receipt</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        // SET YOUR CASHIER PIN HERE (Change '1990' to whatever PIN you prefer)
+        const CASHIER_PIN = '1990';
+
+        const loginOverlay = document.getElementById('loginOverlay');
+        const appContainer = document.getElementById('appContainer');
+        const cashierPinInput = document.getElementById('cashierPinInput');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginError = document.getElementById('loginError');
+
+        function handleLogin() {
+            if (cashierPinInput.value.trim() === CASHIER_PIN) {
+                loginOverlay.style.display = 'none';
+                appContainer.style.display = 'block';
+                fetchLiveInventory();
+                document.getElementById('barcodeScan').focus();
+            } else {
+                loginError.style.display = 'block';
+                cashierPinInput.value = '';
+                cashierPinInput.focus();
+            }
+        }
+
+        loginBtn.addEventListener('click', handleLogin);
+        cashierPinInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleLogin();
+        });
+
+        // SUPABASE BACKEND LOGIC
         const SUPABASE_URL = 'https://aivsmcdhxfdccsbqmejt.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_NDE9uLsqMD2QiIa6LMw-Lw_IBOmeebV';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -366,7 +474,6 @@
                 currentInventory = data || [];
             }
         }
-        fetchLiveInventory();
 
         barcodeInput.addEventListener('input', (e) => {
             const query = e.target.value.trim().toLowerCase();
@@ -430,6 +537,27 @@
             let html = '';
             let grandTotal = 0;
 
+            stagedBatch.shorthand = stagedBatch.forEach((item, index) => {
+                grandTotal += item.subtotal;
+                html += `
+                    <tr>
+                        <td>${item.desc}<br><small style="color:var(--text-muted);">${item.sku}</small></td>
+                        <td>${item.qty}</td>
+                        <td>R ${item.subtotal.toFixed(2)}</td>
+                        <td><button class="remove-btn" onclick="removeStagedItem(${index})">Remove</button></td>
+                    </tr>
+                `;
+            });
+
+            // Fallback iteration loop fix
+            stagedBatch.forEach((item, index) => {
+                if(index === 0) grandTotal = 0; // reset once
+                grandTotal += item.subtotal;
+            });
+
+            // Re-evaluating cleanly
+            html = '';
+            grandTotal = 0;
             stagedBatch.forEach((item, index) => {
                 grandTotal += item.subtotal;
                 html += `
