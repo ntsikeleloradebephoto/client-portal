@@ -3,87 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nguni Homeware | Cashier POS Selling Front</title>
+    <title>Nguni Homeware | Cashier POS Front Desk</title>
     <link rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
-            --bg-dark: #0f0f0f;
-            --card-bg: rgba(22, 22, 22, 0.75);
-            --border-color: rgba(255, 255, 255, 0.08);
+            --bg-dark: #08080a;
+            --card-bg: rgba(28, 28, 32, 0.65);
+            --border-color: rgba(255, 255, 255, 0.1);
             --accent-gold: #f3c65d;
-            --accent-hover: #d4ab47;
-            --text-main: #ffffff;
-            --text-muted: #888888;
-            --success: #22c55e;
-            --danger: #ef4444;
+            --accent-hover: #fae19c;
+            --text-main: #f5f5f7;
+            --text-muted: #86868b;
+            --success: #30d158;
+            --danger: #ff453a;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
         }
 
         body {
             background-color: var(--bg-dark);
             color: var(--text-main);
-            padding: 25px;
-            background-image: radial-gradient(circle at 50% 0%, rgba(243, 198, 93, 0.03) 0%, transparent 60%);
+            padding: 30px;
+            background-image: 
+                radial-gradient(circle at 20% 10%, rgba(243, 198, 93, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 80% 90%, rgba(48, 209, 88, 0.03) 0%, transparent 40%);
             min-height: 100vh;
         }
 
-        /* Login Modal Overlay */
+        /* tvOS / iOS Glassmorphism Login Overlay */
         #loginOverlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(15, 15, 15, 0.95);
-            backdrop-filter: blur(15px);
+            background: rgba(8, 8, 10, 0.85);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 1000;
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .login-box {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            padding: 40px;
-            border-radius: 16px;
+            background: rgba(36, 36, 40, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 50px 40px;
+            border-radius: 24px;
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             text-align: center;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
         }
 
         .login-logo {
-            width: 64px;
-            height: 64px;
+            width: 72px;
+            height: 72px;
             object-fit: contain;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
+            filter: drop-shadow(0 4px 12px rgba(243, 198, 93, 0.2));
         }
 
         .login-title {
-            font-size: 1rem;
-            color: var(--accent-gold);
-            letter-spacing: 1.5px;
+            font-size: 1.1rem;
+            color: var(--text-main);
+            font-weight: 600;
+            letter-spacing: -0.01em;
             margin-bottom: 8px;
-            text-transform: uppercase;
         }
 
         .login-subtitle {
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             color: var(--text-muted);
-            margin-bottom: 25px;
+            margin-bottom: 30px;
+        }
+
+        .pin-input {
+            text-align: center;
+            letter-spacing: 12px;
+            font-size: 1.8rem;
+            font-weight: 500;
+            padding: 16px;
+            border-radius: 14px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--accent-gold);
+            transition: all 0.3s ease;
+        }
+
+        .pin-input:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 4px rgba(243, 198, 93, 0.15);
+            background: rgba(0, 0, 0, 0.7);
         }
 
         /* App Container (Hidden until authenticated) */
         #appContainer {
             display: none;
+            animation: scaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
         }
 
         header {
@@ -91,103 +129,103 @@
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid var(--border-color);
-            padding-bottom: 20px;
+            padding-bottom: 22px;
             margin-bottom: 30px;
-            backdrop-filter: blur(10px);
         }
 
         .brand-container {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 16px;
         }
 
         .brand-logo {
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
             object-fit: contain;
         }
 
         h1 {
-            font-size: 1.1rem;
-            letter-spacing: 1.5px;
-            color: var(--accent-gold);
-            font-weight: 500;
+            font-size: 1rem;
+            letter-spacing: 0.05em;
+            color: var(--text-main);
+            font-weight: 600;
         }
 
         .header-actions {
             display: flex;
-            gap: 15px;
+            gap: 14px;
             align-items: center;
         }
 
         .nav-link {
-            color: var(--accent-gold);
+            color: var(--text-main);
             text-decoration: none;
             font-size: 0.8rem;
+            font-weight: 500;
             border: 1px solid var(--border-color);
-            padding: 8px 14px;
-            border-radius: 8px;
+            padding: 10px 16px;
+            border-radius: 10px;
             background: var(--card-bg);
-            backdrop-filter: blur(8px);
-            transition: all 0.2s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .nav-link:hover {
-            background: rgba(243, 198, 93, 0.1);
-            border-color: var(--accent-gold);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
         }
 
         .cashier-badge {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            padding: 8px 16px;
-            border-radius: 8px;
+            background: rgba(243, 198, 93, 0.1);
+            border: 1px solid rgba(243, 198, 93, 0.2);
+            padding: 10px 18px;
+            border-radius: 10px;
             font-size: 0.8rem;
+            font-weight: 600;
             color: var(--accent-gold);
-            backdrop-filter: blur(8px);
-            letter-spacing: 0.5px;
+            letter-spacing: 0.03em;
         }
 
         .pos-container {
             display: grid;
             grid-template-columns: 2fr 1fr;
-            gap: 25px;
+            gap: 24px;
         }
 
         .card {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 24px;
+            border-radius: 18px;
+            padding: 28px;
             margin-bottom: 20px;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
         }
 
         .card-title {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--accent-gold);
-            margin-bottom: 20px;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 22px;
             border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
+            padding-bottom: 12px;
         }
 
         .form-group {
-            margin-bottom: 18px;
+            margin-bottom: 20px;
         }
 
         label {
             display: block;
-            font-size: 0.7rem;
+            font-size: 0.72rem;
+            font-weight: 500;
             text-transform: uppercase;
             color: var(--text-muted);
-            margin-bottom: 6px;
-            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+            letter-spacing: 0.05em;
         }
 
         input, select {
@@ -195,48 +233,55 @@
             background: rgba(0, 0, 0, 0.4);
             border: 1px solid var(--border-color);
             color: var(--text-main);
-            padding: 12px 16px;
-            border-radius: 8px;
+            padding: 13px 16px;
+            border-radius: 12px;
             font-size: 0.95rem;
-            transition: border-color 0.2s;
+            transition: all 0.2s ease;
         }
 
         input:focus, select:focus {
             outline: none;
             border-color: var(--accent-gold);
             background: rgba(0, 0, 0, 0.6);
+            box-shadow: 0 0 0 3px rgba(243, 198, 93, 0.12);
         }
 
         input[readonly] {
-            color: #b0b0b0;
+            color: var(--text-muted);
             background: rgba(255, 255, 255, 0.02);
+            border-color: rgba(255, 255, 255, 0.04);
         }
 
         .inline-fields {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            gap: 16px;
         }
 
         .btn-gold {
             background-color: var(--accent-gold);
-            color: #000;
+            color: #111;
             font-weight: 600;
             border: none;
             padding: 14px;
             width: 100%;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
             text-transform: uppercase;
-            font-size: 0.85rem;
-            letter-spacing: 1px;
-            transition: all 0.2s;
-            box-shadow: 0 4px 14px rgba(243, 198, 93, 0.2);
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 20px rgba(243, 198, 93, 0.25);
         }
 
         .btn-gold:hover {
             background-color: var(--accent-hover);
             transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(243, 198, 93, 0.35);
+        }
+
+        .btn-gold:active {
+            transform: translateY(0);
         }
 
         table {
@@ -255,8 +300,9 @@
         th {
             color: var(--text-muted);
             font-size: 0.7rem;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
+            letter-spacing: 0.06em;
         }
 
         .total-section {
@@ -266,12 +312,14 @@
             margin-top: 25px;
             padding-top: 20px;
             border-top: 1px solid var(--border-color);
-            font-size: 1.15rem;
+            font-size: 1.2rem;
             font-weight: 600;
         }
 
         .total-amount {
             color: var(--accent-gold);
+            font-feature-settings: "tnum";
+            font-variant-numeric: tabular-nums;
         }
 
         .remove-btn {
@@ -280,6 +328,7 @@
             color: var(--danger);
             cursor: pointer;
             font-size: 0.8rem;
+            font-weight: 500;
             opacity: 0.8;
             transition: opacity 0.2s;
         }
@@ -291,28 +340,37 @@
         .error-msg {
             color: var(--danger);
             font-size: 0.8rem;
-            margin-top: 10px;
+            font-weight: 500;
+            margin-top: 14px;
             display: none;
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
         }
     </style>
 </head>
 <body>
 
+    <!-- tvOS/iOS PIN Login Overlay -->
     <div id="loginOverlay">
         <div class="login-box">
             <img src="logo.png" alt="Nguni Logo" class="login-logo">
-            <div class="login-title">Restricted POS Access</div>
-            <div class="login-subtitle">Enter Cashier PIN to unlock counter terminal</div>
+            <div class="login-title">Authentication Required</div>
+            <div class="login-subtitle">Enter 4-digit cashier security PIN</div>
             
-            <div class="form-group">
-                <input type="password" id="cashierPinInput" placeholder="Enter PIN..." autofocus style="text-align: center; letter-spacing: 3px;" maxlength="6">
+            <div class="form-group" style="margin-bottom: 0;">
+                <input type="password" id="cashierPinInput" class="pin-input" placeholder="••••" autofocus maxlength="6">
             </div>
             
-            <button class="btn-gold" id="loginBtn">Authorize Terminal</button>
-            <div id="loginError" class="error-msg">Incorrect PIN. Access Denied.</div>
+            <div id="loginError" class="error-msg">Incorrect PIN. Please try again.</div>
         </div>
     </div>
 
+    <!-- Main POS Interface (Protected) -->
     <div id="appContainer">
         <header>
             <div class="brand-container">
@@ -321,11 +379,12 @@
             </div>
             <div class="header-actions">
                 <a href="admin.html" class="nav-link">&larr; Admin Hub</a>
-                <div class="cashier-badge">CASHIER: COUNTER-01</div>
+                <div class="cashier-badge" id="cashierBadgeDisplay">CASHIER: COUNTER-01</div>
             </div>
         </header>
 
         <div class="pos-container">
+            <!-- Left Column: Barcode Scan & Staging Input -->
             <div>
                 <div class="card">
                     <div class="card-title">Live Barcode Scan & Terminal Checkout</div>
@@ -377,6 +436,7 @@
                 </div>
             </div>
 
+            <!-- Right Column: Transaction Staged Batch & Grand Total -->
             <div>
                 <div class="card">
                     <div class="card-title">Staged Transaction Batch</div>
@@ -420,35 +480,39 @@
         const loginOverlay = document.getElementById('loginOverlay');
         const appContainer = document.getElementById('appContainer');
         const cashierPinInput = document.getElementById('cashierPinInput');
-        const loginBtn = document.getElementById('loginBtn');
         const loginError = document.getElementById('loginError');
+        const cashierBadgeDisplay = document.getElementById('cashierBadgeDisplay');
 
-        async function handleLogin() {
-            const enteredPin = cashierPinInput.value.trim();
-            if (!enteredPin) return;
+        // Auto-Verify PIN as soon as typing matches database record length
+        cashierPinInput.addEventListener('input', async (e) => {
+            const enteredPin = e.target.value.trim();
+            loginError.style.display = 'none';
 
-            const { data, error } = await supabaseClient
-                .from('cashiers')
-                .select('*')
-                .eq('pin', enteredPin)
-                .single();
+            // Trigger check once PIN reaches 4 characters or more
+            if (enteredPin.length >= 4) {
+                const { data, error } = await supabaseClient
+                    .from('cashiers')
+                    .select('*')
+                    .eq('pin', enteredPin)
+                    .single();
 
-            if (error || !data) {
-                loginError.style.display = 'block';
-                cashierPinInput.value = '';
-                cashierPinInput.focus();
-            } else {
-                loginOverlay.style.display = 'none';
-                appContainer.style.display = 'block';
-                document.querySelector('.cashier-badge').innerText = `CASHIER: ${data.cashier_name.toUpperCase()}`;
-                fetchLiveInventory();
-                document.getElementById('barcodeScan').focus();
+                if (!error && data) {
+                    // Success: Smooth glass fade-in out
+                    loginOverlay.style.opacity = '0';
+                    loginOverlay.style.transition = 'opacity 0.3s ease';
+                    setTimeout(() => {
+                        loginOverlay.style.display = 'none';
+                        appContainer.style.display = 'block';
+                        cashierBadgeDisplay.innerText = `CASHIER: ${data.cashier_name.toUpperCase()}`;
+                        fetchLiveInventory();
+                        document.getElementById('barcodeScan').focus();
+                    }, 300);
+                } else if (enteredPin.length >= 6) {
+                    // Show error feedback if it hits max length without matching
+                    loginError.style.display = 'block';
+                    cashierPinInput.value = '';
+                }
             }
-        }
-
-        loginBtn.addEventListener('click', handleLogin);
-        cashierPinInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleLogin();
         });
 
         const barcodeInput = document.getElementById('barcodeScan');
