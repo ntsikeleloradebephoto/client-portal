@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nguni Homeware | Supplier Trade Ledger (tvOS Edition)</title>
+    <title>Nguni Homeware | Curated Storefront (tvOS Edition)</title>
     <link rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <style>
@@ -37,216 +37,210 @@
             align-items: center;
             border-bottom: 1px solid var(--border-subtle);
             padding-bottom: 20px;
-            margin-bottom: 32px;
+            margin-bottom: 36px;
             backdrop-filter: var(--blur-radius);
         }
 
-        .header-title { display: flex; align-items: center; gap: 14px; }
+        .header-title { display: flex; align-items: center; gap: 16px; }
         .header h1 { font-size: 15px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold-primary); margin: 0; }
         
-        .sync-badge { 
-            background: rgba(48, 209, 88, 0.12); 
-            border: 1px solid rgba(48, 209, 88, 0.3); 
-            color: var(--green-active); 
-            padding: 8px 16px; 
+        .cart-trigger { 
+            background: rgba(255, 255, 255, 0.05); 
+            border: 1px solid var(--border-glass); 
+            color: var(--gold-light); 
+            padding: 10px 20px; 
             border-radius: 980px; 
-            font-size: 11px; 
+            font-size: 12px; 
             font-weight: 600; 
+            cursor: pointer;
             display: flex; 
             align-items: center; 
-            gap: 8px;
+            gap: 10px;
             backdrop-filter: var(--blur-radius);
             box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            transition: all 0.2s ease;
         }
-        .sync-dot { width: 8px; height: 8px; background: var(--green-active); border-radius: 50%; box-shadow: 0 0 8px var(--green-active); }
+        .cart-trigger:hover { background: rgba(255,255,255,0.09); transform: scale(1.02); }
 
-        /* KPI METRIC CARDS */
-        .metrics-grid {
+        .hero-banner {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(18, 20, 26, 0.6) 100%);
+            border: 1px solid var(--border-glass);
+            border-radius: 24px;
+            padding: 48px;
+            margin-bottom: 40px;
+            backdrop-filter: var(--blur-radius);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+        .hero-banner h2 { font-size: 32px; font-weight: 700; margin: 0 0 12px 0; letter-spacing: -0.5px; color: #fff; }
+        .hero-banner p { font-size: 15px; color: var(--text-muted); margin: 0; max-width: 600px; line-height: 1.5; }
+
+        .section-title { 
+            font-size: 12px; 
+            font-weight: 600;
+            text-transform: uppercase; 
+            letter-spacing: 1.2px; 
+            color: var(--gold-primary); 
+            margin-bottom: 24px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+
+        /* PRODUCT GRID (tvOS CARDS) */
+        .product-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin-bottom: 32px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 48px;
         }
 
-        .metric-card {
+        .product-card {
             background: var(--panel-glass);
             border: 1px solid var(--border-subtle);
             border-radius: 20px;
             padding: 24px;
             backdrop-filter: var(--blur-radius);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-        }
-        .metric-label { font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1.2px; margin-bottom: 12px; }
-        .metric-value { font-size: 28px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
-
-        /* DASHBOARD SPLIT CONTENT */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 1.4fr 1fr;
-            gap: 24px;
-        }
-
-        .panel-box {
-            background: var(--panel-glass);
-            border: 1px solid var(--border-subtle);
-            border-radius: 20px;
-            padding: 28px;
-            backdrop-filter: var(--blur-radius);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-        }
-
-        .panel-title {
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            color: var(--gold-primary);
-            margin-top: 0;
-            margin-bottom: 24px;
-        }
-
-        /* MANIFEST LIST ITEMS */
-        .manifest-list {
+            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            max-height: 520px;
-            overflow-y: auto;
-            padding-right: 4px;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+        .product-card:hover {
+            transform: translateY(-6px) scale(1.01);
+            border-color: var(--border-glass);
+            box-shadow: 0 20px 40px rgba(212, 175, 55, 0.15);
         }
 
-        .manifest-item {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--border-subtle);
-            border-radius: 14px;
-            padding: 16px 20px;
+        .product-tag { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 8px; }
+        .product-name { font-size: 16px; font-weight: 600; color: #fff; margin: 0 0 8px 0; letter-spacing: -0.3px; }
+        .product-supplier { font-size: 12px; color: var(--gold-light); margin-bottom: 16px; }
+        
+        .product-footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: all 0.2s ease;
+            border-top: 1px solid var(--border-subtle);
+            padding-top: 16px;
+            margin-top: 16px;
         }
-        .manifest-item:hover { border-color: var(--border-glass); background: rgba(0, 0, 0, 0.6); }
-
-        .manifest-item-name { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 4px; }
-        .manifest-item-meta { font-size: 11px; color: var(--text-muted); }
+        .product-price { font-size: 18px; font-weight: 700; color: var(--cyan-bright); letter-spacing: -0.5px; }
         
-        .manifest-item-price { text-align: right; }
-        .manifest-amount { font-size: 15px; font-weight: 700; color: var(--gold-light); margin-bottom: 4px; }
-        
-        .status-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 3px 8px; border-radius: 980px; display: inline-block; }
-        .status-pending { color: var(--gold-light); background: rgba(212, 175, 55, 0.12); border: 1px solid rgba(212, 175, 55, 0.3); }
-        .status-settled { color: var(--green-active); background: rgba(48, 209, 88, 0.12); border: 1px solid rgba(48, 209, 88, 0.3); }
-
-        /* SUPPLIER SELECTOR BAR */
-        .supplier-filter-bar {
-            background: var(--panel-glass);
-            border: 1px solid var(--border-subtle);
-            border-radius: 16px;
-            padding: 16px 24px;
-            margin-bottom: 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .form-control {
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid var(--border-subtle);
-            color: #fff;
+        .btn-add {
+            background: linear-gradient(135deg, #f3c649 0%, #d4af37 100%);
+            color: #000;
+            font-weight: 700;
             padding: 10px 16px;
+            border: none;
             border-radius: 10px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.25);
+        }
+        .btn-add:hover { transform: scale(1.04); box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4); }
+
+        /* MODAL / CART DRAWER */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(25px); display: none; justify-content: center; align-items: center; z-index: 999; animation: fadeIn 0.2s ease; }
+        .modal-card { background: #14161c; border: 1px solid var(--border-glass); padding: 36px; border-radius: 24px; width: 440px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); max-height: 90vh; overflow-y: auto; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 11px; font-weight: 500; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 0.5px; }
+        .form-control { 
+            width: 100%; 
+            padding: 12px 16px; 
+            background: rgba(0, 0, 0, 0.4); 
+            border: 1px solid var(--border-subtle); 
+            color: #fff; 
+            border-radius: 12px; 
+            box-sizing: border-box; 
             font-size: 13px;
             font-family: inherit;
         }
-        .form-control:focus { outline: none; border-color: var(--gold-primary); }
+        .form-control:focus { outline: none; border-color: var(--gold-primary); box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15); }
 
-        @media (max-width: 1024px) {
-            .metrics-grid { grid-template-columns: repeat(2, 1fr); }
-            .dashboard-grid { grid-template-columns: 1fr; }
+        .btn-submit { 
+            background: linear-gradient(135deg, #f3c649 0%, #d4af37 100%); 
+            color: #000; 
+            font-weight: 700; 
+            padding: 14px 24px; 
+            border: none; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            text-transform: uppercase; 
+            letter-spacing: 0.8px; 
+            width: 100%; 
+            font-size: 12px;
+            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
         }
+        .btn-sec { background: rgba(255,255,255,0.06); border: 1px solid var(--border-subtle); color: var(--gold-light); cursor: pointer; padding: 10px 16px; border-radius: 10px; font-size: 11px; font-weight: 600; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <div class="header-title">
-            <img src="logo.png" alt="Nguni Logo" style="height: 34px;" onerror="this.style.display='none'">
-            <h1>NGUNI HOMEWARE | SUPPLIER TRADE LEDGER</h1>
+            <img src="logo.png" alt="Nguni Logo" style="height: 48px;" onerror="this.style.display='none'">
+            <h1>NGUNI HOMEWARE | STOREFRONT</h1>
         </div>
-        <div class="sync-badge">
-            <div class="sync-dot"></div>
-            <span>Realtime Sync Active</span>
-        </div>
+        <button class="cart-trigger" onclick="openCartModal()">
+            🛍️ Bag (<span id="cartItemCount">0</span>)
+        </button>
     </div>
 
-    <!-- SUPPLIER FILTER / IDENTIFIER -->
-    <div class="supplier-filter-bar">
-        <div>
-            <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; display: block; margin-bottom: 4px;">Viewing Partner Ledger</span>
-            <span id="activeSupplierName" style="font-size: 16px; font-weight: 600; color: var(--gold-light);">All Consignment Partners</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 12px;">
-            <label style="font-size: 11px; text-transform: uppercase; color: var(--text-muted);">Select Partner:</label>
-            <select id="supplierSelect" class="form-control" onchange="filterSupplierLedger()">
-                <option value="ALL" style="background:#14161c;">-- All Suppliers / Master View --</option>
-            </select>
-        </div>
+    <div class="hero-banner">
+        <h2>Handcrafted Masterpieces & Homeware</h2>
+        <p>Explore our exclusive collection of luxury local craft and designer homeware, sourced directly from master artisans and available for direct acquisition.</p>
     </div>
 
-    <!-- METRICS GRID -->
-    <div class="metrics-grid">
-        <div class="metric-card">
-            <div class="metric-label">Total Units Consigned & Sold</div>
-            <div class="metric-value" id="metricUnits">0 Units</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-label">Locked Wholesale Payout Owed</div>
-            <div class="metric-value" id="metricOwed" style="color: var(--gold-light);">R 0.00</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-label">Active Pilot SKUs</div>
-            <div class="metric-value" id="metricSkus" style="color: var(--cyan-bright);">0 Lines</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-label">Settlement Cycle</div>
-            <div class="metric-value" style="font-size: 24px;">15–30 Days</div>
-        </div>
+    <div class="section-title">
+        <span>Available Catalog Inventory</span>
+        <span id="catalogCount" style="color: var(--text-muted); font-size: 11px;">Loading items...</span>
     </div>
 
-    <!-- DASHBOARD SPLIT VIEW -->
-    <div class="dashboard-grid">
-        <!-- LEFT: VELOCITY CHART / ANALYTICS PANEL -->
-        <div class="panel-box">
-            <div class="panel-title">Weekly Unit Sales Velocity</div>
-            <div style="height: 280px; display: flex; flex-direction: column; justify-content: flex-end; position: relative; border-bottom: 1px solid var(--border-subtle); border-left: 1px solid var(--border-subtle); padding: 10px;">
-                <!-- Simulated Apple-style SVG Trend Chart -->
-                <svg style="position: absolute; top: 10px; left: 10px; right: 10px; bottom: 10px; width: calc(100% - 20px); height: calc(100% - 20px); overflow: visible;" viewBox="0 0 500 200" preserveAspectRatio="none">
-                    <defs>
-                        <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="rgba(212, 175, 55, 0.3)" />
-                            <stop offset="100%" stop-color="rgba(212, 175, 55, 0.0)" />
-                        </linearGradient>
-                    </defs>
-                    <path d="M 0 40 Q 250 120 500 100 L 500 200 L 0 200 Z" fill="url(#chartGradient)" />
-                    <path d="M 0 40 Q 250 120 500 100" fill="none" stroke="var(--gold-primary)" stroke-width="3" />
-                    <circle cx="0" cy="40" r="5" fill="var(--gold-light)" />
-                    <circle cx="500" cy="100" r="5" fill="var(--gold-light)" />
-                </svg>
-                <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-top: 10px; position: relative; z-index: 2;">
-                    <span id="chartStartDate">03 Sept 2026</span>
-                    <span id="chartEndDate">04 Sept 2026</span>
+    <div class="product-grid" id="productGrid">
+        <!-- Dynamic Inventory Render -->
+        <div style="color: var(--text-muted); grid-column: 1 / -1; padding: 40px; text-align: center;">Loading live inventory catalog...</div>
+    </div>
+
+    <!-- SHOPPING BAG / CHECKOUT MODAL -->
+    <div class="modal-overlay" id="cartModal">
+        <div class="modal-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h3 style="color: var(--gold-primary); margin: 0; font-size: 16px; font-weight: 600;">YOUR SHOPPING BAG</h3>
+                <button class="btn-sec" onclick="closeCartModal()" style="padding: 6px 12px;">Close</button>
+            </div>
+
+            <div id="cartItemsList" style="margin-bottom: 24px; max-height: 250px; overflow-y: auto;">
+                <p style="color: var(--text-muted); text-align: center; font-size: 13px;">Your bag is currently empty.</p>
+            </div>
+
+            <div style="border-top: 1px solid var(--border-subtle); padding-top: 16px; margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 700;">
+                    <span>Total:</span>
+                    <span id="cartGrandTotal" style="color: var(--cyan-bright);">R 0.00</span>
                 </div>
             </div>
-            <p style="font-size: 11px; color: var(--text-muted); margin-top: 16px; line-height: 1.5;">
-                Velocity tracking reflects aggregated daily sell-through rates across retail storefront and live POS terminal checkouts.
-            </p>
-        </div>
 
-        <!-- RIGHT: CONSIGNMENT SALES MANIFEST -->
-        <div class="panel-box">
-            <div class="panel-title">Consignment Sales Manifest</div>
-            <div class="manifest-list" id="manifestList">
-                <div style="color: var(--text-muted); text-align: center; padding: 40px;">Loading live manifest records...</div>
+            <div class="form-group">
+                <label>Customer Full Name</label>
+                <input type="text" id="customerName" class="form-control" placeholder="e.g. Lerato Khumalo">
             </div>
+            <div class="form-group">
+                <label>Contact Phone / Email</label>
+                <input type="text" id="customerContact" class="form-control" placeholder="e.g. 082 123 4567">
+            </div>
+
+            <button class="btn-submit" onclick="submitOrderCheckout()">COMPLETE ORDER</button>
         </div>
     </div>
 
@@ -261,109 +255,164 @@
             console.error("Supabase load error", e);
         }
 
-        let allOrders = [];
-        let allInventory = [];
+        let cachedInventory = [];
+        let shoppingCart = [];
 
         window.addEventListener('DOMContentLoaded', () => {
-            fetchSupplierData();
-
-            if (supabaseClient) {
-                supabaseClient.channel('supplier_realtime').on('postgres_changes', { event: '*', schema: 'public' }, () => {
-                    fetchSupplierData();
-                }).subscribe();
-            }
+            fetchStorefrontInventory();
         });
 
-        async function fetchSupplierData() {
+        async function fetchStorefrontInventory() {
             if (!supabaseClient) return;
-
-            const { data: orders } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
             const { data: inventory } = await supabaseClient.from('inventory').select('*').order('created_at', { ascending: false });
-
-            allOrders = orders || [];
-            allInventory = inventory || [];
-
-            populateSupplierDropdown(allOrders);
-            renderSupplierPortal('ALL');
+            cachedInventory = inventory || [];
+            renderStorefrontGrid(cachedInventory);
         }
 
-        function populateSupplierDropdown(orders) {
-            const select = document.getElementById('supplierSelect');
-            const suppliers = [...new Set(orders.map(o => o.supplier).filter(Boolean))];
-            
-            // Keep the default "ALL" option
-            select.innerHTML = '<option value="ALL" style="background:#14161c;">-- All Suppliers / Master View --</option>';
-            
-            suppliers.forEach(supp => {
-                const opt = document.createElement('option');
-                opt.value = supp;
-                opt.style.background = '#14161c';
-                opt.innerText = supp;
-                select.appendChild(opt);
-            });
-        }
+        function renderStorefrontGrid(items) {
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = '';
 
-        function filterSupplierLedger() {
-            const selectedSupplier = document.getElementById('supplierSelect').value;
-            document.getElementById('activeSupplierName').innerText = selectedSupplier === 'ALL' ? 'All Consignment Partners' : selectedSupplier;
-            renderSupplierPortal(selectedSupplier);
-        }
+            document.getElementById('catalogCount').innerText = `${items.length} items available`;
 
-        function renderSupplierPortal(supplierFilter) {
-            const filteredOrders = supplierFilter === 'ALL' 
-                ? allOrders 
-                : allOrders.filter(o => o.supplier === supplierFilter);
-
-            const filteredInventory = supplierFilter === 'ALL'
-                ? allInventory
-                : allInventory.filter(i => i.supplier === supplierFilter);
-
-            // Compute Metrics
-            let totalUnits = 0;
-            let totalOwed = 0;
-
-            filteredOrders.forEach(order => {
-                if (order.payout_status !== 'RETURNED / CANCELLED') {
-                    totalUnits += (parseInt(order.quantity_dispatched) || 1);
-                    if (order.payout_status === 'ESCROW PENDING' || !order.payout_status) {
-                        totalOwed += (parseFloat(order.wholesale_floor_zar) || 0);
-                    }
-                }
-            });
-
-            document.getElementById('metricUnits').innerText = `${totalUnits} Units`;
-            document.getElementById('metricOwed').innerText = `R ${totalOwed.toFixed(2)}`;
-            document.getElementById('metricSkus').innerText = `${filteredInventory.length} Lines`;
-
-            // Render Manifest List
-            const manifestList = document.getElementById('manifestList');
-            manifestList.innerHTML = '';
-
-            if (filteredOrders.length === 0) {
-                manifestList.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 40px;">No transaction records found for this partner.</div>';
+            if (items.length === 0) {
+                grid.innerHTML = '<div style="color: var(--text-muted); grid-column: 1 / -1; padding: 40px; text-align: center;">No inventory items currently listed.</div>';
                 return;
             }
 
-            filteredOrders.forEach(order => {
-                const amount = parseFloat(order.wholesale_floor_zar) || 0;
-                const status = order.payout_status || 'ESCROW PENDING';
-                const badgeClass = status === 'SETTLED' ? 'status-settled' : 'status-pending';
-                const dateStr = order.created_at ? new Date(order.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent';
+            items.forEach(item => {
+                const name = item.item_name || item.item_description || 'Exclusive Homeware Item';
+                const supplier = item.supplier || 'Master Wholesaler';
+                const price = parseFloat(item.wholesale_floor_zar || item.unit_price || item.cost_price || 0);
+                const qty = parseInt(item.quantity_allocated || item.quantity || 0);
 
-                const div = document.createElement('div');
-                div.className = 'manifest-item';
-                div.innerHTML = `
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
                     <div>
-                        <div class="manifest-item-name">${order.item_name || 'Consigned Item'}</div>
-                        <div class="manifest-item-meta">Order Ref: #${order.order_number || order.id.slice(0, 8)} • ${dateStr}</div>
+                        <div class="product-tag">${item.sku || 'NGUNI-ART'}</div>
+                        <h3 class="product-name">${name}</h3>
+                        <div class="product-supplier">By ${supplier}</div>
+                        <div style="font-size: 11px; color: ${qty > 0 ? 'var(--green-active)' : 'var(--text-muted)'}; margin-bottom: 8px;">
+                            ${qty > 0 ? `In Stock (${qty} available)` : 'Sold Out'}
+                        </div>
                     </div>
-                    <div class="manifest-item-price">
-                        <div class="manifest-amount">R ${amount.toFixed(2)}</div>
-                        <span class="status-badge ${badgeClass}">${status}</span>
+                    <div class="product-footer">
+                        <span class="product-price">R ${price.toFixed(2)}</span>
+                        ${qty > 0 ? `<button class="btn-add" onclick="addToBag('${item.id}')">+ Add to Bag</button>` : '<span style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">Unavailable</span>'}
                     </div>
                 `;
-                manifestList.appendChild(div);
+                grid.appendChild(card);
             });
+        }
+
+        function addToBag(itemId) {
+            const item = cachedInventory.find(i => i.id === itemId);
+            if (!item) return;
+
+            const existing = shoppingCart.find(i => i.id === itemId);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                shoppingCart.push({
+                    id: item.id,
+                    sku: item.sku || 'N/A',
+                    name: item.item_name || item.item_description || 'Item',
+                    supplier: item.supplier || 'General Wholesaler',
+                    price: parseFloat(item.wholesale_floor_zar || item.unit_price || 0),
+                    qty: 1
+                });
+            }
+
+            updateBagBadge();
+            openCartModal();
+        }
+
+        function updateBagBadge() {
+            const totalCount = shoppingCart.reduce((sum, item) => sum + item.qty, 0);
+            document.getElementById('cartItemCount').innerText = totalCount;
+        }
+
+        function openCartModal() {
+            renderCartModalList();
+            document.getElementById('cartModal').style.display = 'flex';
+        }
+
+        function closeCartModal() {
+            document.getElementById('cartModal').style.display = 'none';
+        }
+
+        function renderCartModalList() {
+            const container = document.getElementById('cartItemsList');
+            container.innerHTML = '';
+
+            if (shoppingCart.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); text-align: center; font-size: 13px;">Your bag is currently empty.</p>';
+                document.getElementById('cartGrandTotal').innerText = 'R 0.00';
+                return;
+            }
+
+            let grandTotal = 0;
+            shoppingCart.forEach((item, idx) => {
+                const subtotal = item.price * item.qty;
+                grandTotal += subtotal;
+
+                const div = document.createElement('div');
+                div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 8px;';
+                div.innerHTML = `
+                    <div>
+                        <div style="font-weight: 600; color: #fff;">${item.name}</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">${item.qty}x @ R ${item.price.toFixed(2)}</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="color: var(--cyan-bright); font-weight: 600;">R ${subtotal.toFixed(2)}</span>
+                        <button onclick="removeFromBag(${idx})" style="background: rgba(255,69,58,0.2); color: #ff453a; border: none; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 10px;">✕</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            document.getElementById('cartGrandTotal').innerText = `R ${grandTotal.toFixed(2)}`;
+        }
+
+        function removeFromBag(idx) {
+            shoppingCart.splice(idx, 1);
+            updateBagBadge();
+            renderCartModalList();
+        }
+
+        async function submitOrderCheckout() {
+            if (shoppingCart.length === 0) return alert('Your shopping bag is empty.');
+            const name = document.getElementById('customerName').value.trim();
+            const contact = document.getElementById('customerContact').value.trim();
+
+            if (!name) return alert('Please enter your full name for order dispatch.');
+
+            const orderRef = `WEB-${Math.floor(100000 + Math.random() * 900000)}`;
+            const inserts = shoppingCart.map(item => ({
+                item_name: `${item.name} (Online: ${name})`,
+                order_number: orderRef,
+                quantity_dispatched: item.qty,
+                wholesale_floor_zar: item.price * item.qty,
+                supplier: item.supplier,
+                marketplace: 'Online Storefront',
+                payout_status: 'ESCROW PENDING',
+                processed_by: `Customer (${name})`
+            }));
+
+            const { error } = await supabaseClient.from('orders').insert(inserts);
+
+            if (error) {
+                alert('Order Submission Error: ' + error.message);
+            } else {
+                alert(`Order #${orderRef} successfully placed! Thank you for shopping with Nguni Homeware.`);
+                shoppingCart = [];
+                updateBagBadge();
+                closeCartModal();
+                document.getElementById('customerName').value = '';
+                document.getElementById('customerContact').value = '';
+                fetchStorefrontInventory();
+            }
         }
     </script>
 </body>
