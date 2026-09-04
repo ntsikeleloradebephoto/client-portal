@@ -37,7 +37,6 @@
             min-height: 100vh;
         }
 
-        /* tvOS / iOS Glassmorphism Login Overlay */
         #loginOverlay {
             position: fixed;
             top: 0;
@@ -106,7 +105,6 @@
             background: rgba(0, 0, 0, 0.7);
         }
 
-        /* App Container */
         #appContainer {
             display: none;
         }
@@ -350,7 +348,6 @@
 </head>
 <body>
 
-    <!-- tvOS/iOS PIN Login Overlay -->
     <div id="loginOverlay">
         <div class="login-box">
             <img src="logo.png" alt="Nguni Logo" class="login-logo">
@@ -365,7 +362,6 @@
         </div>
     </div>
 
-    <!-- Main POS Interface -->
     <div id="appContainer">
         <header>
             <div class="brand-container">
@@ -379,7 +375,6 @@
         </header>
 
         <div class="pos-container">
-            <!-- Left Column: Scan & Staging -->
             <div>
                 <div class="card">
                     <div class="card-title">Live Barcode Scan & Terminal Checkout</div>
@@ -431,7 +426,6 @@
                 </div>
             </div>
 
-            <!-- Right Column: Staged Batch & Tender Checkout -->
             <div>
                 <div class="card">
                     <div class="card-title">Staged Transaction Batch</div>
@@ -459,7 +453,6 @@
                         <span class="total-amount" id="grandTotalDisplay">R 0.00</span>
                     </div>
 
-                    <!-- Tender / Payment Section -->
                     <div style="margin-top: 20px;">
                         <label>Payment Tender Method</label>
                         <div class="tender-options">
@@ -498,7 +491,6 @@
         let activeCashierName = 'COUNTER-01';
         let selectedTender = 'CASH';
 
-        // Auto-Verify PIN on input completion
         cashierPinInput.addEventListener('input', async (e) => {
             const enteredPin = e.target.value.trim();
             loginError.style.display = 'none';
@@ -565,28 +557,50 @@
 
         async function fetchLiveInventory() {
             const { data, error } = await supabaseClient.from('inventory').select('*');
-            if (!error) currentInventory = data || [];
+            if (!error) {
+                currentInventory = data || [];
+                console.log("Loaded inventory items:", currentInventory.length);
+            } else {
+                console.error("Error loading inventory:", error);
+            }
         }
 
         barcodeInput.addEventListener('input', (e) => {
             const query = e.target.value.trim().toLowerCase();
-            activeScannedItem = currentInventory.find(item => 
-                item.sku?.toLowerCase() === query || item.item_number?.toLowerCase() === query
-            );
+            if (!query) return;
+
+            // Flexible matching across multiple common column names
+            activeScannedItem = currentInventory.find(item => {
+                const s = String(item.sku || '').toLowerCase();
+                const num = String(item.item_number || '').toLowerCase();
+                const barcode = String(item.barcode || '').toLowerCase();
+                return s === query || num === query || barcode === query;
+            });
 
             if (activeScannedItem) {
-                itemDescInput.value = activeScannedItem.item_description || activeScannedItem.product_name || '';
-                barcodeDisplay.value = activeScannedItem.sku || activeScannedItem.item_number || '';
-                stockAvailInput.value = activeScannedItem.stock_qty || 0;
-                unitPriceInput.value = activeScannedItem.wholesale_floor || activeScannedItem.unit_price || 0;
-                supplierTagInput.value = activeScannedItem.supplier_partner || activeScannedItem.consignor || '';
+                const name = activeScannedItem.item_description || activeScannedItem.product_name || activeScannedItem.name || 'Unnamed Product';
+                const code = activeScannedItem.sku || activeScannedItem.item_number || activeScannedItem.barcode || query;
+                const stock = activeScannedItem.stock_qty ?? activeScannedItem.stock ?? activeScannedItem.quantity ?? 0;
+                const price = activeScannedItem.wholesale_floor || activeScannedItem.unit_price || activeScannedItem.price || 0;
+                const supplier = activeScannedItem.supplier_partner || activeScannedItem.consignor || activeScannedItem.supplier || 'Standard';
+
+                itemDescInput.value = name;
+                barcodeDisplay.value = code;
+                stockAvailInput.value = stock;
+                unitPriceInput.value = parseFloat(price).toFixed(2);
+                supplierTagInput.value = supplier;
             } else {
                 itemDescInput.value = "Item not found in live stock";
-                barcodeDisplay.value = "--";
+                barcodeDisplay.value = query;
                 stockAvailInput.value = 0;
-                unitPriceInput.value = 0.00;
+                unitPriceInput.value = "0.00";
                 supplierTagInput.value = "--";
             }
+        });
+
+        // Trigger staging on Enter key inside quantity or barcode
+        quantityInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') stageItemBtn.click();
         });
 
         stageItemBtn.addEventListener('click', () => {
@@ -598,7 +612,7 @@
             const qty = parseInt(quantityInput.value) || 1;
             const stockAvailable = parseInt(stockAvailInput.value) || 0;
 
-            if (qty > stockAvailable) {
+            if (qty > stockAvailable && stockAvailable > 0) {
                 alert("Cannot stage more than available stock quantity on hand.");
                 return;
             }
@@ -689,7 +703,6 @@
             const orderRef = orderRefInput.value.trim() || `POS-${Math.floor(1000 + Math.random() * 9000)}`;
 
             for (const item of stagedBatch) {
-                // 1. Record order in Supabase
                 const { error: orderError } = await supabaseClient.from('orders').insert([{
                     order_ref: orderRef,
                     sku: item.sku,
@@ -704,17 +717,27 @@
 
                 if (orderError) console.error("Order sync error:", orderError);
 
-                // 2. Deduct sold quantity from live inventory stock
-                const matchedStockItem = currentInventory.find(inv => (inv.sku === item.sku || inv.item_number === item.sku));
+                const matchedStockItem = currentInventory.find(inv => 
+                    String(inv.sku || '').toLowerCase() === String(item.sku).toLowerCase() || 
+                    String(inv.item_number || '').toLowerCase() === String(item.sku).toLowerCase()
+                );
+                
                 if (matchedStockItem) {
-                    const newQty = Math.max(0, (matchedStockItem.stock_qty || 0) - item.qty);
-                    await supabaseClient.from('inventory').update({ stock_qty: newQty }).eq('id', matchedStockItem.id);
+                    const currentStockVal = matchedStockItem.stock_qty ?? matchedStockItem.stock ?? matchedStockItem.quantity ?? 0;
+                    const newQty = Math.max(0, currentStockVal - item.qty);
+                    
+                    // Update whichever stock column exists
+                    const updatePayload = {};
+                    if ('stock_qty' in matchedStockItem) updatePayload.stock_qty = newQty;
+                    else if ('stock' in matchedStockItem) updatePayload.stock = newQty;
+                    else if ('quantity' in matchedStockItem) updatePayload.quantity = newQty;
+
+                    await supabaseClient.from('inventory').update(updatePayload).eq('id', matchedStockItem.id);
                 }
             }
 
             alert(`Sale ${orderRef} successfully settled via ${selectedTender} (${activeCashierName})! Receipt dispatched.`);
             
-            // Reset everything for the next customer
             stagedBatch = [];
             orderRefInput.value = '';
             document.getElementById('cashReceived').value = '';
