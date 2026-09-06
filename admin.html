@@ -1191,73 +1191,6 @@
         let html5QrCodeScanner = null;
         let salesChartInstance = null;
 
-        /* GLOBAL KEYBOARD SHORTCUTS LISTENER */
-        document.addEventListener('keydown', (e) => {
-            const activeElement = document.activeElement;
-            const isInput = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA' || activeElement.tagName === 'SELECT');
-
-            if (e.altKey) {
-                const key = e.key.toLowerCase();
-                if (key >= '1' && key <= '9') {
-                    const tabButtons = document.querySelectorAll('.tabs .tab-btn');
-                    const index = parseInt(key, 10) - 1;
-                    if (tabButtons[index] && tabButtons[index].style.display !== 'none') {
-                        e.preventDefault();
-                        tabButtons[index].click();
-                        return;
-                    }
-                }
-                if (key === '0') {
-                    const tabButtons = document.querySelectorAll('.tabs .tab-btn');
-                    if (tabButtons[9] && tabButtons[9].style.display !== 'none') {
-                        e.preventDefault();
-                        tabButtons[9].click();
-                        return;
-                    }
-                }
-                if (key === 'b') {
-                    e.preventDefault();
-                    const scanInput = document.getElementById('posBarcodeScan');
-                    if (scanInput) scanInput.focus();
-                    return;
-                }
-                if (key === 'c') {
-                    e.preventDefault();
-                    checkoutBatchOrder();
-                    return;
-                }
-            }
-
-            if (e.key === 'Escape') {
-                const cameraModal = document.getElementById('cameraScannerModal');
-                if (cameraModal && cameraModal.style.display !== 'none') {
-                    stopCameraScanner();
-                    return;
-                }
-                const receiptModal = document.getElementById('receiptModal');
-                if (receiptModal && receiptModal.style.display !== 'none') {
-                    closeModal('receiptModal');
-                    return;
-                }
-                const loginModal = document.getElementById('loginModal');
-                if (loginModal && loginModal.style.display !== 'none') {
-                    closeModal('loginModal');
-                    return;
-                }
-            }
-
-            if (e.key === 'F2') {
-                e.preventDefault();
-                setTender('CASH');
-                return;
-            }
-            if (e.key === 'F3') {
-                e.preventDefault();
-                setTender('CARD');
-                return;
-            }
-        });
-
         /* APPLE TV LAUNCHER CONTROLLER */
         function triggerLauncherSequence(callback) {
             const launcher = document.getElementById('appleTvLauncher');
@@ -1317,6 +1250,100 @@
                 supabaseClient.channel('enterprise_realtime').on('postgres_changes', { event: '*', schema: 'public' }, () => {
                     fetchAdminOrders();
                 }).subscribe();
+            }
+        });
+
+        /* GLOBAL KEYBOARD SHORTCUTS LISTENER */
+        window.addEventListener('keydown', (e) => {
+            const target = e.target;
+            const isInput = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable);
+
+            // Alt + Number Keys (1-0): Tab Navigation
+            if (e.altKey && !e.ctrlKey && !e.metaKey) {
+                const tabMap = {
+                    '1': 'tab1',
+                    '2': 'tabCashup',
+                    '3': 'tab2',
+                    '4': 'tab9',
+                    '5': 'tab3',
+                    '6': 'tab4',
+                    '7': 'tab5',
+                    '8': 'tab6',
+                    '9': 'tab7',
+                    '0': 'tab8'
+                };
+                if (tabMap[e.key]) {
+                    const targetBtnId = {
+                        'tab1': 'btnTab1',
+                        'tabCashup': 'btnTabCashup',
+                        'tab2': 'btnTab2',
+                        'tab9': 'btnTab9',
+                        'tab3': 'btnTab3',
+                        'tab4': 'btnTab4',
+                        'tab5': 'btnTab5',
+                        'tab6': 'btnTab6',
+                        'tab7': 'btnTab7',
+                        'tab8': 'btnTab8'
+                    }[tabMap[e.key]];
+
+                    const btn = document.getElementById(targetBtnId);
+                    if (btn && btn.style.display !== 'none') {
+                        e.preventDefault();
+                        switchTab(tabMap[e.key]);
+                    }
+                    return;
+                }
+            }
+
+            // Global Actions (when not typing in input)
+            if (!isInput) {
+                // F2: Focus Barcode Scanner Search Input
+                if (e.key === 'F2') {
+                    e.preventDefault();
+                    const scanInput = document.getElementById('posBarcodeScan');
+                    if (scanInput) {
+                        switchTab('tab1');
+                        scanInput.focus();
+                        scanInput.select();
+                    }
+                    return;
+                }
+
+                // F4: Complete Sale & Checkout Batch
+                if (e.key === 'F4') {
+                    e.preventDefault();
+                    checkoutBatchOrder();
+                    return;
+                }
+
+                // F8: Switch Payment Tender Method (Cash / Card)
+                if (e.key === 'F8') {
+                    e.preventDefault();
+                    setTender(selectedTender === 'CASH' ? 'CARD' : 'CASH');
+                    return;
+                }
+
+                // F9: Open Login Modal / Switch User Session
+                if (e.key === 'F9') {
+                    e.preventDefault();
+                    triggerLauncherAndLogin();
+                    return;
+                }
+            }
+
+            // Escape Key: Close Active Modal
+            if (e.key === 'Escape') {
+                const loginModal = document.getElementById('loginModal');
+                const receiptModal = document.getElementById('receiptModal');
+                const cameraModal = document.getElementById('cameraScannerModal');
+
+                if (cameraModal && cameraModal.style.display !== 'none') {
+                    stopCameraScanner();
+                } else if (receiptModal && receiptModal.style.display !== 'none') {
+                    closeModal('receiptModal');
+                } else if (loginModal && loginModal.style.display !== 'none') {
+                    closeModal('loginModal');
+                }
             }
         });
 
@@ -2297,4 +2324,206 @@
             if (!tbody) return;
 
             if (returns.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">Loading`;
+                tbody.innerHTML = `<tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">Loading return history...</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            returns.forEach(r => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${new Date(r.created_at).toLocaleDateString()}</td>
+                        <td><strong>${r.order_ref}</strong><br><small style="color:var(--text-muted);">${r.item_name}</small></td>
+                        <td>${r.qty_returned}</td>
+                        <td>${r.reason}</td>
+                        <td>${r.restocked ? '<span class="status-badge status-settled">YES</span>' : '<span class="status-badge status-returned">NO</span>'}</td>
+                        <td>${r.processed_by || 'Staff'}</td>
+                        <td><span class="status-badge status-returned">PROCESSED</span></td>
+                    </tr>
+                `;
+            });
+        }
+
+        /* ACCOUNTING & FINANCIAL P&L DASHBOARD */
+        function renderAccountingDashboard() {
+            const startDate = document.getElementById('accFilterStart').value;
+            const endDate = document.getElementById('accFilterEnd').value;
+
+            let filteredOrders = cachedOrders.filter(o => o.payout_status !== 'RETURNED / CANCELLED');
+            let filteredExpenses = cachedExpenses;
+
+            if (startDate) {
+                filteredOrders = filteredOrders.filter(o => new Date(o.created_at) >= new Date(startDate));
+                filteredExpenses = filteredExpenses.filter(e => new Date(e.created_at) >= new Date(startDate));
+            }
+            if (endDate) {
+                filteredOrders = filteredOrders.filter(o => new Date(o.created_at) <= new Date(endDate + 'T23:59:59'));
+                filteredExpenses = filteredExpenses.filter(e => new Date(e.created_at) <= new Date(endDate + 'T23:59:59'));
+            }
+
+            let grossSales = 0;
+            let cogs = 0;
+            let cashTendered = 0;
+            let cardTendered = 0;
+            let unitsSold = 0;
+
+            filteredOrders.forEach(o => {
+                const saleVal = parseFloat(o.gross_sale_zar || o.selling_price_zar * o.quantity_dispatched) || 0;
+                const costVal = parseFloat(o.wholesale_cost_zar) || 0;
+                const qty = parseInt(o.quantity_dispatched) || 1;
+
+                grossSales += saleVal;
+                cogs += costVal;
+                unitsSold += qty;
+
+                if ((o.payment_method || '').toUpperCase() === 'CARD') {
+                    cardTendered += saleVal;
+                } else {
+                    cashTendered += saleVal;
+                }
+            });
+
+            let totalOpEx = 0;
+            filteredExpenses.forEach(e => totalOpEx += parseFloat(e.amount || 0));
+
+            const grossProfit = grossSales - cogs;
+            const netProfit = grossProfit - PLATFORM_FEE - totalOpEx;
+
+            document.getElementById('accGrossSales').innerText = `R ${grossSales.toFixed(2)}`;
+            document.getElementById('accCogs').innerText = `R ${cogs.toFixed(2)}`;
+            document.getElementById('accGrossProfit').innerText = `R ${grossProfit.toFixed(2)}`;
+            document.getElementById('accNetProfit').innerText = `R ${netProfit.toFixed(2)}`;
+            document.getElementById('accOpEx').innerText = `R ${totalOpEx.toFixed(2)}`;
+            document.getElementById('accCashTendered').innerText = `R ${cashTendered.toFixed(2)}`;
+            document.getElementById('accCardTendered').innerText = `R ${cardTendered.toFixed(2)}`;
+            document.getElementById('accUnitsSold').innerText = `${unitsSold} Items`;
+
+            renderAccountingTable(filteredOrders);
+        }
+
+        function renderAccountingTable(orders) {
+            const tbody = document.getElementById('accountingTableBody');
+            if (!tbody) return;
+
+            if (orders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">No transaction records found.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            orders.forEach(o => {
+                const gross = parseFloat(o.gross_sale_zar || o.selling_price_zar * o.quantity_dispatched) || 0;
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${o.order_ref || 'POS'}</strong></td>
+                        <td>${new Date(o.created_at).toLocaleString()}</td>
+                        <td>${o.item_name}</td>
+                        <td>${o.quantity_dispatched}</td>
+                        <td>R ${parseFloat(o.selling_price_zar || 0).toFixed(2)}</td>
+                        <td style="color:var(--cyan-bright); font-weight:bold;">R ${gross.toFixed(2)}</td>
+                        <td>${o.payment_method || 'CASH'}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function handleLogExpense(e) {
+            e.preventDefault();
+            const desc = document.getElementById('expDesc').value.trim();
+            const category = document.getElementById('expCategory').value;
+            const amount = parseFloat(document.getElementById('expAmount').value) || 0;
+
+            const payload = {
+                description: desc,
+                category: category,
+                amount: amount,
+                logged_by: currentUser ? currentUser.full_name : 'Staff',
+                created_at: new Date().toISOString()
+            };
+
+            if (supabaseClient) {
+                const { error } = await supabaseClient.from('expenses').insert([payload]);
+                if (error) {
+                    showNotification(`Expense Error: ${error.message}`, 'error');
+                    return;
+                }
+            }
+
+            showNotification(`Logged OpEx expense: R ${amount.toFixed(2)}`, 'success');
+            logAuditAction(`Logged expense: ${desc} (R ${amount.toFixed(2)})`);
+            document.getElementById('expenseForm').reset();
+            fetchAdminOrders();
+        }
+
+        /* AUDIT LOGGING */
+        async function logAuditAction(actionText) {
+            const payload = {
+                user_name: currentUser ? currentUser.full_name : 'System',
+                action: actionText,
+                created_at: new Date().toISOString()
+            };
+
+            if (supabaseClient) {
+                await supabaseClient.from('audit_logs').insert([payload]);
+                fetchAuditLogs();
+            }
+        }
+
+        async function fetchAuditLogs() {
+            if (!supabaseClient) return;
+            const { data } = await supabaseClient.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(50);
+            renderAuditTable(data || []);
+        }
+
+        function renderAuditTable(logs) {
+            const tbody = document.getElementById('auditTableBody');
+            if (!tbody) return;
+
+            if (logs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="color: var(--text-muted); padding: 20px;">No activity logged.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            logs.forEach(l => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${new Date(l.created_at).toLocaleString()}</td>
+                        <td><strong>${l.user_name}</strong></td>
+                        <td>${l.action}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        /* EXPORT DATA FUNCTIONS */
+        function exportSupplierStatement() {
+            let csv = 'Order Ref,Supplier,Date,Cashier,Qty,Wholesale Cost,Status\n';
+            cachedOrders.forEach(o => {
+                csv += `"${o.order_ref}","${o.supplier}","${o.created_at}","${o.cashier_name}",${o.quantity_dispatched},${o.wholesale_cost_zar},"${o.payout_status}"\n`;
+            });
+
+            downloadCSV(csv, `Supplier_Statement_${new Date().toISOString().split('T')[0]}.csv`);
+        }
+
+        function exportAccountingCSV() {
+            let csv = 'Order Ref,Timestamp,Item Name,Qty,Selling Price,Gross Total,Payment Method\n';
+            cachedOrders.forEach(o => {
+                const gross = o.gross_sale_zar || o.selling_price_zar * o.quantity_dispatched;
+                csv += `"${o.order_ref}","${o.created_at}","${o.item_name}",${o.quantity_dispatched},${o.selling_price_zar},${gross},"${o.payment_method}"\n`;
+            });
+
+            downloadCSV(csv, `Accounting_Report_${new Date().toISOString().split('T')[0]}.csv`);
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', filename);
+            a.click();
+        }
+    </script>
+</body>
+</html>
