@@ -43,6 +43,81 @@
             min-height: 100vh;
         }
 
+        /* APPLE TV STYLE LAUNCHER OVERLAY */
+        #appleTvLauncher {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at center, #1a160b 0%, #040406 100%);
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(50px) saturate(200%);
+            transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow: hidden;
+        }
+
+        #appleTvLauncher.fade-out {
+            opacity: 0;
+            transform: scale(1.08);
+            pointer-events: none;
+        }
+
+        .launcher-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            animation: launcherZoomIn 2.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes launcherZoomIn {
+            0% { opacity: 0; transform: scale(0.88) translateY(20px); filter: blur(10px); }
+            40% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0px); }
+            100% { opacity: 1; transform: scale(1.03); }
+        }
+
+        .launcher-logo-center {
+            width: 220px;
+            height: 220px;
+            object-fit: contain;
+            margin-bottom: 24px;
+            filter: drop-shadow(0 20px 40px rgba(212, 175, 55, 0.35));
+            border-radius: 36px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+            animation: logoGlowPulse 3s infinite alternate;
+        }
+
+        @keyframes logoGlowPulse {
+            0% { box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.2); }
+            100% { box-shadow: 0 30px 90px rgba(212, 175, 55, 0.3), inset 0 1px 1px rgba(255,255,255,0.4); }
+        }
+
+        .launcher-title {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--gold-primary);
+            text-shadow: 0 10px 20px rgba(0, 0, 0, 0.8);
+            margin-bottom: 8px;
+        }
+
+        .launcher-subtitle {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
         /* ON-SCREEN TOAST NOTIFICATION CONTAINER */
         #toastContainer {
             position: fixed;
@@ -385,6 +460,15 @@
 </head>
 <body>
 
+    <!-- APPLE TV STYLE LAUNCHER SPLASH OVERLAY -->
+    <div id="appleTvLauncher">
+        <div class="launcher-content">
+            <img src="logo.png" alt="Nguni Logo" class="launcher-logo-center" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'120\' height=\'120\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23d4af37\' stroke-width=\'1.5\'><path d=\'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5\'/></svg>'">
+            <div class="launcher-title">NGUNI HOMEWARE</div>
+            <div class="launcher-subtitle">ENTERPRISE POS & LEDGER HUB</div>
+        </div>
+    </div>
+
     <!-- ON-SCREEN TOAST NOTIFICATION CONTAINER -->
     <div id="toastContainer"></div>
 
@@ -396,7 +480,7 @@
         </div>
         <div class="role-badge">
             <span id="roleLabel">ACTIVE USER: NOT LOGGED IN</span>
-            <button class="btn-sec" onclick="openLoginModal()" style="padding: 4px 10px; font-size: 9px;">SWITCH USER</button>
+            <button class="btn-sec" onclick="triggerLauncherAndLogin()" style="padding: 4px 10px; font-size: 9px;">SWITCH USER</button>
         </div>
     </div>
 
@@ -553,9 +637,15 @@
                         <label>Total Card / POS Sales Declared (ZAR)</label>
                         <input type="number" id="cashupActualCard" class="form-control" placeholder="0.00" step="0.01" required oninput="calculateCashupVariance()">
                     </div>
-                    <div class="form-group">
-                        <label>Cash Variance / Difference</label>
-                        <input type="text" id="cashupVariance" class="form-control" readonly value="R 0.00" style="font-weight: bold;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>Cash Discrepancy / Variance</label>
+                            <input type="text" id="cashupVariance" class="form-control" readonly value="R 0.00" style="font-weight: bold;">
+                        </div>
+                        <div class="form-group">
+                            <label>Card Discrepancy / Variance</label>
+                            <input type="text" id="cashupCardVariance" class="form-control" readonly value="R 0.00" style="font-weight: bold;">
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Notes / Explanations for Discrepancies</label>
@@ -567,7 +657,7 @@
 
             <div>
                 <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--gold-primary); margin-bottom: 8px;">System Expected Totals (Today)</div>
-                <div class="summary-grid" style="grid-template-columns: 1fr; gap: 10px; margin-bottom: 14px;">
+                <div class="summary-grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
                     <div class="summary-card" style="padding: 12px 16px;">
                         <div class="summary-label">Expected Cash Sales</div>
                         <div class="summary-val" id="expectedCashSales" style="font-size: 18px; color: var(--cyan-bright);">R 0.00</div>
@@ -586,12 +676,13 @@
                                 <th>Date/Time</th>
                                 <th>Cashier</th>
                                 <th>Declared Cash</th>
-                                <th>Variance</th>
+                                <th>Cash Var</th>
+                                <th>Card Var</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
                         <tbody id="cashupHistoryTable">
-                            <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No cashups recorded.</td></tr>
+                            <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No cashups recorded.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -1061,6 +1152,30 @@
         let html5QrCodeScanner = null;
         let salesChartInstance = null;
 
+        /* APPLE TV LAUNCHER CONTROLLER */
+        function triggerLauncherSequence(callback) {
+            const launcher = document.getElementById('appleTvLauncher');
+            if (!launcher) return callback && callback();
+            
+            launcher.style.display = 'flex';
+            launcher.classList.remove('fade-out');
+
+            // 3.5s cinematic delay for enjoying Apple TV style experience
+            setTimeout(() => {
+                launcher.classList.add('fade-out');
+                setTimeout(() => {
+                    launcher.style.display = 'none';
+                    if (callback) callback();
+                }, 1200);
+            }, 3500);
+        }
+
+        function triggerLauncherAndLogin() {
+            triggerLauncherSequence(() => {
+                openLoginModal();
+            });
+        }
+
         /* ON-SCREEN TOAST NOTIFICATION HUB */
         function showNotification(message, type = 'info') {
             const container = document.getElementById('toastContainer');
@@ -1087,7 +1202,9 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            openLoginModal();
+            triggerLauncherSequence(() => {
+                openLoginModal();
+            });
             fetchAdminOrders();
 
             if (supabaseClient) {
@@ -1576,21 +1693,39 @@
         function calculateCashupVariance() {
             const floatVal = parseFloat(document.getElementById('cashupFloat').value) || 0;
             const actualCash = parseFloat(document.getElementById('cashupActualCash').value) || 0;
+            const actualCard = parseFloat(document.getElementById('cashupActualCard').value) || 0;
+
             const expectedCashStr = document.getElementById('expectedCashSales').innerText.replace('R', '').trim();
             const expectedCash = parseFloat(expectedCashStr) || 0;
 
+            const expectedCardStr = document.getElementById('expectedCardSales').innerText.replace('R', '').trim();
+            const expectedCard = parseFloat(expectedCardStr) || 0;
+
+            /* Cash Variance */
             const totalActualCashWithFloat = actualCash + floatVal;
             const expectedTotalCashWithFloat = expectedCash + floatVal;
-            const variance = totalActualCashWithFloat - expectedTotalCashWithFloat;
+            const cashVariance = totalActualCashWithFloat - expectedTotalCashWithFloat;
 
-            const varianceField = document.getElementById('cashupVariance');
-            varianceField.value = `R ${variance.toFixed(2)}`;
-            if (variance < 0) {
-                varianceField.style.color = 'var(--red-alert)';
-            } else if (variance > 0) {
-                varianceField.style.color = 'var(--gold-light)';
+            const cashVarianceField = document.getElementById('cashupVariance');
+            cashVarianceField.value = `R ${cashVariance.toFixed(2)}`;
+            if (cashVariance < 0) {
+                cashVarianceField.style.color = 'var(--red-alert)';
+            } else if (cashVariance > 0) {
+                cashVarianceField.style.color = 'var(--gold-light)';
             } else {
-                varianceField.style.color = 'var(--green-active)';
+                cashVarianceField.style.color = 'var(--green-active)';
+            }
+
+            /* Card Variance */
+            const cardVariance = actualCard - expectedCard;
+            const cardVarianceField = document.getElementById('cashupCardVariance');
+            cardVarianceField.value = `R ${cardVariance.toFixed(2)}`;
+            if (cardVariance < 0) {
+                cardVarianceField.style.color = 'var(--red-alert)';
+            } else if (cardVariance > 0) {
+                cardVarianceField.style.color = 'var(--gold-light)';
+            } else {
+                cardVarianceField.style.color = 'var(--green-active)';
             }
         }
 
@@ -1601,7 +1736,8 @@
             const floatVal = parseFloat(document.getElementById('cashupFloat').value) || 0;
             const actualCash = parseFloat(document.getElementById('cashupActualCash').value) || 0;
             const actualCard = parseFloat(document.getElementById('cashupActualCard').value) || 0;
-            const varianceStr = document.getElementById('cashupVariance').value;
+            const cashVarianceStr = document.getElementById('cashupVariance').value;
+            const cardVarianceStr = document.getElementById('cashupCardVariance').value;
             const notes = document.getElementById('cashupNotes').value.trim();
 
             const cashupPayload = {
@@ -1609,7 +1745,8 @@
                 float_amount: floatVal,
                 actual_cash: actualCash,
                 actual_card: actualCard,
-                variance: varianceStr,
+                variance: cashVarianceStr,
+                card_variance: cardVarianceStr,
                 notes: notes,
                 status: 'SUBMITTED'
             };
@@ -1623,7 +1760,7 @@
             }
 
             showNotification('Cashup report submitted successfully!', 'success');
-            logAuditAction(`Submitted Cashup reconciliation (${currentUser.full_name}) - Variance: ${varianceStr}`);
+            logAuditAction(`Submitted Cashup reconciliation (${currentUser.full_name}) - Cash Var: ${cashVarianceStr}, Card Var: ${cardVarianceStr}`);
             document.getElementById('cashupForm').reset();
             document.getElementById('cashupFloat').value = '0.00';
             fetchAdminOrders();
@@ -1635,7 +1772,7 @@
             tbody.innerHTML = '';
 
             if (!cachedCashups || cachedCashups.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No cashups recorded.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No cashups recorded.</td></tr>';
                 return;
             }
 
@@ -1647,6 +1784,7 @@
                     <td><strong>${c.user_name || 'Staff'}</strong></td>
                     <td>R ${parseFloat(c.actual_cash || 0).toFixed(2)}</td>
                     <td style="color: var(--gold-light);">${c.variance || 'R 0.00'}</td>
+                    <td style="color: var(--cyan-bright);">${c.card_variance || 'R 0.00'}</td>
                     <td><span class="status-badge status-settled">${c.status || 'SUBMITTED'}</span></td>
                 `;
                 tbody.appendChild(tr);
@@ -2230,68 +2368,69 @@
                     tr.innerHTML = `
                         <td><strong>#${o.order_number || o.id.slice(0,6)}</strong></td>
                         <td><small style="color:var(--text-muted);">${dateStr}</small></td>
-                        <td>${o.item_name || 'Item'}</td>
+                        <td>${o.item_name || 'Product'}</td>
                         <td>${qty}</td>
                         <td>R ${unitPrice.toFixed(2)}</td>
-                        <td style="color: var(--gold-light); font-weight: 600;">R ${lineGross.toFixed(2)}</td>
+                        <td style="color: var(--cyan-bright); font-weight: 600;">R ${lineGross.toFixed(2)}</td>
                         <td><span class="status-badge status-pending">${o.marketplace || 'POS'}</span></td>
                     `;
                     tbody.appendChild(tr);
                 }
             });
 
-            let totalOpex = 0;
+            let totalOpEx = 0;
             cachedExpenses.forEach(exp => {
                 if (start && exp.created_at && new Date(exp.created_at) < new Date(start)) return;
                 if (end && exp.created_at && new Date(exp.created_at) > new Date(end + 'T23:59:59')) return;
-                totalOpex += parseFloat(exp.amount) || 0;
+                totalOpEx += (parseFloat(exp.amount) || 0);
             });
 
             const grossProfit = grossSales - totalCogs;
-            const netProfit = grossProfit - totalOpex;
+            const netProfit = grossProfit - totalOpEx - PLATFORM_FEE;
 
-            document.getElementById('accGrossSales').innerText = `R ${grossSales.toFixed(2)}`;
-            document.getElementById('accCogs').innerText = `R ${totalCogs.toFixed(2)}`;
-            document.getElementById('accGrossProfit').innerText = `R ${grossProfit.toFixed(2)}`;
-            document.getElementById('accNetProfit').innerText = `R ${netProfit.toFixed(2)}`;
-            document.getElementById('accOpEx').innerText = `R ${totalOpex.toFixed(2)}`;
-            document.getElementById('accCashTendered').innerText = `R ${cashTendered.toFixed(2)}`;
-            document.getElementById('accCardTendered').innerText = `R ${cardTendered.toFixed(2)}`;
-            document.getElementById('accUnitsSold').innerText = `${unitsSold} Items`;
-        }
-
-        /* EXPORT UTILITIES */
-        function exportSupplierStatement() {
-            let csv = 'Order Ref,Item Name,Supplier,Date,Qty,Wholesale Cost,Status\n';
-            cachedOrders.forEach(o => {
-                csv += `"#${o.order_number || o.id.slice(0,6)}","${o.item_name || ''}","${o.supplier || ''}","${o.created_at || ''}",${o.quantity_dispatched || 1},${parseFloat(o.wholesale_floor_zar || 0).toFixed(2)},"${o.payout_status || 'ESCROW PENDING'}"\n`;
-            });
-            downloadCSV(csv, 'Nguni_Supplier_Settlement_Ledger.csv');
+            if (document.getElementById('accGrossSales')) document.getElementById('accGrossSales').innerText = `R ${grossSales.toFixed(2)}`;
+            if (document.getElementById('accCogs')) document.getElementById('accCogs').innerText = `R ${totalCogs.toFixed(2)}`;
+            if (document.getElementById('accGrossProfit')) document.getElementById('accGrossProfit').innerText = `R ${grossProfit.toFixed(2)}`;
+            if (document.getElementById('accNetProfit')) document.getElementById('accNetProfit').innerText = `R ${netProfit.toFixed(2)}`;
+            if (document.getElementById('accOpEx')) document.getElementById('accOpEx').innerText = `R ${totalOpEx.toFixed(2)}`;
+            if (document.getElementById('accCashTendered')) document.getElementById('accCashTendered').innerText = `R ${cashTendered.toFixed(2)}`;
+            if (document.getElementById('accCardTendered')) document.getElementById('accCardTendered').innerText = `R ${cardTendered.toFixed(2)}`;
+            if (document.getElementById('accUnitsSold')) document.getElementById('accUnitsSold').innerText = `${unitsSold} Items`;
         }
 
         function exportAccountingCSV() {
-            let csv = 'Order ID,Timestamp,Product Name,Qty,Unit Price,Gross Total,Channel\n';
+            if (cachedOrders.length === 0) return showNotification('No data to export.', 'error');
+            let csv = 'Order Ref,Timestamp,Product,Qty,Unit Price,Gross Total,Channel\n';
             cachedOrders.forEach(o => {
-                if (o.payout_status !== 'RETURNED / CANCELLED') {
-                    const qty = parseInt(o.quantity_dispatched) || 1;
-                    const unitPrice = o.selling_price ? parseFloat(o.selling_price) : ((parseFloat(o.wholesale_floor_zar) || 0) / qty) * 1.3;
-                    csv += `"#${o.order_number || o.id.slice(0,6)}","${o.created_at || ''}","${o.item_name || ''}",${qty},${unitPrice.toFixed(2)},${(unitPrice * qty).toFixed(2)},"${o.marketplace || 'POS'}"\n`;
-                }
+                const qty = parseInt(o.quantity_dispatched) || 1;
+                const unitPrice = o.selling_price ? parseFloat(o.selling_price) : ((parseFloat(o.wholesale_floor_zar) || 0) / qty) * 1.3;
+                const lineGross = unitPrice * qty;
+                csv += `"#${o.order_number || o.id.slice(0,6)}","${o.created_at || ''}","${o.item_name || ''}",${qty},${unitPrice.toFixed(2)},${lineGross.toFixed(2)},"${o.marketplace || 'POS'}"\n`;
             });
-            downloadCSV(csv, 'Nguni_Enterprise_Accounting_PnL.csv');
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `Nguni_Accounting_Report_${new Date().toISOString().slice(0,10)}.csv`);
+            a.click();
         }
 
-        function downloadCSV(csvContent, fileName) {
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.setAttribute('href', url);
-            link.setAttribute('download', fileName);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            showNotification(`Successfully exported ${fileName}`, 'success');
+        function exportSupplierStatement() {
+            if (cachedOrders.length === 0) return showNotification('No ledger data to export.', 'error');
+            let csv = 'Order Ref,Supplier,Date,Processed By,Qty,Wholesale Amount,Status\n';
+            cachedOrders.forEach(o => {
+                const qty = parseInt(o.quantity_dispatched) || 1;
+                const wholesaleAmount = parseFloat(o.wholesale_floor_zar) || 0;
+                csv += `"#${o.order_number || o.id.slice(0,6)}","${o.supplier || ''}","${o.created_at || ''}","${o.processed_by || ''}",${qty},${wholesaleAmount.toFixed(2)},"${o.payout_status || 'ESCROW PENDING'}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `Nguni_Settlement_Ledger_${new Date().toISOString().slice(0,10)}.csv`);
+            a.click();
         }
     </script>
 </body>
