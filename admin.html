@@ -681,11 +681,11 @@
 
     <!-- TAB 5: STAFF PROFILES -->
     <div id="tab5" class="tab-content">
-        <div class="section-title">Cashier & Staff Profile Management</div>
+        <div class="section-title">Cashier, Staff & Supplier Profile Management</div>
         <form id="createStaffForm" onsubmit="handleCreateStaff(event)" style="margin-bottom: 24px;">
             <div class="form-group">
-                <label>Full Name</label>
-                <input type="text" id="staffNameInput" class="form-control" required placeholder="e.g. Sipho Ndlovu">
+                <label>Full Name / Supplier Name</label>
+                <input type="text" id="staffNameInput" class="form-control" required placeholder="e.g. Sipho Ndlovu or Craft Master Wholesalers">
             </div>
             <div class="form-group">
                 <label>PIN Code (4-6 Digits)</label>
@@ -696,25 +696,26 @@
                 <select id="staffRoleSelect" class="form-control">
                     <option value="cashier" style="background:#1c1c1e;">Cashier (POS Dispatch Only)</option>
                     <option value="staff" style="background:#1c1c1e;">Staff (POS & Intake Only)</option>
+                    <option value="supplier" style="background:#1c1c1e;">Supplier Partner (Trade Ledger Portal Only)</option>
                     <option value="manager" style="background:#1c1c1e;">Manager (Full Access & Ledger)</option>
                 </select>
             </div>
-            <button type="submit" class="btn-submit" style="width:100%;">Create Cashier / Staff Profile</button>
+            <button type="submit" class="btn-submit" style="width:100%;">Create Cashier / Staff / Supplier Profile</button>
         </form>
 
-        <div class="section-title">Active Staff & Cashier Accounts</div>
+        <div class="section-title">Active Staff, Cashier & Supplier Accounts</div>
         <div class="pos-table-container">
             <table class="ledger-table">
                 <thead>
                     <tr>
-                        <th>Staff Name</th>
+                        <th>Account Name</th>
                         <th>Role</th>
                         <th>Created On</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody id="staffProfileTable">
-                    <tr><td colspan="4" style="color: var(--text-muted); padding: 20px;">Loading staff profiles...</td></tr>
+                    <tr><td colspan="4" style="color: var(--text-muted); padding: 20px;">Loading profiles...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -1003,9 +1004,20 @@
                 });
                 if (document.getElementById('btnTab9')) document.getElementById('btnTab9').style.display = 'block';
                 switchTab('tab9');
+
+                // Auto-select matching supplier name in dropdown if available
+                const supplierSelect = document.getElementById('supplierSelect');
+                if (supplierSelect) {
+                    const matchingOpt = Array.from(supplierSelect.options).find(opt => 
+                        opt.value.toLowerCase() === currentUser.full_name.toLowerCase()
+                    );
+                    if (matchingOpt) {
+                        supplierSelect.value = matchingOpt.value;
+                        filterSupplierLedger();
+                    }
+                }
             } 
             else if (currentUser.role === 'pos_restricted') {
-                // PIN 1111 ACCESS: Show CASHIER POS SELL, STOCK INTAKE, STOCK ON-HAND, and RETURNS
                 ['btnTab1', 'btnTab2', 'btnTab4', 'btnTab7'].forEach(id => {
                     if (document.getElementById(id)) document.getElementById(id).style.display = 'block';
                 });
@@ -1021,7 +1033,7 @@
                 switchTab('tab1');
             } 
             else {
-                // DEFAULT CASHIER ACCESS: Show ONLY Cashier POS Sell
+                // DEFAULT CASHIER ACCESS
                 if (document.getElementById('btnTab1')) document.getElementById('btnTab1').style.display = 'block';
                 
                 ['btnTab2', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8', 'btnTab9'].forEach(id => {
@@ -1670,8 +1682,8 @@
 
             if (error) alert('Staff Error: ' + error.message);
             else {
-                logAuditAction(`Created staff profile for ${name}`);
-                alert(`Staff account created for ${name}!`);
+                logAuditAction(`Created profile for ${name} (${role})`);
+                alert(`Account created for ${name}!`);
                 document.getElementById('createStaffForm').reset();
                 fetchStaffProfiles();
             }
@@ -1684,7 +1696,7 @@
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            if (!data || data.length === 0) return tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted); padding: 20px;">No custom staff profiles found. Default PINs active (1234 / 1111 / 9999 / 0000).</td></tr>';
+            if (!data || data.length === 0) return tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted); padding: 20px;">No custom profiles found. Default PINs active (1234 / 1111 / 9999 / 0000).</td></tr>';
 
             data.forEach(s => {
                 const dateStr = s.created_at ? new Date(s.created_at).toLocaleDateString('en-GB') : 'Recent';
@@ -1700,10 +1712,10 @@
         }
 
         async function deleteStaffProfile(id) {
-            if (!confirm("Are you sure you want to remove this staff profile?")) return;
+            if (!confirm("Are you sure you want to remove this profile?")) return;
             const { error } = await supabaseClient.from('staff_profiles').delete().eq('id', id);
             if (!error) {
-                logAuditAction(`Deleted staff profile (ID: ${id})`);
+                logAuditAction(`Deleted profile (ID: ${id})`);
                 fetchStaffProfiles();
             }
         }
