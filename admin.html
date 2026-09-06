@@ -51,7 +51,89 @@
             color: var(--text-light);
             padding: 24px;
             min-height: 100vh;
+            transition: background 0.4s ease, color 0.4s ease;
         }
+
+        /* IOS & TVOS SKIN MODE OVERRIDES */
+        body.skin-space {
+            background: #0a0e1a !important;
+            background-image: radial-gradient(circle at 50% -20%, #1a2642 0%, #050811 80%) !important;
+            color: #f5f5f7 !important;
+        }
+        body.skin-space .header, body.skin-space .tab-content, body.skin-space .summary-card, body.skin-space .chart-panel, body.skin-space .manifest-panel, body.skin-space .pos-table-container, body.skin-space .pos-summary-bar {
+            background: rgba(16, 24, 40, 0.75) !important;
+            border-color: rgba(0, 229, 255, 0.25) !important;
+        }
+        body.skin-space .tab-btn.active {
+            background: linear-gradient(135deg, #80f3ff 0%, #00e5ff 50%, #0088cc 100%) !important;
+            color: #000 !important;
+        }
+        body.skin-space .section-title, body.skin-space .launcher-title, body.skin-space .header h1, body.skin-space .summary-val {
+            background: linear-gradient(135deg, #80f3ff 0%, #00e5ff 50%, #0088cc 100%) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+        }
+
+        body.skin-frost {
+            background: #f2f2f7 !important;
+            background-image: radial-gradient(circle at 50% -20%, #ffffff 0%, #e5e5ea 80%) !important;
+            color: #1c1c1e !important;
+        }
+        body.skin-frost .header, body.skin-frost .tab-content, body.skin-frost .summary-card, body.skin-frost .chart-panel, body.skin-frost .manifest-panel, body.skin-frost .pos-table-container, body.skin-frost .pos-summary-bar {
+            background: rgba(255, 255, 255, 0.85) !important;
+            border-color: rgba(0, 122, 255, 0.2) !important;
+            color: #1c1c1e !important;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+        }
+        body.skin-frost .summary-val, body.skin-frost .launcher-title, body.skin-frost .header h1, body.skin-frost .section-title {
+            background: linear-gradient(135deg, #5ac8fa 0%, #007aff 50%, #0051a8 100%) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+        }
+        body.skin-frost .tab-btn { color: #5a5a60 !important; }
+        body.skin-frost .tab-btn:hover { color: #1c1c1e !important; background: rgba(0,0,0,0.04) !important; }
+        body.skin-frost .tab-btn.active {
+            background: linear-gradient(135deg, #5ac8fa 0%, #007aff 50%, #0051a8 100%) !important;
+            color: #fff !important;
+        }
+        body.skin-frost .form-control, body.skin-frost .slot-input {
+            background: rgba(0, 0, 0, 0.04) !important;
+            color: #1c1c1e !important;
+            border-color: rgba(0, 0, 0, 0.15) !important;
+        }
+        body.skin-frost table th { color: #007aff !important; background: rgba(0, 122, 255, 0.08) !important; }
+        body.skin-frost table td { color: #1c1c1e !important; }
+        body.skin-frost .role-badge, body.skin-frost .summary-label { color: #3c3c43 !important; }
+
+        body.skin-emerald {
+            background: #030a05 !important;
+            background-image: radial-gradient(circle at 50% -20%, #0f2e1a 0%, #030a05 80%) !important;
+        }
+        body.skin-emerald .header, body.skin-emerald .tab-content, body.skin-emerald .summary-card, body.skin-emerald .chart-panel, body.skin-emerald .manifest-panel, body.skin-emerald .pos-table-container, body.skin-emerald .pos-summary-bar {
+            background: rgba(14, 30, 18, 0.75) !important;
+            border-color: rgba(48, 209, 88, 0.25) !important;
+        }
+        body.skin-emerald .tab-btn.active, body.skin-emerald .section-title, body.skin-emerald .launcher-title, body.skin-emerald .header h1, body.skin-emerald .summary-val {
+            background: linear-gradient(135deg, #a5f3bc 0%, #30d158 50%, #107c29 100%) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+        }
+        body.skin-emerald .tab-btn.active { color: #000 !important; }
+
+        body.skin-ruby {
+            background: #0d0505 !important;
+            background-image: radial-gradient(circle at 50% -20%, #331414 0%, #0d0505 80%) !important;
+        }
+        body.skin-ruby .header, body.skin-ruby .tab-content, body.skin-ruby .summary-card, body.skin-ruby .chart-panel, body.skin-ruby .manifest-panel, body.skin-ruby .pos-table-container, body.skin-ruby .pos-summary-bar {
+            background: rgba(32, 18, 18, 0.75) !important;
+            border-color: rgba(255, 69, 58, 0.25) !important;
+        }
+        body.skin-ruby .tab-btn.active, body.skin-ruby .section-title, body.skin-ruby .launcher-title, body.skin-ruby .header h1, body.skin-ruby .summary-val {
+            background: linear-gradient(135deg, #ffb3af 0%, #ff453a 50%, #c72418 100%) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+        }
+        body.skin-ruby .tab-btn.active { color: #fff !important; }
 
         /* APPLE TV STYLE LAUNCHER OVERLAY */
         #appleTvLauncher {
@@ -203,6 +285,12 @@
             -webkit-text-fill-color: transparent;
         }
 
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
         .role-badge { 
             background: rgba(255, 255, 255, 0.04); 
             border: 1px solid var(--border-glass); 
@@ -294,7 +382,7 @@
             padding: 10px 14px; 
             background: rgba(0, 0, 0, 0.5); 
             border: 1px solid var(--border-subtle); 
-            color: #fff; 
+            color: inherit; 
             border-radius: 10px; 
             font-size: 13px;
             font-family: var(--font-text);
@@ -338,7 +426,7 @@
         .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
         .summary-card { background: rgba(15, 15, 18, 0.6); border: 1px solid var(--border-subtle); padding: 18px 20px; border-radius: 16px; }
         .summary-label { font-size: 10px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; }
-        .summary-val { font-family: var(--font-display); font-size: 24px; font-weight: 600; letter-spacing: -0.025em; margin-top: 8px; color: #fff; font-variant-numeric: tabular-nums; }
+        .summary-val { font-family: var(--font-display); font-size: 24px; font-weight: 600; letter-spacing: -0.025em; margin-top: 8px; color: inherit; font-variant-numeric: tabular-nums; }
 
         .trade-grid-container {
             display: grid;
@@ -402,7 +490,7 @@
 
         .slot-box { display: flex; flex-direction: column; gap: 4px; }
         .slot-label { font-size: 10px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.04em; text-transform: uppercase; }
-        .slot-input { background: rgba(0,0,0,0.5); border: 1px solid var(--border-subtle); color: #fff; padding: 8px 10px; font-size: 13px; font-family: var(--font-text); letter-spacing: -0.01em; border-radius: 8px; width: 100%; font-variant-numeric: tabular-nums; }
+        .slot-input { background: rgba(0,0,0,0.5); border: 1px solid var(--border-subtle); color: inherit; padding: 8px 10px; font-size: 13px; font-family: var(--font-text); letter-spacing: -0.01em; border-radius: 8px; width: 100%; font-variant-numeric: tabular-nums; }
 
         .transaction-slots-grid {
             display: grid;
@@ -436,7 +524,7 @@
         .tender-btn {
             background: rgba(0, 0, 0, 0.4);
             border: 1px solid var(--border-subtle);
-            color: var(--text-light);
+            color: inherit;
             padding: 10px;
             border-radius: 10px;
             cursor: pointer;
@@ -517,9 +605,21 @@
             <img src="logo.png" alt="Nguni Logo" style="height: 28px;" onerror="this.style.display='none'">
             <h1>Nguni Homeware | Enterprise POS & Ledger Hub</h1>
         </div>
-        <div class="role-badge">
-            <span id="roleLabel">ACTIVE USER: NOT LOGGED IN</span>
-            <button class="btn-sec" onclick="triggerLauncherAndLogin()" style="padding: 4px 10px; font-size: 10px;">SWITCH USER</button>
+        <div class="header-controls">
+            <div class="skin-selector-wrapper" style="display: flex; align-items: center; gap: 6px;">
+                <label style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Skin:</label>
+                <select id="skinSelect" class="form-control" style="width: 140px; padding: 4px 8px; font-size: 11px;" onchange="switchSkin(this.value)">
+                    <option value="obsidian">Cupertino Obsidian</option>
+                    <option value="space">tvOS Deep Space</option>
+                    <option value="frost">iOS Titanium Frost</option>
+                    <option value="emerald">tvOS Cinema Emerald</option>
+                    <option value="ruby">iOS Sunset Ruby</option>
+                </select>
+            </div>
+            <div class="role-badge">
+                <span id="roleLabel">ACTIVE USER: NOT LOGGED IN</span>
+                <button class="btn-sec" onclick="triggerLauncherAndLogin()" style="padding: 4px 10px; font-size: 10px;">SWITCH USER</button>
+            </div>
         </div>
     </div>
 
@@ -781,7 +881,7 @@
         </div>
 
         <div class="pos-summary-bar">
-            <div><span class="slot-label">STAGED LINES: <span id="intakeBatchCount" style="color:#fff;">0</span></span></div>
+            <div><span class="slot-label">STAGED LINES: <span id="intakeBatchCount" style="color:inherit;">0</span></span></div>
             <button type="button" class="btn-submit" onclick="commitIntakeBatch()">COMMIT ALL STAGED INVENTORY</button>
         </div>
     </div>
@@ -790,7 +890,7 @@
     <div id="tab9" class="tab-content">
         <div class="trade-header-bar">
             <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="font-size: 16px; font-weight: 700; font-style: italic; color: #fff;">⚡</span>
+                <span style="font-size: 16px; font-weight: 700; font-style: italic;">⚡</span>
                 <span style="font-size: 13px; font-weight: 600; letter-spacing: -0.01em; color: var(--gold-light);">Nguni Homeware | Supplier Trade Ledger (Wholesale Cost View)</span>
             </div>
             <div class="sync-pill">
@@ -802,7 +902,7 @@
         <div style="background: rgba(15,15,18,0.6); border: 1px solid var(--border-subtle); padding: 14px 20px; border-radius: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <span style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: 500; letter-spacing: 0.06em;">VIEWING PARTNER LEDGER</span>
-                <div id="activeSupplierName" style="font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: #fff; margin-top: 2px;">All Consignment Partners</div>
+                <div id="activeSupplierName" style="font-size: 15px; font-weight: 600; letter-spacing: -0.01em; margin-top: 2px;">All Consignment Partners</div>
             </div>
             <div style="display: flex; align-items: center; gap: 12px;">
                 <label style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: 500; letter-spacing: 0.06em;">SELECT PARTNER:</label>
@@ -869,12 +969,12 @@
                 <div class="summary-val" id="adminSettled" style="color: var(--green-active);">R 0.00</div>
             </div>
             <div class="summary-card">
-                <div class="summary-label">Platform Fees (Store Retention)</div>
-                <div class="summary-val" style="color: var(--gold-light);">R 230.00</div>
+                <div class="summary-label">Platform Fees (Store Retention)[cite: 2]</div>
+                <div class="summary-val" style="color: var(--gold-light);">R 230.00[cite: 2]</div>
             </div>
             <div class="summary-card">
                 <div class="summary-label">Net Payable Balance</div>
-                <div class="summary-val" id="adminNet" style="color: #fff;">R 0.00</div>
+                <div class="summary-val" id="adminNet">R 0.00</div>
             </div>
         </div>
 
@@ -1070,8 +1170,8 @@
         <!-- SECONDARY FINANCIAL BREAKDOWN GRID -->
         <div class="summary-grid" style="grid-template-columns: repeat(5, 1fr);">
             <div class="summary-card">
-                <div class="summary-label">Platform Fees (Fixed)</div>
-                <div class="summary-val" style="font-size: 18px; color: var(--gold-light);">R 230.00</div>
+                <div class="summary-label">Platform Fees (Fixed)[cite: 2]</div>
+                <div class="summary-val" style="font-size: 18px; color: var(--gold-light);">R 230.00[cite: 2]</div>
             </div>
             <div class="summary-card">
                 <div class="summary-label">Operating Expenses (OpEx)</div>
@@ -1079,15 +1179,15 @@
             </div>
             <div class="summary-card">
                 <div class="summary-label">Cash Collected</div>
-                <div class="summary-val" id="accCashTendered" style="font-size: 18px; color: #fff;">R 0.00</div>
+                <div class="summary-val" id="accCashTendered" style="font-size: 18px;">R 0.00</div>
             </div>
             <div class="summary-card">
                 <div class="summary-label">Card / Digital Sales</div>
-                <div class="summary-val" id="accCardTendered" style="font-size: 18px; color: #fff;">R 0.00</div>
+                <div class="summary-val" id="accCardTendered" style="font-size: 18px;">R 0.00</div>
             </div>
             <div class="summary-card">
                 <div class="summary-label">Units Sold</div>
-                <div class="summary-val" id="accUnitsSold" style="font-size: 18px; color: #fff;">0 Items</div>
+                <div class="summary-val" id="accUnitsSold" style="font-size: 18px;">0 Items</div>
             </div>
         </div>
 
@@ -1177,7 +1277,7 @@
             console.error("Supabase load error", e);
         }
 
-        const PLATFORM_FEE = 230;
+        const PLATFORM_FEE = 230; //[cite: 2]
         let currentUser = null;
         let cachedOrders = [];
         let cachedInventory = [];
@@ -1191,6 +1291,16 @@
         let html5QrCodeScanner = null;
         let salesChartInstance = null;
 
+        /* SKIN SWITCHER CONTROLLER */
+        function switchSkin(skinName) {
+            document.body.className = '';
+            if (skinName !== 'obsidian') {
+                document.body.classList.add(`skin-${skinName}`);
+            }
+            localStorage.setItem('nguni_skin', skinName);
+            showNotification(`Applied ${skinName.toUpperCase()} skin mode.`, 'success');
+        }
+
         /* APPLE TV LAUNCHER CONTROLLER */
         function triggerLauncherSequence(callback) {
             const launcher = document.getElementById('appleTvLauncher');
@@ -1199,7 +1309,6 @@
             launcher.style.display = 'flex';
             launcher.classList.remove('fade-out');
 
-            // 3.5s cinematic delay for enjoying Apple TV style experience
             setTimeout(() => {
                 launcher.classList.add('fade-out');
                 setTimeout(() => {
@@ -1241,6 +1350,11 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
+            const savedSkin = localStorage.getItem('nguni_skin') || 'obsidian';
+            const skinSelect = document.getElementById('skinSelect');
+            if (skinSelect) skinSelect.value = savedSkin;
+            switchSkin(savedSkin);
+
             triggerLauncherSequence(() => {
                 openLoginModal();
             });
@@ -1255,14 +1369,12 @@
 
         /* GLOBAL KEYBOARD SHORTCUTS */
         window.addEventListener('keydown', (e) => {
-            // Escape to close modals / camera
             if (e.key === 'Escape') {
                 closeModal('loginModal');
                 closeModal('receiptModal');
                 stopCameraScanner();
             }
 
-            // Alt + Number keys to switch tabs quickly
             if (e.altKey) {
                 if (e.key === '1') { e.preventDefault(); switchTab('tab1'); }
                 if (e.key === '2') { e.preventDefault(); switchTab('tabCashup'); }
@@ -1276,7 +1388,6 @@
                 if (e.key === '0') { e.preventDefault(); switchTab('tab8'); }
             }
 
-            // F2 or '/' (when not typing in an input field) to focus barcode scanner on POS tab
             if (e.key === 'F2' || (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'SELECT')) {
                 e.preventDefault();
                 const barcodeInput = document.getElementById('posBarcodeScan');
@@ -1287,7 +1398,6 @@
                 }
             }
 
-            // F4 or Ctrl + Enter to complete sale when on POS tab
             if ((e.key === 'F4' || (e.ctrlKey && e.key === 'Enter')) && document.getElementById('tab1').classList.contains('active')) {
                 e.preventDefault();
                 checkoutBatchOrder();
@@ -1494,9 +1604,7 @@
                         stopCameraScanner();
                         showNotification(`Scanned barcode: ${decodedText}`, 'success');
                     },
-                    (errorMessage) => {
-                        // Scanning frame feedback (silent)
-                    }
+                    (errorMessage) => {}
                 ).catch(err => {
                     console.error("Camera start error:", err);
                     showNotification('Unable to access camera. Check permissions.', 'error');
@@ -2094,7 +2202,7 @@
 
             document.getElementById('adminOwed').innerText = `R ${totalOwed.toFixed(2)}`;
             document.getElementById('adminSettled').innerText = `R ${totalSettled.toFixed(2)}`;
-            document.getElementById('adminNet').innerText = `R ${(totalOwed - PLATFORM_FEE).toFixed(2)}`;
+            document.getElementById('adminNet').innerText = `R ${(totalOwed - PLATFORM_FEE).toFixed(2)}`; //[cite: 2]
 
             populateReturnOrderSelect(filtered);
         }
@@ -2271,7 +2379,7 @@
             if (!tbody) return;
 
             if (returns.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">Loading return history...</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No returns recorded.</td></tr>`;
                 return;
             }
 
@@ -2283,58 +2391,93 @@
                         <td><strong>${r.order_ref}</strong><br><small style="color:var(--text-muted);">${r.item_name}</small></td>
                         <td>${r.qty_returned}</td>
                         <td>${r.reason}</td>
-                        <td>${r.restocked ? '<span class="status-badge status-settled">YES</span>' : '<span class="status-badge status-returned">NO</span>'}</td>
-                        <td>${r.processed_by || 'Staff'}</td>
-                        <td><span class="status-badge status-returned">PROCESSED</span></td>
+                        <td>${r.restocked ? 'YES' : 'NO'}</td>
+                        <td>${r.processed_by}</td>
+                        <td><span class="status-badge status-returned">RETURNED</span></td>
                     </tr>
                 `;
             });
         }
 
-        /* ACCOUNTING & FINANCIAL P&L DASHBOARD */
+        async function exportSupplierStatement() {
+            let csv = "Order Ref,Item,Supplier,Date,Qty,Wholesale Cost,Status\n";
+            cachedOrders.forEach(o => {
+                csv += `"${o.order_ref}","${o.item_name}","${o.supplier}","${o.created_at}","${o.quantity_dispatched}","${o.wholesale_cost_zar}","${o.payout_status}"\n`;
+            });
+            downloadCSV(csv, "nguni_supplier_statement.csv");
+        }
+
+        async function exportAccountingCSV() {
+            let csv = "Order ID,Timestamp,Product SKU/Name,Qty,Unit Price,Gross Total,Channel\n";
+            cachedOrders.forEach(o => {
+                csv += `"${o.order_ref}","${o.created_at}","${o.item_name}","${o.quantity_dispatched}","${o.selling_price_zar}","${o.gross_sale_zar}","POS"\n`;
+            });
+            downloadCSV(csv, "nguni_accounting_ledger.csv");
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', filename);
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        async function handleLogExpense(e) {
+            e.preventDefault();
+            const desc = document.getElementById('expDesc').value;
+            const category = document.getElementById('expCategory').value;
+            const amount = parseFloat(document.getElementById('expAmount').value) || 0;
+
+            if (supabaseClient) {
+                await supabaseClient.from('expenses').insert([{ description: desc, category: category, amount: amount, created_at: new Date().toISOString() }]);
+            }
+            showNotification('Operating expense logged.', 'success');
+            logAuditAction(`Logged expense (${desc} - R ${amount.toFixed(2)})`);
+            document.getElementById('expenseForm').reset();
+            fetchAdminOrders();
+        }
+
         function renderAccountingDashboard() {
             const startDate = document.getElementById('accFilterStart').value;
             const endDate = document.getElementById('accFilterEnd').value;
 
-            let filteredOrders = cachedOrders.filter(o => o.payout_status !== 'RETURNED / CANCELLED');
-            let filteredExpenses = cachedExpenses;
-
-            if (startDate) {
-                filteredOrders = filteredOrders.filter(o => new Date(o.created_at) >= new Date(startDate));
-                filteredExpenses = filteredExpenses.filter(e => new Date(e.created_at) >= new Date(startDate));
-            }
-            if (endDate) {
-                filteredOrders = filteredOrders.filter(o => new Date(o.created_at) <= new Date(endDate + 'T23:59:59'));
-                filteredExpenses = filteredExpenses.filter(e => new Date(e.created_at) <= new Date(endDate + 'T23:59:59'));
-            }
+            let filteredOrders = cachedOrders;
+            if (startDate) filteredOrders = filteredOrders.filter(o => new Date(o.created_at) >= new Date(startDate));
+            if (endDate) filteredOrders = filteredOrders.filter(o => new Date(o.created_at) <= new Date(endDate + 'T23:59:59'));
 
             let grossSales = 0;
             let cogs = 0;
+            let unitsSold = 0;
             let cashTendered = 0;
             let cardTendered = 0;
-            let unitsSold = 0;
 
             filteredOrders.forEach(o => {
-                const saleVal = parseFloat(o.gross_sale_zar || o.selling_price_zar * o.quantity_dispatched) || 0;
-                const costVal = parseFloat(o.wholesale_cost_zar) || 0;
-                const qty = parseInt(o.quantity_dispatched) || 1;
-
-                grossSales += saleVal;
-                cogs += costVal;
-                unitsSold += qty;
-
-                if ((o.payment_method || '').toUpperCase() === 'CARD') {
-                    cardTendered += saleVal;
-                } else {
-                    cashTendered += saleVal;
+                if (o.payout_status !== 'RETURNED / CANCELLED') {
+                    const gross = parseFloat(o.gross_sale_zar || 0);
+                    const cost = parseFloat(o.wholesale_cost_zar || 0);
+                    grossSales += gross;
+                    cogs += cost;
+                    unitsSold += (parseInt(o.quantity_dispatched) || 1);
+                    if ((o.payment_method || '').toUpperCase() === 'CARD') {
+                        cardTendered += gross;
+                    } else {
+                        cashTendered += gross;
+                    }
                 }
             });
 
             let totalOpEx = 0;
-            filteredExpenses.forEach(e => totalOpEx += parseFloat(e.amount || 0));
+            cachedExpenses.forEach(e => {
+                totalOpEx += parseFloat(e.amount || 0);
+            });
 
             const grossProfit = grossSales - cogs;
-            const netProfit = grossProfit - PLATFORM_FEE - totalOpEx;
+            const netProfit = grossProfit - PLATFORM_FEE - totalOpEx; //[cite: 2]
 
             document.getElementById('accGrossSales').innerText = `R ${grossSales.toFixed(2)}`;
             document.getElementById('accCogs').innerText = `R ${cogs.toFixed(2)}`;
@@ -2345,21 +2488,16 @@
             document.getElementById('accCardTendered').innerText = `R ${cardTendered.toFixed(2)}`;
             document.getElementById('accUnitsSold').innerText = `${unitsSold} Items`;
 
-            renderAccountingTable(filteredOrders);
-        }
-
-        function renderAccountingTable(orders) {
             const tbody = document.getElementById('accountingTableBody');
             if (!tbody) return;
 
-            if (orders.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">No transaction records found.</td></tr>`;
+            if (filteredOrders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No accounting transaction records found.</td></tr>`;
                 return;
             }
 
             tbody.innerHTML = '';
-            orders.forEach(o => {
-                const gross = parseFloat(o.gross_sale_zar || o.selling_price_zar * o.quantity_dispatched) || 0;
+            filteredOrders.forEach(o => {
                 tbody.innerHTML += `
                     <tr>
                         <td><strong>${o.order_ref || 'POS'}</strong></td>
@@ -2367,53 +2505,18 @@
                         <td>${o.item_name}</td>
                         <td>${o.quantity_dispatched}</td>
                         <td>R ${parseFloat(o.selling_price_zar || 0).toFixed(2)}</td>
-                        <td style="color:var(--cyan-bright); font-weight:bold;">R ${gross.toFixed(2)}</td>
-                        <td>${o.payment_method || 'CASH'}</td>
+                        <td style="color:var(--cyan-bright); font-weight:bold;">R ${parseFloat(o.gross_sale_zar || 0).toFixed(2)}</td>
+                        <td>${o.payment_method || 'CASH'} / POS</td>
                     </tr>
                 `;
             });
         }
 
-        async function handleLogExpense(e) {
-            e.preventDefault();
-            const desc = document.getElementById('expDesc').value.trim();
-            const category = document.getElementById('expCategory').value;
-            const amount = parseFloat(document.getElementById('expAmount').value) || 0;
-
-            const payload = {
-                description: desc,
-                category: category,
-                amount: amount,
-                logged_by: currentUser ? currentUser.full_name : 'Staff',
-                created_at: new Date().toISOString()
-            };
-
-            if (supabaseClient) {
-                const { error } = await supabaseClient.from('expenses').insert([payload]);
-                if (error) {
-                    showNotification(`Expense Error: ${error.message}`, 'error');
-                    return;
-                }
-            }
-
-            showNotification(`Logged OpEx expense: R ${amount.toFixed(2)}`, 'success');
-            logAuditAction(`Logged expense: ${desc} (R ${amount.toFixed(2)})`);
-            document.getElementById('expenseForm').reset();
-            fetchAdminOrders();
-        }
-
-        /* AUDIT LOGGING */
         async function logAuditAction(actionText) {
-            const payload = {
-                user_name: currentUser ? currentUser.full_name : 'System',
-                action: actionText,
-                created_at: new Date().toISOString()
-            };
-
-            if (supabaseClient) {
-                await supabaseClient.from('audit_logs').insert([payload]);
-                fetchAuditLogs();
-            }
+            if (!supabaseClient) return;
+            const user = currentUser ? currentUser.full_name : 'System';
+            await supabaseClient.from('audit_logs').insert([{ user_name: user, action: actionText, created_at: new Date().toISOString() }]);
+            fetchAuditLogs();
         }
 
         async function fetchAuditLogs() {
@@ -2425,12 +2528,10 @@
         function renderAuditTable(logs) {
             const tbody = document.getElementById('auditTableBody');
             if (!tbody) return;
-
             if (logs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" style="color: var(--text-muted); padding: 20px;">No activity logged.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 20px;">No audit logs.</td></tr>`;
                 return;
             }
-
             tbody.innerHTML = '';
             logs.forEach(l => {
                 tbody.innerHTML += `
@@ -2441,36 +2542,6 @@
                     </tr>
                 `;
             });
-        }
-
-        /* EXPORT DATA FUNCTIONS */
-        function exportSupplierStatement() {
-            let csv = 'Order Ref,Supplier,Date,Cashier,Qty,Wholesale Cost,Status\n';
-            cachedOrders.forEach(o => {
-                csv += `"${o.order_ref}","${o.supplier}","${o.created_at}","${o.cashier_name}",${o.quantity_dispatched},${o.wholesale_cost_zar},"${o.payout_status}"\n`;
-            });
-
-            downloadCSV(csv, `Supplier_Statement_${new Date().toISOString().split('T')[0]}.csv`);
-        }
-
-        function exportAccountingCSV() {
-            let csv = 'Order Ref,Timestamp,Item Name,Qty,Selling Price,Gross Total,Payment Method\n';
-            cachedOrders.forEach(o => {
-                const gross = o.gross_sale_zar || o.selling_price_zar * o.quantity_dispatched;
-                csv += `"${o.order_ref}","${o.created_at}","${o.item_name}",${o.quantity_dispatched},${o.selling_price_zar},${gross},"${o.payment_method || 'CASH'}"\n`;
-            });
-
-            downloadCSV(csv, `Accounting_Report_${new Date().toISOString().split('T')[0]}.csv`);
-        }
-
-        function downloadCSV(csvContent, fileName) {
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.setAttribute('download', fileName);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
         }
     </script>
 </body>
