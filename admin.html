@@ -546,7 +546,7 @@
         <div class="trade-header-bar">
             <div style="display: flex; align-items: center; gap: 12px;">
                 <span style="font-size: 16px; font-weight: 700; font-style: italic; color: #fff;">⚡</span>
-                <span style="font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--gold-light);">NGUNI HOMEWARE | SUPPLIER TRADE LEDGER</span>
+                <span style="font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--gold-light);">NGUNI HOMEWARE | SUPPLIER TRADE LEDGER (WHOLESALE COST VIEW)</span>
             </div>
             <div class="sync-pill">
                 <span class="sync-dot"></span>
@@ -573,7 +573,7 @@
                 <div class="summary-val" id="tradeUnits">0 Units</div>
             </div>
             <div class="summary-card">
-                <div class="summary-label">LOCKED WHOLESALE PAYOUT OWED</div>
+                <div class="summary-label">LOCKED WHOLESALE COST OWED</div>
                 <div class="summary-val" id="tradeOwed" style="color: var(--gold-light);">R 0.00</div>
             </div>
             <div class="summary-card">
@@ -595,7 +595,7 @@
             </div>
 
             <div class="manifest-panel">
-                <div class="section-title">CONSIGNMENT SALES MANIFEST</div>
+                <div class="section-title">CONSIGNMENT SALES MANIFEST (WHOLESALE COST)</div>
                 <div class="manifest-list" id="manifestList">
                     <div style="color: var(--text-muted); text-align: center; padding: 40px;">Loading live manifest records...</div>
                 </div>
@@ -616,7 +616,7 @@
 
         <div class="summary-grid">
             <div class="summary-card">
-                <div class="summary-label">Escrow Pending (Owed)</div>
+                <div class="summary-label">Wholesale Cost Escrow Pending</div>
                 <div class="summary-val" id="adminOwed" style="color: var(--gold-light);">R 0.00</div>
             </div>
             <div class="summary-card">
@@ -642,7 +642,7 @@
                         <th>Date</th>
                         <th>Processed By</th>
                         <th>Qty</th>
-                        <th>Wholesale Amount</th>
+                        <th>Wholesale Cost Amount</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -1129,8 +1129,8 @@
                     intake: 0, 
                     dispatched: 0, 
                     supplier: item.supplier || 'General Wholesaler', 
-                    price: item.wholesale_floor_zar || item.unit_price || item.cost_price || 0,
-                    sellingPrice: item.selling_price || item.retail_price || (item.wholesale_floor_zar ? item.wholesale_floor_zar * 1.3 : 0)
+                    price: parseFloat(item.wholesale_floor_zar || item.unit_price || item.cost_price || 0),
+                    sellingPrice: parseFloat(item.selling_price || item.retail_price || ((item.wholesale_floor_zar || item.unit_price || 0) * 1.3))
                 };
                 stockMap[name].intake += (parseInt(item.quantity_allocated || item.quantity) || 0);
             });
@@ -1154,8 +1154,8 @@
                 document.getElementById('slotProductName').value = match.name;
                 document.getElementById('slotBarcode').value = match.sku || 'N/A';
                 document.getElementById('slotStockOnHand').value = onHand;
-                document.getElementById('slotUnitPrice').value = `R ${parseFloat(match.price).toFixed(2)}`;
-                document.getElementById('slotSellingPrice').value = `R ${parseFloat(match.sellingPrice).toFixed(2)}`;
+                document.getElementById('slotUnitPrice').value = `R ${match.price.toFixed(2)}`;
+                document.getElementById('slotSellingPrice').value = `R ${match.sellingPrice.toFixed(2)}`;
                 document.getElementById('slotSupplier').value = match.supplier;
                 calculateSlotLineTotal();
             } else {
@@ -1257,7 +1257,7 @@
                 item_name: item.name,
                 order_number: orderRef,
                 quantity_dispatched: item.qty,
-                wholesale_floor_zar: item.wholesalePrice * item.qty,
+                wholesale_floor_zar: item.wholesalePrice * item.qty, // Strictly wholesale cost for ledger/suppliers
                 selling_price: item.sellingPrice,
                 supplier: item.supplier,
                 marketplace: `POS / ${selectedTender}`,
@@ -1421,7 +1421,7 @@
                 if (order.payout_status !== 'RETURNED / CANCELLED') {
                     totalUnits += (parseInt(order.quantity_dispatched) || 1);
                     if (order.payout_status === 'ESCROW PENDING' || !order.payout_status) {
-                        totalOwed += (parseFloat(order.wholesale_floor_zar) || 0);
+                        totalOwed += (parseFloat(order.wholesale_floor_zar) || 0); // Explicitly wholesale cost
                     }
                 }
             });
@@ -1437,7 +1437,7 @@
                 manifestList.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 40px;">No transaction records found for this partner.</div>';
             } else {
                 filteredOrders.forEach(order => {
-                    const amount = parseFloat(order.wholesale_floor_zar) || 0;
+                    const wholesaleCostAmount = parseFloat(order.wholesale_floor_zar) || 0; // Display wholesale cost instead of retail price
                     const status = order.payout_status || 'ESCROW PENDING';
                     const badgeClass = status === 'SETTLED' ? 'status-settled' : 'status-pending';
                     const dateStr = order.created_at ? new Date(order.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent';
@@ -1450,7 +1450,7 @@
                             <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">Order Ref: #${order.order_number || order.id.slice(0, 8)} • ${dateStr}</div>
                         </div>
                         <div style="text-align: right;">
-                            <div style="font-size: 13px; font-weight: 700; color: var(--gold-light);">R ${amount.toFixed(2)}</div>
+                            <div style="font-size: 13px; font-weight: 700; color: var(--gold-light);">R ${wholesaleCostAmount.toFixed(2)}</div>
                             <span class="status-badge ${badgeClass}" style="margin-top: 2px;">${status}</span>
                         </div>
                     `;
@@ -1651,9 +1651,7 @@
                 if (o.payout_status !== 'RETURNED / CANCELLED') {
                     const qty = parseInt(o.quantity_dispatched) || 1;
                     const wholesaleCost = parseFloat(o.wholesale_floor_zar) || 0;
-                    
-                    // Selling price derived or fallback
-                    const lineGross = (o.selling_price ? parseFloat(o.selling_price) * qty : wholesaleCost);
+                    const lineGross = (o.selling_price ? parseFloat(o.selling_price) * qty : wholesaleCost * 1.3);
 
                     grossSales += lineGross;
                     cogs += wholesaleCost;
@@ -1679,10 +1677,7 @@
                 }
             });
 
-            // Calculate Operational Expenses
             let totalOpEx = filteredExpenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
-
-            // Compute Financial Ratios
             const grossProfit = grossSales - cogs;
             const netProfit = grossProfit - PLATFORM_FEE - totalOpEx;
 
@@ -1915,11 +1910,11 @@
         /* CSV EXPORTS */
         function exportSupplierStatement() {
             if (cachedOrders.length === 0) return alert('No data available for export.');
-            let csv = 'Order Ref,Item Name,Supplier,Quantity,Wholesale Amount,Payout Status,Date\n';
+            let csv = 'Order Ref,Item Name,Supplier,Quantity,Wholesale Cost Amount,Payout Status,Date\n';
             cachedOrders.forEach(o => {
                 csv += `"${o.order_number || o.id}","${o.item_name}","${o.supplier || ''}",${o.quantity_dispatched || 1},${o.wholesale_floor_zar || 0},"${o.payout_status || ''}","${o.created_at || ''}"\n`;
             });
-            downloadCSV(csv, 'Nguni_Supplier_Ledger_Statement.csv');
+            downloadCSV(csv, 'Nguni_Supplier_Wholesale_Cost_Ledger.csv');
         }
 
         function exportAccountingCSV() {
@@ -1927,7 +1922,9 @@
             let csv = 'Transaction Ref,Timestamp,Product Name,Quantity,Gross Amount,Fulfillment Channel\n';
             cachedOrders.forEach(o => {
                 if (o.payout_status !== 'RETURNED / CANCELLED') {
-                    csv += `"${o.order_number || o.id}","${o.created_at || ''}","${o.item_name}",${o.quantity_dispatched || 1},${o.wholesale_floor_zar || 0},"${o.marketplace || 'POS / In-Store'}"\n`;
+                    const qty = parseInt(o.quantity_dispatched) || 1;
+                    const lineGross = (o.selling_price ? parseFloat(o.selling_price) * qty : (parseFloat(o.wholesale_floor_zar) || 0) * 1.3);
+                    csv += `"${o.order_number || o.id}","${o.created_at || ''}","${o.item_name}",${qty},${lineGross.toFixed(2)},"${o.marketplace || 'POS / In-Store'}"\n`;
                 }
             });
             downloadCSV(csv, 'Nguni_Accounting_POS_Sales.csv');
