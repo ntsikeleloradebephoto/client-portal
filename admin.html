@@ -739,7 +739,7 @@
                 <div class="summary-val" id="adminSettled" style="color: var(--green-active);">R 0.00</div>
             </div>
             <div class="summary-card">
-                <div class="summary-label">Platform Fees (Store Retention)[cite: 7]</div>
+                <div class="summary-label">Platform Fees (Store Retention)</div>
                 <div class="summary-val" style="color: var(--gold-primary);">R 230.00</div>
             </div>
             <div class="summary-card">
@@ -940,7 +940,7 @@
         <!-- SECONDARY FINANCIAL BREAKDOWN GRID -->
         <div class="summary-grid" style="grid-template-columns: repeat(5, 1fr);">
             <div class="summary-card">
-                <div class="summary-label">Platform Fees (Fixed)[cite: 7]</div>
+                <div class="summary-label">Platform Fees (Fixed)</div>
                 <div class="summary-val" style="font-size: 18px; color: var(--gold-primary);">R 230.00</div>
             </div>
             <div class="summary-card">
@@ -1047,7 +1047,7 @@
             console.error("Supabase load error", e);
         }
 
-        const PLATFORM_FEE = 230; //[cite: 7]
+        const PLATFORM_FEE = 230;
         let currentUser = null;
         let cachedOrders = [];
         let cachedInventory = [];
@@ -1268,6 +1268,61 @@
             renderSupplierPortal('ALL');
             fetchReturnsLog();
             renderCashupHistory();
+        }
+
+        /* CAMERA BARCODE SCANNER INTEGRATION */
+        function toggleCameraScanner() {
+            const modal = document.getElementById('cameraScannerModal');
+            if (modal.style.display === 'block') {
+                stopCameraScanner();
+            } else {
+                modal.style.display = 'block';
+                startCameraScanner();
+            }
+        }
+
+        function startCameraScanner() {
+            if (typeof Html5Qrcode === 'undefined') {
+                showNotification('QR/Barcode scanner library not loaded.', 'error');
+                return;
+            }
+            try {
+                html5QrCodeScanner = new Html5Qrcode("interactive-camera");
+                html5QrCodeScanner.start(
+                    { facingMode: "environment" },
+                    { fps: 10, qrbox: { width: 250, height: 150 } },
+                    (decodedText) => {
+                        document.getElementById('posBarcodeScan').value = decodedText;
+                        handleBarcodeScanInput();
+                        stopCameraScanner();
+                        showNotification(`Scanned barcode: ${decodedText}`, 'success');
+                    },
+                    (errorMessage) => {
+                        // Scanning frame feedback (silent)
+                    }
+                ).catch(err => {
+                    console.error("Camera start error:", err);
+                    showNotification('Unable to access camera. Check permissions.', 'error');
+                    stopCameraScanner();
+                });
+            } catch (e) {
+                console.error("Scanner init error:", e);
+                showNotification('Could not initialize camera scanner.', 'error');
+            }
+        }
+
+        function stopCameraScanner() {
+            const modal = document.getElementById('cameraScannerModal');
+            if (modal) modal.style.display = 'none';
+            if (html5QrCodeScanner) {
+                html5QrCodeScanner.stop().then(() => {
+                    html5QrCodeScanner.clear();
+                    html5QrCodeScanner = null;
+                }).catch(err => {
+                    console.error("Failed to stop scanner", err);
+                    html5QrCodeScanner = null;
+                });
+            }
         }
 
         /* POS SCAN & CART LOGIC */
@@ -2209,21 +2264,21 @@
         function exportSupplierStatement() {
             let csv = 'Order Ref,Item Name,Supplier,Date,Qty,Wholesale Cost,Status\n';
             cachedOrders.forEach(o => {
-                csv += `"#${o.order_number || o.id.slice(0,6)}","${o.item_name || ''}","${o.supplier || ''}","${o.created_at || ''}",${o.quantity_dispatched || 1},${o.wholesale_floor_zar || 0},"${o.payout_status || ''}"\n`;
+                csv += `"#${o.order_number || o.id.slice(0,6)}","${o.item_name || ''}","${o.supplier || ''}","${o.created_at || ''}",${o.quantity_dispatched || 1},${parseFloat(o.wholesale_floor_zar || 0).toFixed(2)},"${o.payout_status || 'ESCROW PENDING'}"\n`;
             });
-            downloadCSV(csv, 'Nguni_Supplier_Settlement_Statement.csv');
+            downloadCSV(csv, 'Nguni_Supplier_Settlement_Ledger.csv');
         }
 
         function exportAccountingCSV() {
-            let csv = 'Order Ref,Timestamp,Item Name,Qty,Selling Price,Gross Total,Marketplace\n';
+            let csv = 'Order ID,Timestamp,Product Name,Qty,Unit Price,Gross Total,Channel\n';
             cachedOrders.forEach(o => {
                 if (o.payout_status !== 'RETURNED / CANCELLED') {
                     const qty = parseInt(o.quantity_dispatched) || 1;
-                    const price = o.selling_price ? parseFloat(o.selling_price) : 0;
-                    csv += `"#${o.order_number || o.id.slice(0,6)}","${o.created_at || ''}","${o.item_name || ''}",${qty},${price},${price * qty},"${o.marketplace || ''}"\n`;
+                    const unitPrice = o.selling_price ? parseFloat(o.selling_price) : ((parseFloat(o.wholesale_floor_zar) || 0) / qty) * 1.3;
+                    csv += `"#${o.order_number || o.id.slice(0,6)}","${o.created_at || ''}","${o.item_name || ''}",${qty},${unitPrice.toFixed(2)},${(unitPrice * qty).toFixed(2)},"${o.marketplace || 'POS'}"\n`;
                 }
             });
-            downloadCSV(csv, 'Nguni_Accounting_PandL.csv');
+            downloadCSV(csv, 'Nguni_Enterprise_Accounting_PnL.csv');
         }
 
         function downloadCSV(csvContent, fileName) {
@@ -2236,52 +2291,7 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            showNotification('File exported successfully as CSV.', 'success');
-        }
-
-        /* CAMERA BARCODE SCANNER INTEGRATION */
-        function toggleCameraScanner() {
-            const modal = document.getElementById('cameraScannerModal');
-            if (modal.style.display === 'block') {
-                stopCameraScanner();
-            } else {
-                modal.style.display = 'block';
-                startCameraScanner();
-            }
-        }
-
-        function startCameraScanner() {
-            if (typeof Html5Qrcode === 'undefined') {
-                showNotification('Barcode scanner library not loaded.', 'error');
-                return;
-            }
-            html5QrCodeScanner = new Html5Qrcode("interactive-camera");
-            html5QrCodeScanner.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 250, height: 150 } },
-                (decodedText) => {
-                    document.getElementById('posBarcodeScan').value = decodedText;
-                    handleBarcodeScanInput();
-                    stopCameraScanner();
-                    showNotification(`Scanned barcode: ${decodedText}`, 'success');
-                },
-                (errorMessage) => {
-                    // Scanning frame tick error ignored
-                }
-            ).catch(err => {
-                showNotification('Unable to start camera: ' + err, 'error');
-                document.getElementById('cameraScannerModal').style.display = 'none';
-            });
-        }
-
-        function stopCameraScanner() {
-            if (html5QrCodeScanner) {
-                html5QrCodeScanner.stop().then(() => {
-                    html5QrCodeScanner.clear();
-                    html5QrCodeScanner = null;
-                }).catch(err => console.error(err));
-            }
-            document.getElementById('cameraScannerModal').style.display = 'none';
+            showNotification(`Successfully exported ${fileName}`, 'success');
         }
     </script>
 </body>
