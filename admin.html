@@ -10,7 +10,9 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root {
+            /* DARK MODE (DEFAULT CORE THEME) */
             --bg-dark: #000000;
+            --bg-gradient: radial-gradient(circle at 50% -20%, #2A210B 0%, #000000 80%);
             --bg-surface: rgba(28, 28, 30, 0.65);
             --panel-glass: rgba(22, 22, 24, 0.72);
             --gold-primary: #D4AF37;
@@ -27,11 +29,39 @@
             --cyan-bright: #64D2FF;
             --glass-blur: blur(40px) saturate(190%);
             --glass-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+            --input-bg: rgba(0, 0, 0, 0.5);
+            --table-header-bg: rgba(255, 255, 255, 0.04);
+            --launcher-bg: radial-gradient(circle at center, #231C0C 0%, #000000 100%);
 
             /* APPLE TYPOGRAPHY SYSTEM VARS */
             --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro", "Helvetica Neue", sans-serif;
             --font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", "Helvetica Neue", sans-serif;
             --font-mono: "SF Mono", SFMono-Regular, ui-monospace, Menlo, Monaco, monospace;
+        }
+
+        /* APPLE TV LIGHT MODE SKIN OVERRIDES */
+        [data-skin="light"] {
+            --bg-dark: #F2F2F7;
+            --bg-gradient: radial-gradient(circle at 50% -20%, #FFF3D6 0%, #E5E5EA 100%);
+            --bg-surface: rgba(255, 255, 255, 0.75);
+            --panel-glass: rgba(255, 255, 255, 0.82);
+            --gold-primary: #B8860B;
+            --gold-light: #8B6508;
+            --gold-dark: #5C4000;
+            --gold-gradient: linear-gradient(135deg, #B8860B 0%, #997A15 50%, #705400 100%);
+            --gold-glow: 0 8px 24px rgba(184, 134, 11, 0.2);
+            --text-light: #1C1C1E;
+            --text-muted: rgba(60, 60, 67, 0.65);
+            --border-glass: rgba(184, 134, 11, 0.3);
+            --border-subtle: rgba(0, 0, 0, 0.08);
+            --green-active: #28CD41;
+            --red-alert: #FF3B30;
+            --cyan-bright: #007AFF;
+            --glass-blur: blur(40px) saturate(200%);
+            --glass-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            --input-bg: rgba(255, 255, 255, 0.85);
+            --table-header-bg: rgba(0, 0, 0, 0.03);
+            --launcher-bg: radial-gradient(circle at center, #FFF8E7 0%, #E5E5EA 100%);
         }
 
         * {
@@ -45,12 +75,13 @@
         }
 
         body {
-            background: #000000;
-            background-image: radial-gradient(circle at 50% -20%, #2A210B 0%, #000000 80%);
+            background: var(--bg-dark);
+            background-image: var(--bg-gradient);
             background-attachment: fixed;
             color: var(--text-light);
             padding: 24px;
             min-height: 100vh;
+            transition: background 0.4s ease, color 0.4s ease;
         }
 
         /* APPLE TV STYLE LAUNCHER OVERLAY */
@@ -60,7 +91,7 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: radial-gradient(circle at center, #231C0C 0%, #000000 100%);
+            background: var(--launcher-bg);
             z-index: 99999;
             display: flex;
             flex-direction: column;
@@ -119,7 +150,7 @@
             background: var(--gold-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0 10px 20px rgba(0, 0, 0, 0.8);
+            text-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
             margin-bottom: 6px;
         }
 
@@ -147,18 +178,18 @@
 
         .toast-notification {
             pointer-events: auto;
-            background: rgba(25, 25, 32, 0.9);
+            background: var(--panel-glass);
             backdrop-filter: blur(20px);
             border: 1px solid var(--border-subtle);
             padding: 14px 18px;
             border-radius: 14px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: var(--glass-shadow);
             display: flex;
             align-items: flex-start;
             gap: 12px;
             animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             font-size: 12px;
-            color: #fff;
+            color: var(--text-light);
             letter-spacing: -0.01em;
         }
 
@@ -204,7 +235,7 @@
         }
 
         .role-badge { 
-            background: rgba(255, 255, 255, 0.04); 
+            background: rgba(125, 125, 125, 0.08); 
             border: 1px solid var(--border-glass); 
             color: var(--gold-light); 
             padding: 6px 14px; 
@@ -218,13 +249,25 @@
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
 
+        .skin-selector {
+            background: var(--input-bg);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-light);
+            border-radius: 980px;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            outline: none;
+        }
+
         /* TABS NAVIGATION */
         .tabs { 
             display: grid; 
             grid-template-columns: repeat(10, 1fr); 
             gap: 6px; 
             margin-bottom: 20px; 
-            background: rgba(255, 255, 255, 0.02);
+            background: rgba(125, 125, 125, 0.05);
             padding: 6px;
             border-radius: 16px;
             border: 1px solid var(--border-subtle);
@@ -246,7 +289,7 @@
             text-align: center; 
         }
 
-        .tab-btn:hover { color: var(--text-light); background: rgba(255,255,255,0.06); }
+        .tab-btn:hover { color: var(--text-light); background: rgba(125,125,125,0.1); }
         .tab-btn.active { 
             background: var(--gold-gradient); 
             color: #000; 
@@ -292,9 +335,9 @@
         .form-control { 
             width: 100%; 
             padding: 10px 14px; 
-            background: rgba(0, 0, 0, 0.5); 
+            background: var(--input-bg); 
             border: 1px solid var(--border-subtle); 
-            color: #fff; 
+            color: var(--text-light); 
             border-radius: 10px; 
             font-size: 13px;
             font-family: var(--font-text);
@@ -305,7 +348,6 @@
             outline: none;
             border-color: var(--gold-primary);
             box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
-            background: rgba(0, 0, 0, 0.7);
         }
 
         /* TRADE LEDGER SPECIFIC LAYOUT */
@@ -313,7 +355,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(15, 15, 18, 0.7);
+            background: var(--input-bg);
             border: 1px solid var(--border-subtle);
             padding: 16px 20px;
             border-radius: 16px;
@@ -336,9 +378,9 @@
         .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green-active); }
 
         .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
-        .summary-card { background: rgba(15, 15, 18, 0.6); border: 1px solid var(--border-subtle); padding: 18px 20px; border-radius: 16px; }
+        .summary-card { background: var(--input-bg); border: 1px solid var(--border-subtle); padding: 18px 20px; border-radius: 16px; }
         .summary-label { font-size: 10px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; }
-        .summary-val { font-family: var(--font-display); font-size: 24px; font-weight: 600; letter-spacing: -0.025em; margin-top: 8px; color: #fff; font-variant-numeric: tabular-nums; }
+        .summary-val { font-family: var(--font-display); font-size: 24px; font-weight: 600; letter-spacing: -0.025em; margin-top: 8px; color: var(--text-light); font-variant-numeric: tabular-nums; }
 
         .trade-grid-container {
             display: grid;
@@ -347,7 +389,7 @@
         }
 
         .chart-panel {
-            background: rgba(15, 15, 18, 0.6);
+            background: var(--input-bg);
             border: 1px solid var(--border-subtle);
             border-radius: 18px;
             padding: 20px;
@@ -363,7 +405,7 @@
         }
 
         .manifest-panel {
-            background: rgba(15, 15, 18, 0.6);
+            background: var(--input-bg);
             border: 1px solid var(--border-subtle);
             border-radius: 18px;
             padding: 20px;
@@ -371,7 +413,7 @@
 
         .manifest-list { display: flex; flex-direction: column; gap: 10px; max-height: 330px; overflow-y: auto; padding-right: 4px; }
         .manifest-item { 
-            background: rgba(25, 25, 30, 0.5); 
+            background: rgba(125, 125, 125, 0.06); 
             border: 1px solid var(--border-subtle); 
             border-radius: 12px; 
             padding: 12px 16px; 
@@ -393,7 +435,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
-            background: rgba(0, 0, 0, 0.3);
+            background: var(--input-bg);
             padding: 16px;
             border-radius: 16px;
             border: 1px solid var(--border-subtle);
@@ -402,7 +444,7 @@
 
         .slot-box { display: flex; flex-direction: column; gap: 4px; }
         .slot-label { font-size: 10px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.04em; text-transform: uppercase; }
-        .slot-input { background: rgba(0,0,0,0.5); border: 1px solid var(--border-subtle); color: #fff; padding: 8px 10px; font-size: 13px; font-family: var(--font-text); letter-spacing: -0.01em; border-radius: 8px; width: 100%; font-variant-numeric: tabular-nums; }
+        .slot-input { background: var(--input-bg); border: 1px solid var(--border-subtle); color: var(--text-light); padding: 8px 10px; font-size: 13px; font-family: var(--font-text); letter-spacing: -0.01em; border-radius: 8px; width: 100%; font-variant-numeric: tabular-nums; }
 
         .transaction-slots-grid {
             display: grid;
@@ -411,16 +453,16 @@
             margin-bottom: 20px;
         }
 
-        .pos-table-container { background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); border-radius: 16px; overflow: hidden; margin-bottom: 20px; }
+        .pos-table-container { background: var(--input-bg); border: 1px solid var(--border-subtle); border-radius: 16px; overflow: hidden; margin-bottom: 20px; }
         .pos-table, .ledger-table { width: 100%; border-collapse: collapse; font-size: 13px; letter-spacing: -0.01em; }
-        .pos-table th, .ledger-table th { background: rgba(255,255,255,0.04); color: var(--gold-light); text-align: left; padding: 10px 14px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--border-subtle); }
-        .pos-table td, .ledger-table td { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; font-variant-numeric: tabular-nums; }
+        .pos-table th, .ledger-table th { background: var(--table-header-bg); color: var(--gold-light); text-align: left; padding: 10px 14px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--border-subtle); }
+        .pos-table td, .ledger-table td { padding: 10px 14px; border-bottom: 1px solid var(--border-subtle); vertical-align: middle; font-variant-numeric: tabular-nums; }
 
         .pos-summary-bar {
             display: flex;
             flex-direction: column;
             gap: 14px;
-            background: rgba(0, 0, 0, 0.4);
+            background: var(--input-bg);
             border: 1px solid var(--border-subtle);
             padding: 18px;
             border-radius: 16px;
@@ -434,7 +476,7 @@
         }
 
         .tender-btn {
-            background: rgba(0, 0, 0, 0.4);
+            background: var(--input-bg);
             border: 1px solid var(--border-subtle);
             color: var(--text-light);
             padding: 10px;
@@ -472,8 +514,8 @@
         }
         .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 12px 30px rgba(212, 175, 55, 0.4); }
 
-        .btn-sec { background: rgba(255,255,255,0.06); border: 1px solid var(--border-glass); color: var(--gold-light); cursor: pointer; padding: 6px 12px; border-radius: 10px; font-size: 11px; font-weight: 500; transition: all 0.2s; }
-        .btn-sec:hover { background: rgba(212, 175, 55, 0.15); color: #fff; border-color: var(--gold-primary); }
+        .btn-sec { background: rgba(125,125,125,0.1); border: 1px solid var(--border-glass); color: var(--gold-light); cursor: pointer; padding: 6px 12px; border-radius: 10px; font-size: 11px; font-weight: 500; transition: all 0.2s; }
+        .btn-sec:hover { background: rgba(212, 175, 55, 0.15); color: var(--text-light); border-color: var(--gold-primary); }
 
         .btn-action { padding: 5px 10px; font-size: 10px; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; border: none; border-radius: 6px; cursor: pointer; margin-right: 4px; }
         .btn-pending { background: rgba(212, 175, 55, 0.2); color: var(--gold-light); border: 1px solid rgba(212, 175, 55, 0.4); }
@@ -486,8 +528,8 @@
         .status-returned { color: var(--red-alert); background: rgba(255, 69, 58, 0.15); border: 1px solid rgba(255, 69, 58, 0.3); }
 
         /* MODALS */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); display: flex; justify-content: center; align-items: center; z-index: 999; }
-        .modal-card { background: rgba(25, 25, 30, 0.9); border: 1px solid var(--border-glass); padding: 28px; border-radius: 20px; width: 360px; text-align: center; box-shadow: var(--glass-shadow); }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.65); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); display: flex; justify-content: center; align-items: center; z-index: 999; }
+        .modal-card { background: var(--panel-glass); border: 1px solid var(--border-glass); padding: 28px; border-radius: 20px; width: 360px; text-align: center; box-shadow: var(--glass-shadow); }
 
         @media print {
             body * { visibility: hidden; }
@@ -497,7 +539,7 @@
         }
     </style>
 </head>
-<body>
+<body data-skin="dark">
 
     <!-- APPLE TV STYLE LAUNCHER SPLASH OVERLAY -->
     <div id="appleTvLauncher">
@@ -518,6 +560,10 @@
             <h1>Nguni Homeware | Enterprise POS & Ledger Hub</h1>
         </div>
         <div class="role-badge">
+            <select class="skin-selector" id="themeSkinSelect" onchange="switchThemeSkin(this.value)">
+                <option value="dark">Dark Mode (Default)</option>
+                <option value="light">Light Mode (Apple TV)</option>
+            </select>
             <span id="roleLabel">ACTIVE USER: NOT LOGGED IN</span>
             <button class="btn-sec" onclick="triggerLauncherAndLogin()" style="padding: 4px 10px; font-size: 10px;">SWITCH USER</button>
         </div>
@@ -781,7 +827,7 @@
         </div>
 
         <div class="pos-summary-bar">
-            <div><span class="slot-label">STAGED LINES: <span id="intakeBatchCount" style="color:#fff;">0</span></span></div>
+            <div><span class="slot-label">STAGED LINES: <span id="intakeBatchCount" style="color:var(--text-light);">0</span></span></div>
             <button type="button" class="btn-submit" onclick="commitIntakeBatch()">COMMIT ALL STAGED INVENTORY</button>
         </div>
     </div>
@@ -790,7 +836,7 @@
     <div id="tab9" class="tab-content">
         <div class="trade-header-bar">
             <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="font-size: 16px; font-weight: 700; font-style: italic; color: #fff;">⚡</span>
+                <span style="font-size: 16px; font-weight: 700; font-style: italic; color: var(--text-light);">⚡</span>
                 <span style="font-size: 13px; font-weight: 600; letter-spacing: -0.01em; color: var(--gold-light);">Nguni Homeware | Supplier Trade Ledger (Wholesale Cost View)</span>
             </div>
             <div class="sync-pill">
@@ -799,14 +845,14 @@
             </div>
         </div>
 
-        <div style="background: rgba(15,15,18,0.6); border: 1px solid var(--border-subtle); padding: 14px 20px; border-radius: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="background: var(--input-bg); border: 1px solid var(--border-subtle); padding: 14px 20px; border-radius: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <span style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: 500; letter-spacing: 0.06em;">VIEWING PARTNER LEDGER</span>
-                <div id="activeSupplierName" style="font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: #fff; margin-top: 2px;">All Consignment Partners</div>
+                <div id="activeSupplierName" style="font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: var(--text-light); margin-top: 2px;">All Consignment Partners</div>
             </div>
             <div style="display: flex; align-items: center; gap: 12px;">
                 <label style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: 500; letter-spacing: 0.06em;">SELECT PARTNER:</label>
-                <select id="supplierSelect" class="form-control" style="width: 240px; background: rgba(0,0,0,0.6);" onchange="filterSupplierLedger()">
+                <select id="supplierSelect" class="form-control" style="width: 240px; background: var(--input-bg);" onchange="filterSupplierLedger()">
                     <option value="ALL">-- All Suppliers / Master View --</option>
                 </select>
             </div>
@@ -874,7 +920,7 @@
             </div>
             <div class="summary-card">
                 <div class="summary-label">Net Payable Balance</div>
-                <div class="summary-val" id="adminNet" style="color: #fff;">R 0.00</div>
+                <div class="summary-val" id="adminNet" style="color: var(--text-light);">R 0.00</div>
             </div>
         </div>
 
@@ -937,10 +983,10 @@
             <div class="form-group">
                 <label>Access Level Role</label>
                 <select id="staffRoleSelect" class="form-control">
-                    <option value="cashier" style="background:#1c1c1e;">Cashier (POS Dispatch Only)</option>
-                    <option value="staff" style="background:#1c1c1e;">Staff (POS & Intake Only)</option>
-                    <option value="supplier" style="background:#1c1c1e;">Supplier Partner (Trade Ledger Portal Only)</option>
-                    <option value="manager" style="background:#1c1c1e;">Manager (Full Access & Ledger)</option>
+                    <option value="cashier" style="background:var(--input-bg);">Cashier (POS Dispatch Only)</option>
+                    <option value="staff" style="background:var(--input-bg);">Staff (POS & Intake Only)</option>
+                    <option value="supplier" style="background:var(--input-bg);">Supplier Partner (Trade Ledger Portal Only)</option>
+                    <option value="manager" style="background:var(--input-bg);">Manager (Full Access & Ledger)</option>
                 </select>
             </div>
             <button type="submit" class="btn-submit" style="width:100%;">Create Cashier / Staff / Supplier Profile</button>
@@ -1079,15 +1125,15 @@
             </div>
             <div class="summary-card">
                 <div class="summary-label">Cash Collected</div>
-                <div class="summary-val" id="accCashTendered" style="font-size: 18px; color: #fff;">R 0.00</div>
+                <div class="summary-val" id="accCashTendered" style="font-size: 18px; color: var(--text-light);">R 0.00</div>
             </div>
             <div class="summary-card">
                 <div class="summary-label">Card / Digital Sales</div>
-                <div class="summary-val" id="accCardTendered" style="font-size: 18px; color: #fff;">R 0.00</div>
+                <div class="summary-val" id="accCardTendered" style="font-size: 18px; color: var(--text-light);">R 0.00</div>
             </div>
             <div class="summary-card">
                 <div class="summary-label">Units Sold</div>
-                <div class="summary-val" id="accUnitsSold" style="font-size: 18px; color: #fff;">0 Items</div>
+                <div class="summary-val" id="accUnitsSold" style="font-size: 18px; color: var(--text-light);">0 Items</div>
             </div>
         </div>
 
@@ -1190,6 +1236,14 @@
         let currentGrandTotal = 0;
         let html5QrCodeScanner = null;
         let salesChartInstance = null;
+
+        /* THEME SKIN SWITCHER CONTROLLER */
+        function switchThemeSkin(skin) {
+            document.body.setAttribute('data-skin', skin);
+            if (cachedOrders && cachedOrders.length > 0) {
+                renderVelocityChart(cachedOrders);
+            }
+        }
 
         /* APPLE TV LAUNCHER CONTROLLER */
         function triggerLauncherSequence(callback) {
@@ -1973,6 +2027,12 @@
 
             if (salesChartInstance) salesChartInstance.destroy();
 
+            const isLight = document.body.getAttribute('data-skin') === 'light';
+            const axisColor = isLight ? '#3C3C43' : '#8E8E93';
+            const gridColor = isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)';
+            const barBg = isLight ? 'rgba(184, 134, 11, 0.7)' : 'rgba(212, 175, 55, 0.6)';
+            const barBorder = isLight ? '#B8860B' : '#D4AF37';
+
             const daysMap = { 'Mon': 0, 'Tue': 0, 'Wed': 0, 'Thu': 0, 'Fri': 0, 'Sat': 0, 'Sun': 0 };
             orders.forEach(o => {
                 const day = new Date(o.created_at).toLocaleDateString('en-US', { weekday: 'short' });
@@ -1986,8 +2046,8 @@
                     datasets: [{
                         label: 'Units Dispatched',
                         data: Object.values(daysMap),
-                        backgroundColor: 'rgba(212, 175, 55, 0.6)',
-                        borderColor: '#D4AF37',
+                        backgroundColor: barBg,
+                        borderColor: barBorder,
                         borderWidth: 1,
                         borderRadius: 6
                     }]
@@ -1997,8 +2057,8 @@
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
-                        y: { ticks: { color: '#8E8E93' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                        x: { ticks: { color: '#8E8E93' }, grid: { display: false } }
+                        y: { ticks: { color: axisColor }, grid: { color: gridColor } },
+                        x: { ticks: { color: axisColor }, grid: { display: false } }
                     }
                 }
             });
@@ -2230,7 +2290,7 @@
             if (!tbody) return;
 
             if (returns.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">Loading return history...</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">No returns recorded.</td></tr>`;
                 return;
             }
 
@@ -2239,70 +2299,66 @@
                 tbody.innerHTML += `
                     <tr>
                         <td>${new Date(r.created_at).toLocaleDateString()}</td>
-                        <td><strong>${r.order_ref}</strong><br><small style="color:var(--text-muted);">${r.item_name}</small></td>
+                        <td><strong>${r.order_ref || 'POS'}</strong><br><small style="color:var(--text-muted);">${r.item_name}</small></td>
                         <td>${r.qty_returned}</td>
                         <td>${r.reason}</td>
-                        <td>${r.restocked ? '<span class="status-badge status-settled">YES</span>' : '<span class="status-badge status-returned">NO</span>'}</td>
+                        <td>${r.restocked ? 'YES' : 'NO'}</td>
                         <td>${r.processed_by || 'Staff'}</td>
-                        <td><span class="status-badge status-returned">PROCESSED</span></td>
+                        <td><span class="status-badge status-returned">RETURNED</span></td>
                     </tr>
                 `;
             });
         }
 
-        /* ACCOUNTING & FINANCIAL P&L DASHBOARD */
+        /* FINANCIAL ACCOUNTING DASHBOARD */
         function renderAccountingDashboard() {
-            const startDate = document.getElementById('accFilterStart').value;
-            const endDate = document.getElementById('accFilterEnd').value;
+            let totalGross = 0;
+            let totalCogs = 0;
+            let totalOpEx = 0;
+            let cashTenderedTotal = 0;
+            let cardTenderedTotal = 0;
+            let totalUnitsSold = 0;
 
-            let filteredOrders = cachedOrders.filter(o => o.payout_status !== 'RETURNED / CANCELLED');
-            let filteredExpenses = cachedExpenses;
+            const startDate = document.getElementById('accFilterStart')?.value;
+            const endDate = document.getElementById('accFilterEnd')?.value;
 
-            if (startDate) {
-                filteredOrders = filteredOrders.filter(o => new Date(o.created_at) >= new Date(startDate));
-                filteredExpenses = filteredExpenses.filter(e => new Date(e.created_at) >= new Date(startDate));
-            }
-            if (endDate) {
-                filteredOrders = filteredOrders.filter(o => new Date(o.created_at) <= new Date(endDate + 'T23:59:59'));
-                filteredExpenses = filteredExpenses.filter(e => new Date(e.created_at) <= new Date(endDate + 'T23:59:59'));
-            }
-
-            let grossSales = 0;
-            let cogs = 0;
-            let cashTendered = 0;
-            let cardTendered = 0;
-            let unitsSold = 0;
+            let filteredOrders = cachedOrders;
+            if (startDate) filteredOrders = filteredOrders.filter(o => new Date(o.created_at) >= new Date(startDate));
+            if (endDate) filteredOrders = filteredOrders.filter(o => new Date(o.created_at) <= new Date(endDate + 'T23:59:59'));
 
             filteredOrders.forEach(o => {
-                const saleVal = parseFloat(o.gross_sale_zar || o.selling_price_zar * o.quantity_dispatched) || 0;
-                const costVal = parseFloat(o.wholesale_cost_zar) || 0;
-                const qty = parseInt(o.quantity_dispatched) || 1;
+                if (o.payout_status !== 'RETURNED / CANCELLED') {
+                    const gross = parseFloat(o.gross_sale_zar || o.selling_price_zar * o.quantity_dispatched) || 0;
+                    const cogs = parseFloat(o.wholesale_cost_zar) || 0;
+                    const units = parseInt(o.quantity_dispatched) || 1;
 
-                grossSales += saleVal;
-                cogs += costVal;
-                unitsSold += qty;
+                    totalGross += gross;
+                    totalCogs += cogs;
+                    totalUnitsSold += units;
 
-                if ((o.payment_method || '').toUpperCase() === 'CARD') {
-                    cardTendered += saleVal;
-                } else {
-                    cashTendered += saleVal;
+                    if ((o.payment_method || '').toUpperCase() === 'CARD') {
+                        cardTenderedTotal += gross;
+                    } else {
+                        cashTenderedTotal += gross;
+                    }
                 }
             });
 
-            let totalOpEx = 0;
-            filteredExpenses.forEach(e => totalOpEx += parseFloat(e.amount || 0));
+            cachedExpenses.forEach(e => {
+                totalOpEx += parseFloat(e.amount) || 0;
+            });
 
-            const grossProfit = grossSales - cogs;
-            const netProfit = grossProfit - PLATFORM_FEE - totalOpEx;
+            const grossProfit = totalGross - totalCogs;
+            const netProfit = grossProfit - totalOpEx - PLATFORM_FEE;
 
-            document.getElementById('accGrossSales').innerText = `R ${grossSales.toFixed(2)}`;
-            document.getElementById('accCogs').innerText = `R ${cogs.toFixed(2)}`;
-            document.getElementById('accGrossProfit').innerText = `R ${grossProfit.toFixed(2)}`;
-            document.getElementById('accNetProfit').innerText = `R ${netProfit.toFixed(2)}`;
-            document.getElementById('accOpEx').innerText = `R ${totalOpEx.toFixed(2)}`;
-            document.getElementById('accCashTendered').innerText = `R ${cashTendered.toFixed(2)}`;
-            document.getElementById('accCardTendered').innerText = `R ${cardTendered.toFixed(2)}`;
-            document.getElementById('accUnitsSold').innerText = `${unitsSold} Items`;
+            if (document.getElementById('accGrossSales')) document.getElementById('accGrossSales').innerText = `R ${totalGross.toFixed(2)}`;
+            if (document.getElementById('accCogs')) document.getElementById('accCogs').innerText = `R ${totalCogs.toFixed(2)}`;
+            if (document.getElementById('accGrossProfit')) document.getElementById('accGrossProfit').innerText = `R ${grossProfit.toFixed(2)}`;
+            if (document.getElementById('accNetProfit')) document.getElementById('accNetProfit').innerText = `R ${netProfit.toFixed(2)}`;
+            if (document.getElementById('accOpEx')) document.getElementById('accOpEx').innerText = `R ${totalOpEx.toFixed(2)}`;
+            if (document.getElementById('accCashTendered')) document.getElementById('accCashTendered').innerText = `R ${cashTenderedTotal.toFixed(2)}`;
+            if (document.getElementById('accCardTendered')) document.getElementById('accCardTendered').innerText = `R ${cardTenderedTotal.toFixed(2)}`;
+            if (document.getElementById('accUnitsSold')) document.getElementById('accUnitsSold').innerText = `${totalUnitsSold} Items`;
 
             renderAccountingTable(filteredOrders);
         }
@@ -2312,7 +2368,7 @@
             if (!tbody) return;
 
             if (orders.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">No transaction records found.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">No accounting records found.</td></tr>`;
                 return;
             }
 
@@ -2355,17 +2411,44 @@
                 }
             }
 
-            showNotification(`Logged OpEx expense: R ${amount.toFixed(2)}`, 'success');
-            logAuditAction(`Logged expense: ${desc} (R ${amount.toFixed(2)})`);
+            showNotification(`Logged expense: R ${amount.toFixed(2)} (${desc})`, 'success');
+            logAuditAction(`Logged OpEx expense R ${amount.toFixed(2)} - ${desc}`);
             document.getElementById('expenseForm').reset();
             fetchAdminOrders();
         }
 
-        /* AUDIT LOGGING */
-        async function logAuditAction(actionText) {
+        function exportAccountingCSV() {
+            let csv = 'Order Ref,Date,Product,Qty,Unit Price,Gross Sale,Payment Method\n';
+            cachedOrders.forEach(o => {
+                csv += `"${o.order_ref}","${o.created_at}","${o.item_name}",${o.quantity_dispatched},${o.selling_price_zar},${o.gross_sale_zar},"${o.payment_method}"\n`;
+            });
+            downloadCSV(csv, 'nguni_accounting_ledger.csv');
+        }
+
+        function exportSupplierStatement() {
+            let csv = 'Order Ref,Supplier,Date,Qty,Wholesale Cost,Status\n';
+            cachedOrders.forEach(o => {
+                csv += `"${o.order_ref}","${o.supplier}","${o.created_at}",${o.quantity_dispatched},${o.wholesale_cost_zar},"${o.payout_status}"\n`;
+            });
+            downloadCSV(csv, 'nguni_supplier_statement.csv');
+        }
+
+        function downloadCSV(csvContent, fileName) {
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute('download', fileName);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        /* AUDIT LOGGING HUB */
+        async function logAuditAction(action) {
+            const user = currentUser ? currentUser.full_name : 'System/Guest';
             const payload = {
-                user_name: currentUser ? currentUser.full_name : 'System',
-                action: actionText,
+                user_name: user,
+                action_executed: action,
                 created_at: new Date().toISOString()
             };
 
@@ -2378,15 +2461,15 @@
         async function fetchAuditLogs() {
             if (!supabaseClient) return;
             const { data } = await supabaseClient.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(50);
-            renderAuditTable(data || []);
+            renderAuditLogsTable(data || []);
         }
 
-        function renderAuditTable(logs) {
+        function renderAuditLogsTable(logs) {
             const tbody = document.getElementById('auditTableBody');
             if (!tbody) return;
 
             if (logs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" style="color: var(--text-muted); padding: 20px;">No activity logged.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="3" style="color: var(--text-muted); padding: 20px;">No audit logs recorded.</td></tr>`;
                 return;
             }
 
@@ -2396,40 +2479,10 @@
                     <tr>
                         <td>${new Date(l.created_at).toLocaleString()}</td>
                         <td><strong>${l.user_name}</strong></td>
-                        <td>${l.action}</td>
+                        <td>${l.action_executed}</td>
                     </tr>
                 `;
             });
-        }
-
-        /* EXPORT DATA FUNCTIONS */
-        function exportSupplierStatement() {
-            let csv = 'Order Ref,Supplier,Date,Cashier,Qty,Wholesale Cost,Status\n';
-            cachedOrders.forEach(o => {
-                csv += `"${o.order_ref}","${o.supplier}","${o.created_at}","${o.cashier_name}",${o.quantity_dispatched},${o.wholesale_cost_zar},"${o.payout_status}"\n`;
-            });
-
-            downloadCSV(csv, `Supplier_Statement_${new Date().toISOString().split('T')[0]}.csv`);
-        }
-
-        function exportAccountingCSV() {
-            let csv = 'Order Ref,Timestamp,Item Name,Qty,Selling Price,Gross Total,Payment Method\n';
-            cachedOrders.forEach(o => {
-                const gross = o.gross_sale_zar || o.selling_price_zar * o.quantity_dispatched;
-                csv += `"${o.order_ref}","${o.created_at}","${o.item_name}",${o.quantity_dispatched},${o.selling_price_zar},${gross},"${o.payment_method || 'CASH'}"\n`;
-            });
-
-            downloadCSV(csv, `Accounting_Report_${new Date().toISOString().split('T')[0]}.csv`);
-        }
-
-        function downloadCSV(csvContent, fileName) {
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.setAttribute('download', fileName);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
         }
     </script>
 </body>
