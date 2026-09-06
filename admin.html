@@ -43,6 +43,49 @@
             min-height: 100vh;
         }
 
+        /* ON-SCREEN TOAST NOTIFICATION CONTAINER */
+        #toastContainer {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 380px;
+            pointer-events: none;
+        }
+
+        .toast-notification {
+            pointer-events: auto;
+            background: rgba(25, 25, 32, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-subtle);
+            padding: 14px 18px;
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            font-size: 12px;
+            color: #fff;
+        }
+
+        .toast-notification.success { border-left: 4px solid var(--green-active); }
+        .toast-notification.error { border-left: 4px solid var(--red-alert); }
+        .toast-notification.info { border-left: 4px solid var(--cyan-bright); }
+
+        @keyframes toastSlideIn {
+            from { opacity: 0; transform: translateX(50px) scale(0.95); }
+            to { opacity: 1; transform: translateX(0) scale(1); }
+        }
+
+        @keyframes toastFadeOut {
+            from { opacity: 1; transform: translateX(0) scale(1); }
+            to { opacity: 0; transform: translateX(30px) scale(0.95); }
+        }
+
         /* HEADER & BAR */
         .header {
             display: flex;
@@ -341,6 +384,9 @@
     </style>
 </head>
 <body>
+
+    <!-- ON-SCREEN TOAST NOTIFICATION CONTAINER -->
+    <div id="toastContainer"></div>
 
     <!-- APPLICATION HEADER -->
     <div class="header">
@@ -693,7 +739,7 @@
                 <div class="summary-val" id="adminSettled" style="color: var(--green-active);">R 0.00</div>
             </div>
             <div class="summary-card">
-                <div class="summary-label">Platform Fees (Store Retention)</div>
+                <div class="summary-label">Platform Fees (Store Retention)[cite: 7]</div>
                 <div class="summary-val" style="color: var(--gold-primary);">R 230.00</div>
             </div>
             <div class="summary-card">
@@ -894,7 +940,7 @@
         <!-- SECONDARY FINANCIAL BREAKDOWN GRID -->
         <div class="summary-grid" style="grid-template-columns: repeat(5, 1fr);">
             <div class="summary-card">
-                <div class="summary-label">Platform Fees (Fixed)</div>
+                <div class="summary-label">Platform Fees (Fixed)[cite: 7]</div>
                 <div class="summary-val" style="font-size: 18px; color: var(--gold-primary);">R 230.00</div>
             </div>
             <div class="summary-card">
@@ -1001,7 +1047,7 @@
             console.error("Supabase load error", e);
         }
 
-        const PLATFORM_FEE = 230;
+        const PLATFORM_FEE = 230; //[cite: 7]
         let currentUser = null;
         let cachedOrders = [];
         let cachedInventory = [];
@@ -1014,6 +1060,31 @@
         let currentGrandTotal = 0;
         let html5QrCodeScanner = null;
         let salesChartInstance = null;
+
+        /* ON-SCREEN TOAST NOTIFICATION HUB */
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = `toast-notification ${type}`;
+            
+            let icon = 'ℹ️';
+            if (type === 'success') icon = '✅';
+            if (type === 'error') icon = '⚠️';
+
+            toast.innerHTML = `
+                <span style="font-size: 14px;">${icon}</span>
+                <div style="flex: 1; word-break: break-word;">${message}</div>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'toastFadeOut 0.3s ease forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
 
         window.addEventListener('DOMContentLoaded', () => {
             openLoginModal();
@@ -1113,8 +1184,12 @@
             if (pin === '0000') { currentUser = { full_name: 'Cashier Floor', role: 'cashier' }; applyUserSession(); return; }
 
             const { data } = await supabaseClient.from('staff_profiles').select('*').eq('pin_code', pin);
-            if (data && data.length > 0) { currentUser = data[0]; applyUserSession(); } 
-            else alert('Invalid PIN code.');
+            if (data && data.length > 0) { 
+                currentUser = data[0]; 
+                applyUserSession(); 
+            } else {
+                showNotification('Invalid PIN code entered.', 'error');
+            }
         }
 
         function applyUserSession() {
@@ -1165,6 +1240,7 @@
             }
 
             closeModal('loginModal');
+            showNotification(`Welcome back, ${currentUser.full_name}! Session started successfully.`, 'success');
             logAuditAction(`Logged in (${currentUser.full_name} - ${currentUser.role})`);
             fetchAdminOrders();
             fetchStaffProfiles();
@@ -1272,12 +1348,18 @@
         }
 
         function addItemToCart() {
-            if (!activePosMatch) return alert('Scan or select an item first.');
+            if (!activePosMatch) {
+                showNotification('Scan or select an item before adding to cart.', 'error');
+                return;
+            }
 
             const qty = parseInt(document.getElementById('posQty').value) || 1;
             const onHand = parseInt(document.getElementById('slotStockOnHand').value) || 0;
 
-            if (qty > onHand) return alert(`Insufficient stock available (${onHand} remaining).`);
+            if (qty > onHand) {
+                showNotification(`Insufficient stock available (${onHand} remaining).`, 'error');
+                return;
+            }
 
             const sellingPrice = parseFloat(activePosMatch.sellingPrice) || 0;
             const wholesalePrice = parseFloat(activePosMatch.price) || 0;
@@ -1292,6 +1374,7 @@
                 subtotal: qty * sellingPrice
             });
 
+            showNotification(`Added ${qty}x ${activePosMatch.name} to cart.`, 'info');
             renderCartTable();
             document.getElementById('posBarcodeScan').value = '';
             clearPosSlots();
@@ -1334,11 +1417,15 @@
         function removeCartItem(idx) {
             posCart.splice(idx, 1);
             renderCartTable();
+            showNotification('Item removed from cart.', 'info');
         }
 
         async function checkoutBatchOrder() {
             if (!currentUser) return openLoginModal();
-            if (posCart.length === 0) return alert('Add items to cart before checking out.');
+            if (posCart.length === 0) {
+                showNotification('Add items to cart before checking out.', 'error');
+                return;
+            }
 
             let orderRef = document.getElementById('posOrderRef').value.trim();
             if (!orderRef) orderRef = `POS-${Math.floor(100000 + Math.random() * 900000)}`;
@@ -1347,7 +1434,7 @@
                 item_name: item.name,
                 order_number: orderRef,
                 quantity_dispatched: item.qty,
-                wholesale_floor_zar: item.wholesalePrice * item.qty, // Strictly wholesale cost for ledger/suppliers
+                wholesale_floor_zar: item.wholesalePrice * item.qty,
                 selling_price: item.sellingPrice,
                 supplier: item.supplier,
                 marketplace: `POS / ${selectedTender}`,
@@ -1357,8 +1444,10 @@
 
             const { error } = await supabaseClient.from('orders').insert(inserts);
 
-            if (error) alert('Checkout error: ' + error.message);
-            else {
+            if (error) {
+                showNotification('Checkout error: ' + error.message, 'error');
+            } else {
+                showNotification(`Sale completed successfully! Ref: #${orderRef}`, 'success');
                 logAuditAction(`Dispatched Batch Order #${orderRef} (${posCart.length} lines) via ${selectedTender}`);
                 showBatchReceipt(orderRef, posCart, currentUser.full_name);
                 posCart = [];
@@ -1407,7 +1496,6 @@
                 document.getElementById('cashupUserBadge').innerText = `USER: ${currentUser.full_name.toUpperCase()}`;
             }
             
-            // Calculate today's expected sales from cachedOrders
             const todayStr = new Date().toDateString();
             let expCash = 0;
             let expCard = 0;
@@ -1474,13 +1562,13 @@
             if (supabaseClient) {
                 const { error } = await supabaseClient.from('cashups').insert([cashupPayload]);
                 if (error) {
-                    alert('Error submitting cashup: ' + error.message);
+                    showNotification('Error submitting cashup: ' + error.message, 'error');
                     return;
                 }
             }
 
+            showNotification('Cashup report submitted successfully!', 'success');
             logAuditAction(`Submitted Cashup reconciliation (${currentUser.full_name}) - Variance: ${varianceStr}`);
-            alert('Cashup submitted successfully and logged for manager tracking!');
             document.getElementById('cashupForm').reset();
             document.getElementById('cashupFloat').value = '0.00';
             fetchAdminOrders();
@@ -1536,6 +1624,7 @@
                 added_by: currentUser ? currentUser.full_name : 'Staff'
             });
 
+            showNotification(`Staged intake line: ${stockName}`, 'info');
             renderIntakeBatchTable();
             document.getElementById('stockForm').reset();
             document.getElementById('stockSku').focus();
@@ -1571,18 +1660,23 @@
         function removeIntakeBatchItem(idx) {
             intakeBatch.splice(idx, 1);
             renderIntakeBatchTable();
+            showNotification('Removed staged item from intake queue.', 'info');
         }
 
         async function commitIntakeBatch() {
             if (!currentUser) return openLoginModal();
-            if (intakeBatch.length === 0) return alert('No staged inventory lines to commit.');
+            if (intakeBatch.length === 0) {
+                showNotification('No staged inventory lines to commit.', 'error');
+                return;
+            }
 
             const { error } = await supabaseClient.from('inventory').insert(intakeBatch);
 
-            if (error) alert('Intake Error: ' + error.message);
-            else {
+            if (error) {
+                showNotification('Intake Error: ' + error.message, 'error');
+            } else {
+                showNotification(`Successfully committed ${intakeBatch.length} inventory lines!`, 'success');
                 logAuditAction(`Committed intake batch of ${intakeBatch.length} items`);
-                alert(`Successfully committed ${intakeBatch.length} inventory lines!`);
                 intakeBatch = [];
                 renderIntakeBatchTable();
                 fetchAdminOrders();
@@ -1620,7 +1714,7 @@
                 if (order.payout_status !== 'RETURNED / CANCELLED') {
                     totalUnits += (parseInt(order.quantity_dispatched) || 1);
                     if (order.payout_status === 'ESCROW PENDING' || !order.payout_status) {
-                        totalOwed += (parseFloat(order.wholesale_floor_zar) || 0); // Explicitly wholesale cost
+                        totalOwed += (parseFloat(order.wholesale_floor_zar) || 0);
                     }
                 }
             });
@@ -1636,7 +1730,7 @@
                 manifestList.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 40px;">No transaction records found for this partner.</div>';
             } else {
                 filteredOrders.forEach(order => {
-                    const wholesaleCostAmount = parseFloat(order.wholesale_floor_zar) || 0; // Display wholesale cost instead of retail price
+                    const wholesaleCostAmount = parseFloat(order.wholesale_floor_zar) || 0;
                     const status = order.payout_status || 'ESCROW PENDING';
                     const badgeClass = status === 'SETTLED' ? 'status-settled' : 'status-pending';
                     const dateStr = order.created_at ? new Date(order.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent';
@@ -1710,309 +1804,155 @@
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
-                        x: { grid: { display: false }, ticks: { color: 'rgba(235, 235, 245, 0.4)', font: { size: 10 } } },
-                        y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: 'rgba(235, 235, 245, 0.4)', font: { size: 10 }, precision: 0 }, beginAtZero: true }
+                        x: { grid: { display: false }, ticks: { color: 'rgba(235, 235, 245, 0.4)', font: { size: 9 } } },
+                        y: { grid: { color: 'rgba(255, 255, 255, 0.04)' }, ticks: { color: 'rgba(235, 235, 245, 0.4)', font: { size: 9 } } }
                     }
                 }
             });
         }
 
-        /* ADMIN & SETTLEMENT LEDGER */
+        /* SETTLEMENT & LEDGER MANAGEMENT */
         function renderAdminOrders(orders) {
-            const startVal = document.getElementById('filterStartDate')?.value;
-            const endVal = document.getElementById('filterEndDate')?.value;
-
-            let filtered = [...orders];
-
-            if (startVal) filtered = filtered.filter(o => new Date(o.created_at) >= new Date(startVal));
-            if (endVal) {
-                const endDate = new Date(endVal);
-                endDate.setHours(23, 59, 59, 999);
-                filtered = filtered.filter(o => new Date(o.created_at) <= endDate);
-            }
-
-            let totalOwed = 0;
-            let totalSettled = 0;
-
             const tbody = document.getElementById('adminOrderTable');
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            if (filtered.length === 0) tbody.innerHTML = '<tr><td colspan="8" style="color: var(--text-muted); padding: 20px;">No ledger transactions found.</td></tr>';
+            const startDate = document.getElementById('filterStartDate')?.value;
+            const endDate = document.getElementById('filterEndDate')?.value;
 
-            filtered.forEach(o => {
-                const amount = parseFloat(o.wholesale_floor_zar) || 0;
-                const status = o.payout_status || 'ESCROW PENDING';
+            let totalOwed = 0;
+            let totalSettled = 0;
+            let countDisplayed = 0;
 
-                if (status === 'ESCROW PENDING') totalOwed += amount;
-                if (status === 'SETTLED') totalSettled += amount;
+            const returnSelect = document.getElementById('returnOrderSelect');
+            if (returnSelect) {
+                returnSelect.innerHTML = '<option value="">-- Choose Dispatched Order --</option>';
+            }
 
-                let badgeClass = 'status-pending';
-                if (status === 'SETTLED') badgeClass = 'status-settled';
-                if (status === 'RETURNED / CANCELLED') badgeClass = 'status-returned';
+            orders.forEach(order => {
+                if (startDate && order.created_at && new Date(order.created_at) < new Date(startDate)) return;
+                if (endDate && order.created_at && new Date(order.created_at) > new Date(endDate + 'T23:59:59')) return;
 
-                const dateStr = o.created_at ? new Date(o.created_at).toLocaleDateString('en-GB') : 'Recent';
+                const qty = parseInt(order.quantity_dispatched) || 1;
+                const wholesaleAmount = parseFloat(order.wholesale_floor_zar) || 0;
+                const status = order.payout_status || 'ESCROW PENDING';
+
+                if (status === 'ESCROW PENDING') totalOwed += wholesaleAmount;
+                if (status === 'SETTLED') totalSettled += wholesaleAmount;
+                countDisplayed++;
+
+                if (returnSelect && status !== 'RETURNED / CANCELLED') {
+                    const opt = document.createElement('option');
+                    opt.value = order.id;
+                    opt.innerText = `#${order.order_number || order.id.slice(0,6)} - ${order.item_name} (${qty}x)`;
+                    returnSelect.appendChild(opt);
+                }
+
+                const dateStr = order.created_at ? new Date(order.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent';
+                const badgeClass = status === 'SETTLED' ? 'status-settled' : (status === 'RETURNED / CANCELLED' ? 'status-returned' : 'status-pending');
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><strong>#${o.order_number || o.id.slice(0,6)}</strong><br><small style="color: var(--text-muted);">${o.item_name}</small></td>
-                    <td>${o.supplier || 'N/A'}</td>
+                    <td><strong>#${order.order_number || order.id.slice(0,6)}</strong><br><small style="color:var(--text-muted);">${order.item_name || 'Item'}</small></td>
+                    <td>${order.supplier || 'General'}</td>
                     <td>${dateStr}</td>
-                    <td>${o.processed_by || 'System'}</td>
-                    <td>${o.quantity_dispatched || 1}</td>
-                    <td style="color: var(--gold-light); font-weight: 600;">R ${amount.toFixed(2)}</td>
+                    <td><small>${order.processed_by || 'Staff'}</small></td>
+                    <td>${qty}</td>
+                    <td style="color: var(--gold-light); font-weight: 600;">R ${wholesaleAmount.toFixed(2)}</td>
                     <td><span class="status-badge ${badgeClass}">${status}</span></td>
                     <td>
-                        <button class="btn-action btn-settled" onclick="updateOrderStatus('${o.id}', 'SETTLED')">Settle</button>
-                        <button class="btn-action btn-pending" onclick="updateOrderStatus('${o.id}', 'ESCROW PENDING')">Hold</button>
+                        ${status === 'ESCROW PENDING' ? `<button class="btn-action btn-settled" onclick="updateOrderStatus('${order.id}', 'SETTLED')">Settle</button>` : ''}
+                        <button class="btn-action btn-delete" onclick="deleteOrderRecord('${order.id}')">Del</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
 
-            const netPayable = Math.max(0, totalOwed - PLATFORM_FEE);
-            if (document.getElementById('adminOwed')) document.getElementById('adminOwed').innerText = `R ${totalOwed.toFixed(2)}`;
-            if (document.getElementById('adminSettled')) document.getElementById('adminSettled').innerText = `R ${totalSettled.toFixed(2)}`;
-            if (document.getElementById('adminNet')) document.getElementById('adminNet').innerText = `R ${netPayable.toFixed(2)}`;
+            if (countDisplayed === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="color: var(--text-muted); text-align: center; padding: 20px;">No settlement ledger records found.</td></tr>';
+            }
 
-            populateReturnOrderSelect(filtered);
+            document.getElementById('adminOwed').innerText = `R ${totalOwed.toFixed(2)}`;
+            document.getElementById('adminSettled').innerText = `R ${totalSettled.toFixed(2)}`;
+            document.getElementById('adminNet').innerText = `R ${Math.max(0, totalOwed - PLATFORM_FEE).toFixed(2)}`;
         }
 
         async function updateOrderStatus(id, newStatus) {
+            if (!currentUser || currentUser.role !== 'manager') {
+                showNotification('Permission denied: Manager privileges required.', 'error');
+                return;
+            }
             const { error } = await supabaseClient.from('orders').update({ payout_status: newStatus }).eq('id', id);
-            if (!error) {
-                logAuditAction(`Updated order status to ${newStatus} (ID: ${id})`);
+            if (error) {
+                showNotification('Update error: ' + error.message, 'error');
+            } else {
+                showNotification(`Order status updated to ${newStatus}.`, 'success');
+                logAuditAction(`Updated order ${id} status to ${newStatus}`);
                 fetchAdminOrders();
             }
         }
 
+        async function deleteOrderRecord(id) {
+            if (!currentUser || currentUser.role !== 'manager') {
+                showNotification('Permission denied: Manager privileges required.', 'error');
+                return;
+            }
+            if (!confirm('Are you sure you want to delete this order record?')) return;
+            const { error } = await supabaseClient.from('orders').delete().eq('id', id);
+            if (error) {
+                showNotification('Delete error: ' + error.message, 'error');
+            } else {
+                showNotification('Order record deleted successfully.', 'success');
+                logAuditAction(`Deleted order record ID ${id}`);
+                fetchAdminOrders();
+            }
+        }
+
+        /* INVENTORY STOCK MANAGEMENT */
         function renderStockTable(inventory) {
             const tbody = document.getElementById('stockTableBody');
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            if (inventory.length === 0) return tbody.innerHTML = '<tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">No inventory records found.</td></tr>';
+            if (!inventory || inventory.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="color: var(--text-muted); text-align: center; padding: 20px;">No active inventory records found.</td></tr>';
+                return;
+            }
 
             inventory.forEach(item => {
+                const cost = parseFloat(item.wholesale_floor_zar || item.unit_price || 0);
+                const selling = parseFloat(item.selling_price || (cost * 1.3));
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td style="color: var(--gold-light); font-weight: 600;">${item.sku || 'N/A'}</td>
-                    <td>${item.item_name || item.item_description}</td>
-                    <td>${item.supplier || 'N/A'}</td>
+                    <td>${item.item_name || item.item_description || 'Product'}</td>
+                    <td>${item.supplier || 'General'}</td>
                     <td>${item.quantity_allocated || item.quantity || 0}</td>
-                    <td>R ${parseFloat(item.wholesale_floor_zar || item.unit_price || 0).toFixed(2)}</td>
-                    <td style="color: var(--cyan-bright); font-weight: 600;">R ${parseFloat(item.selling_price || 0).toFixed(2)}</td>
-                    <td><button class="btn-action btn-delete" onclick="deleteStockItem('${item.id}')">Delete</button></td>
+                    <td>R ${cost.toFixed(2)}</td>
+                    <td style="color: var(--cyan-bright);">R ${selling.toFixed(2)}</td>
+                    <td><button class="btn-action btn-delete" onclick="deleteInventoryItem('${item.id}')">Delete</button></td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        async function deleteStockItem(id) {
-            if (!confirm("Are you sure you want to delete this inventory item?")) return;
+        async function deleteInventoryItem(id) {
+            if (!currentUser || currentUser.role !== 'manager') {
+                showNotification('Permission denied: Manager privileges required.', 'error');
+                return;
+            }
+            if (!confirm('Remove this SKU from active inventory?')) return;
             const { error } = await supabaseClient.from('inventory').delete().eq('id', id);
-            if (!error) {
-                logAuditAction(`Deleted inventory record (ID: ${id})`);
-                fetchAdminOrders();
-            }
-        }
-
-        /* INTEGRATED ACCOUNTING & P&L DASHBOARD LOGIC */
-        function renderAccountingDashboard() {
-            const startVal = document.getElementById('accFilterStart')?.value;
-            const endVal = document.getElementById('accFilterEnd')?.value;
-
-            let filteredOrders = [...cachedOrders];
-            let filteredExpenses = [...cachedExpenses];
-
-            if (startVal) {
-                filteredOrders = filteredOrders.filter(o => new Date(o.created_at) >= new Date(startVal));
-                filteredExpenses = filteredExpenses.filter(e => new Date(e.created_at) >= new Date(startVal));
-            }
-            if (endVal) {
-                const endDate = new Date(endVal);
-                endDate.setHours(23, 59, 59, 999);
-                filteredOrders = filteredOrders.filter(o => new Date(o.created_at) <= endDate);
-                filteredExpenses = filteredExpenses.filter(e => new Date(e.created_at) <= endDate);
-            }
-
-            let grossSales = 0;
-            let cogs = 0;
-            let cashTendered = 0;
-            let cardTendered = 0;
-            let totalUnits = 0;
-
-            const tbody = document.getElementById('accountingTableBody');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-
-            filteredOrders.forEach(o => {
-                if (o.payout_status !== 'RETURNED / CANCELLED') {
-                    const qty = parseInt(o.quantity_dispatched) || 1;
-                    const wholesaleCost = parseFloat(o.wholesale_floor_zar) || 0;
-                    const lineGross = (o.selling_price ? parseFloat(o.selling_price) * qty : wholesaleCost * 1.3);
-
-                    grossSales += lineGross;
-                    cogs += wholesaleCost;
-                    totalUnits += qty;
-
-                    const mkt = (o.marketplace || '').toUpperCase();
-                    if (mkt.includes('CASH')) cashTendered += lineGross;
-                    else cardTendered += lineGross;
-
-                    const dateStr = o.created_at ? new Date(o.created_at).toLocaleString() : 'Recent';
-
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td><strong>#${o.order_number || o.id.slice(0,6)}</strong></td>
-                        <td>${dateStr}</td>
-                        <td>${o.item_name}</td>
-                        <td>${qty}</td>
-                        <td>R ${(lineGross / qty).toFixed(2)}</td>
-                        <td style="color: var(--cyan-bright); font-weight: 600;">R ${lineGross.toFixed(2)}</td>
-                        <td>${o.marketplace || 'POS / In-Store'}</td>
-                    `;
-                    tbody.appendChild(tr);
-                }
-            });
-
-            let totalOpEx = filteredExpenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
-            const grossProfit = grossSales - cogs;
-            const netProfit = grossProfit - PLATFORM_FEE - totalOpEx;
-
-            if (document.getElementById('accGrossSales')) document.getElementById('accGrossSales').innerText = `R ${grossSales.toFixed(2)}`;
-            if (document.getElementById('accCogs')) document.getElementById('accCogs').innerText = `R ${cogs.toFixed(2)}`;
-            if (document.getElementById('accGrossProfit')) document.getElementById('accGrossProfit').innerText = `R ${grossProfit.toFixed(2)}`;
-            if (document.getElementById('accOpEx')) document.getElementById('accOpEx').innerText = `R ${totalOpEx.toFixed(2)}`;
-            if (document.getElementById('accNetProfit')) document.getElementById('accNetProfit').innerText = `R ${netProfit.toFixed(2)}`;
-            
-            if (document.getElementById('accCashTendered')) document.getElementById('accCashTendered').innerText = `R ${cashTendered.toFixed(2)}`;
-            if (document.getElementById('accCardTendered')) document.getElementById('accCardTendered').innerText = `R ${cardTendered.toFixed(2)}`;
-            if (document.getElementById('accUnitsSold')) document.getElementById('accUnitsSold').innerText = `${totalUnits} Items`;
-        }
-
-        async function handleLogExpense(e) {
-            e.preventDefault();
-            const desc = document.getElementById('expDesc').value.trim();
-            const cat = document.getElementById('expCategory').value;
-            const amt = parseFloat(document.getElementById('expAmount').value) || 0;
-
-            if (!desc || amt <= 0) return alert('Please enter a valid description and amount.');
-
-            const { error } = await supabaseClient.from('expenses').insert([{
-                description: desc,
-                category: cat,
-                amount: amt,
-                logged_by: currentUser ? currentUser.full_name : 'Manager'
-            }]);
-
             if (error) {
-                alert('Error logging expense: ' + error.message);
+                showNotification('Error deleting inventory: ' + error.message, 'error');
             } else {
-                logAuditAction(`Logged OpEx Expense: ${desc} (R ${amt.toFixed(2)})`);
-                document.getElementById('expenseForm').reset();
+                showNotification('Inventory item deleted.', 'success');
+                logAuditAction(`Deleted inventory item ID ${id}`);
                 fetchAdminOrders();
             }
         }
 
-        /* RETURNS & STAFF MANAGEMENT */
-        function populateReturnOrderSelect(orders) {
-            const select = document.getElementById('returnOrderSelect');
-            if (!select) return;
-            select.innerHTML = '<option value="">-- Choose Order to Return --</option>';
-            orders.forEach(o => {
-                if (o.payout_status !== 'RETURNED / CANCELLED') {
-                    const opt = document.createElement('option');
-                    opt.value = o.id;
-                    opt.innerText = `#${o.order_number || o.id.slice(0,6)} - ${o.item_name} (${o.quantity_dispatched || 1} units)`;
-                    select.appendChild(opt);
-                }
-            });
-        }
-
-        async function handleReturnSubmit(e) {
-            e.preventDefault();
-            const orderId = document.getElementById('returnOrderSelect').value;
-            const qty = parseInt(document.getElementById('returnQty').value) || 1;
-            const reason = document.getElementById('returnReason').value;
-            const restock = document.getElementById('restockAction').value;
-
-            if (!orderId) return alert('Select an order to return.');
-
-            const targetOrder = cachedOrders.find(o => o.id === orderId);
-            if (!targetOrder) return;
-
-            await supabaseClient.from('orders').update({ payout_status: 'RETURNED / CANCELLED' }).eq('id', orderId);
-
-            await supabaseClient.from('returns_log').insert([{
-                order_id: orderId,
-                order_ref: targetOrder.order_number,
-                item_name: targetOrder.item_name,
-                quantity: qty,
-                reason: reason,
-                restocked: restock === 'YES_RESTOCK',
-                processed_by: currentUser ? currentUser.full_name : 'Staff'
-            }]);
-
-            if (restock === 'YES_RESTOCK') {
-                const matchedStockItem = cachedInventory.find(inv => (inv.item_name || '').toLowerCase() === (targetOrder.item_name || '').toLowerCase());
-                if (matchedStockItem) {
-                    const currentQty = parseInt(matchedStockItem.quantity_allocated || matchedStockItem.quantity || 0);
-                    await supabaseClient.from('inventory').update({
-                        quantity_allocated: currentQty + qty,
-                        quantity: currentQty + qty
-                    }).eq('id', matchedStockItem.id);
-                }
-            }
-
-            logAuditAction(`Processed return for Order #${targetOrder.order_number} (${reason})`);
-            alert('Return processed successfully.');
-            document.getElementById('returnForm').reset();
-            fetchAdminOrders();
-        }
-
-        async function fetchReturnsLog() {
-            if (!supabaseClient) return;
-            const { data } = await supabaseClient.from('returns_log').select('*').order('created_at', { ascending: false });
-            const tbody = document.getElementById('returnsLogTable');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-
-            if (!data || data.length === 0) return tbody.innerHTML = '<tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">No return history recorded.</td></tr>';
-
-            data.forEach(r => {
-                const dateStr = r.created_at ? new Date(r.created_at).toLocaleDateString('en-GB') : 'Recent';
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${dateStr}</td>
-                    <td><strong>#${r.order_ref || (r.order_id ? r.order_id.slice(0,6) : 'N/A')}</strong><br><small style="color: var(--text-muted);">${r.item_name}</small></td>
-                    <td>${r.quantity || 1}</td>
-                    <td>${r.reason || 'N/A'}</td>
-                    <td>${r.restocked ? '<span style="color: var(--green-active);">YES</span>' : '<span style="color: var(--red-alert);">NO</span>'}</td>
-                    <td>${r.processed_by || 'Staff'}</td>
-                    <td><span class="status-badge status-returned">RETURNED</span></td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        async function handleCreateStaff(e) {
-            e.preventDefault();
-            const name = document.getElementById('staffNameInput').value.trim();
-            const pin = document.getElementById('staffPinInput').value.trim();
-            const role = document.getElementById('staffRoleSelect').value;
-
-            const { error } = await supabaseClient.from('staff_profiles').insert([{ full_name: name, pin_code: pin, role: role }]);
-
-            if (error) alert('Staff Error: ' + error.message);
-            else {
-                logAuditAction(`Created profile for ${name} (${role})`);
-                alert(`Account created for ${name}!`);
-                document.getElementById('createStaffForm').reset();
-                fetchStaffProfiles();
-            }
-        }
-
+        /* STAFF & PROFILES */
         async function fetchStaffProfiles() {
             if (!supabaseClient) return;
             const { data } = await supabaseClient.from('staff_profiles').select('*').order('created_at', { ascending: false });
@@ -2020,35 +1960,61 @@
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            if (!data || data.length === 0) return tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted); padding: 20px;">No custom profiles found. Default PINs active (1234 / 1111 / 9999 / 0000).</td></tr>';
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted); text-align: center; padding: 20px;">No custom profiles created yet.</td></tr>';
+                return;
+            }
 
-            data.forEach(s => {
-                const dateStr = s.created_at ? new Date(s.created_at).toLocaleDateString('en-GB') : 'Recent';
+            data.forEach(p => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><strong>${s.full_name}</strong></td>
-                    <td><span style="text-transform: uppercase; font-size: 11px; font-weight: 600; color: var(--gold-light);">${s.role}</span></td>
-                    <td>${dateStr}</td>
-                    <td><button class="btn-action btn-delete" onclick="deleteStaffProfile('${s.id}')">Remove</button></td>
+                    <td><strong>${p.full_name}</strong></td>
+                    <td><span class="status-badge status-pending">${p.role}</span></td>
+                    <td><small>${p.created_at ? new Date(p.created_at).toLocaleDateString() : 'Recent'}</small></td>
+                    <td><button class="btn-action btn-delete" onclick="deleteStaffProfile('${p.id}')">Delete</button></td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
+        async function handleCreateStaff(e) {
+            e.preventDefault();
+            const fullName = document.getElementById('staffNameInput').value.trim();
+            const pinCode = document.getElementById('staffPinInput').value.trim();
+            const role = document.getElementById('staffRoleSelect').value;
+
+            const { error } = await supabaseClient.from('staff_profiles').insert([{ full_name: fullName, pin_code: pinCode, role: role }]);
+            if (error) {
+                showNotification('Error creating profile: ' + error.message, 'error');
+            } else {
+                showNotification(`Created staff/supplier profile for ${fullName}.`, 'success');
+                logAuditAction(`Created staff profile (${fullName} - ${role})`);
+                document.getElementById('createStaffForm').reset();
+                fetchStaffProfiles();
+                populateSupplierTradeDropdown();
+            }
+        }
+
         async function deleteStaffProfile(id) {
-            if (!confirm("Are you sure you want to remove this profile?")) return;
+            if (!currentUser || currentUser.role !== 'manager') {
+                showNotification('Permission denied: Manager privileges required.', 'error');
+                return;
+            }
             const { error } = await supabaseClient.from('staff_profiles').delete().eq('id', id);
-            if (!error) {
-                logAuditAction(`Deleted profile (ID: ${id})`);
+            if (error) {
+                showNotification('Error deleting profile: ' + error.message, 'error');
+            } else {
+                showNotification('Profile deleted.', 'success');
                 fetchStaffProfiles();
             }
         }
 
-        async function logAuditAction(actionText) {
+        /* AUDIT LOGS */
+        async function logAuditAction(actionDescription) {
             if (!supabaseClient) return;
             await supabaseClient.from('audit_logs').insert([{
-                user_name: currentUser ? currentUser.full_name : 'System',
-                action: actionText
+                user_name: currentUser ? currentUser.full_name : 'System / Guest',
+                action: actionDescription
             }]);
             fetchAuditLogs();
         }
@@ -2060,13 +2026,16 @@
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            if (!data || data.length === 0) return tbody.innerHTML = '<tr><td colspan="3" style="color: var(--text-muted); padding: 20px;">No audit events recorded.</td></tr>';
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="color: var(--text-muted); text-align: center; padding: 20px;">No audit records found.</td></tr>';
+                return;
+            }
 
             data.forEach(log => {
-                const dateStr = log.created_at ? new Date(log.created_at).toLocaleString() : 'Recent';
+                const timeStr = log.created_at ? new Date(log.created_at).toLocaleString() : 'Recent';
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><small style="color: var(--text-muted);">${dateStr}</small></td>
+                    <td><small style="color: var(--text-muted);">${timeStr}</small></td>
                     <td><strong>${log.user_name || 'System'}</strong></td>
                     <td>${log.action}</td>
                 `;
@@ -2074,73 +2043,245 @@
             });
         }
 
-        /* BARCODE CAMERA UTILITY */
-        function toggleCameraScanner() {
-            const modal = document.getElementById('cameraScannerModal');
-            if (modal.style.display === 'none' || modal.style.display === '') {
-                modal.style.display = 'block';
-                startCameraScanner();
-            } else stopCameraScanner();
-        }
+        /* RETURNS & RESTOCK */
+        async function handleReturnSubmit(e) {
+            e.preventDefault();
+            if (!currentUser) return openLoginModal();
 
-        function startCameraScanner() {
-            if (!html5QrCodeScanner) html5QrCodeScanner = new Html5Qrcode("interactive-camera");
-            html5QrCodeScanner.start(
-                { facingMode: "environment" }, 
-                { fps: 10, qrbox: { width: 250, height: 150 } }, 
-                (decodedText) => {
-                    document.getElementById('posBarcodeScan').value = decodedText;
-                    handleBarcodeScanInput();
-                    if (activePosMatch) {
-                        addItemToCart();
-                    }
-                    stopCameraScanner();
+            const orderId = document.getElementById('returnOrderSelect').value;
+            const returnQty = parseInt(document.getElementById('returnQty').value) || 1;
+            const reason = document.getElementById('returnReason').value;
+            const restockAction = document.getElementById('restockAction').value;
+
+            const targetOrder = cachedOrders.find(o => o.id === orderId);
+            if (!targetOrder) {
+                showNotification('Please select a valid order.', 'error');
+                return;
+            }
+
+            const payload = {
+                order_id: orderId,
+                order_ref: targetOrder.order_number || targetOrder.id.slice(0, 6),
+                item_name: targetOrder.item_name,
+                quantity: returnQty,
+                reason: reason,
+                restocked: restockAction === 'YES_RESTOCK',
+                processed_by: currentUser.full_name,
+                status: 'PROCESSED'
+            };
+
+            const { error } = await supabaseClient.from('returns').insert([payload]);
+            if (error) {
+                showNotification('Error processing return: ' + error.message, 'error');
+                return;
+            }
+
+            await supabaseClient.from('orders').update({ payout_status: 'RETURNED / CANCELLED' }).eq('id', orderId);
+
+            if (restockAction === 'YES_RESTOCK') {
+                const matchingInv = cachedInventory.find(i => (i.item_name || '').trim().toLowerCase() === (targetOrder.item_name || '').trim().toLowerCase());
+                if (matchingInv) {
+                    const currentQty = parseInt(matchingInv.quantity_allocated || matchingInv.quantity || 0);
+                    await supabaseClient.from('inventory').update({ quantity_allocated: currentQty + returnQty }).eq('id', matchingInv.id);
                 }
-            ).catch(err => {
-                alert("Camera error: " + err);
-                stopCameraScanner();
+            }
+
+            showNotification('Order return processed successfully.', 'success');
+            logAuditAction(`Processed return for Order #${targetOrder.order_number || orderId} (${returnQty}x - ${reason})`);
+            document.getElementById('returnForm').reset();
+            fetchAdminOrders();
+        }
+
+        async function fetchReturnsLog() {
+            if (!supabaseClient) return;
+            const { data } = await supabaseClient.from('returns').select('*').order('created_at', { ascending: false });
+            const tbody = document.getElementById('returnsLogTable');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="color: var(--text-muted); text-align: center; padding: 20px;">No return history found.</td></tr>';
+                return;
+            }
+
+            data.forEach(r => {
+                const dateStr = r.created_at ? new Date(r.created_at).toLocaleDateString() : 'Recent';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${dateStr}</td>
+                    <td><strong>#${r.order_ref}</strong><br><small style="color:var(--text-muted);">${r.item_name}</small></td>
+                    <td>${r.quantity}</td>
+                    <td>${r.reason}</td>
+                    <td><span class="status-badge ${r.restocked ? 'status-settled' : 'status-returned'}">${r.restocked ? 'YES' : 'NO'}</span></td>
+                    <td><small>${r.processed_by || 'Staff'}</small></td>
+                    <td><span class="status-badge status-settled">${r.status}</span></td>
+                `;
+                tbody.appendChild(tr);
             });
         }
 
-        function stopCameraScanner() {
-            if (html5QrCodeScanner && html5QrCodeScanner.isScanning) {
-                html5QrCodeScanner.stop().then(() => document.getElementById('cameraScannerModal').style.display = 'none')
-                .catch(() => document.getElementById('cameraScannerModal').style.display = 'none');
-            } else document.getElementById('cameraScannerModal').style.display = 'none';
+        /* FULL FINANCIAL ACCOUNTING & P&L DASHBOARD */
+        async function handleLogExpense(e) {
+            e.preventDefault();
+            const desc = document.getElementById('expDesc').value.trim();
+            const category = document.getElementById('expCategory').value;
+            const amount = parseFloat(document.getElementById('expAmount').value) || 0;
+
+            const { error } = await supabaseClient.from('expenses').insert([{ description: desc, category: category, amount: amount, logged_by: currentUser ? currentUser.full_name : 'Manager' }]);
+            if (error) {
+                showNotification('Error logging expense: ' + error.message, 'error');
+            } else {
+                showNotification(`Logged expense: R ${amount.toFixed(2)} (${desc})`, 'success');
+                logAuditAction(`Logged OpEx Expense: R ${amount.toFixed(2)} - ${desc}`);
+                document.getElementById('expenseForm').reset();
+                fetchAdminOrders();
+            }
         }
 
-        /* CSV EXPORTS */
-        function exportSupplierStatement() {
-            if (cachedOrders.length === 0) return alert('No data available for export.');
-            let csv = 'Order Ref,Item Name,Supplier,Quantity,Wholesale Cost Amount,Payout Status,Date\n';
+        function renderAccountingDashboard() {
+            const start = document.getElementById('accFilterStart')?.value;
+            const end = document.getElementById('accFilterEnd')?.value;
+
+            let grossSales = 0;
+            let totalCogs = 0;
+            let cashTendered = 0;
+            let cardTendered = 0;
+            let unitsSold = 0;
+
+            const tbody = document.getElementById('accountingTableBody');
+            if (tbody) tbody.innerHTML = '';
+
             cachedOrders.forEach(o => {
-                csv += `"${o.order_number || o.id}","${o.item_name}","${o.supplier || ''}",${o.quantity_dispatched || 1},${o.wholesale_floor_zar || 0},"${o.payout_status || ''}","${o.created_at || ''}"\n`;
+                if (o.payout_status === 'RETURNED / CANCELLED') return;
+                if (start && o.created_at && new Date(o.created_at) < new Date(start)) return;
+                if (end && o.created_at && new Date(o.created_at) > new Date(end + 'T23:59:59')) return;
+
+                const qty = parseInt(o.quantity_dispatched) || 1;
+                const unitPrice = o.selling_price ? parseFloat(o.selling_price) : ((parseFloat(o.wholesale_floor_zar) || 0) / qty) * 1.3;
+                const lineGross = unitPrice * qty;
+                const lineCogs = parseFloat(o.wholesale_floor_zar) || 0;
+
+                grossSales += lineGross;
+                totalCogs += lineCogs;
+                unitsSold += qty;
+
+                const mkt = (o.marketplace || '').toUpperCase();
+                if (mkt.includes('CASH')) cashTendered += lineGross;
+                else cardTendered += lineGross;
+
+                if (tbody) {
+                    const dateStr = o.created_at ? new Date(o.created_at).toLocaleString() : 'Recent';
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>#${o.order_number || o.id.slice(0,6)}</strong></td>
+                        <td><small style="color:var(--text-muted);">${dateStr}</small></td>
+                        <td>${o.item_name || 'Item'}</td>
+                        <td>${qty}</td>
+                        <td>R ${unitPrice.toFixed(2)}</td>
+                        <td style="color: var(--gold-light); font-weight: 600;">R ${lineGross.toFixed(2)}</td>
+                        <td><span class="status-badge status-pending">${o.marketplace || 'POS'}</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                }
             });
-            downloadCSV(csv, 'Nguni_Supplier_Wholesale_Cost_Ledger.csv');
+
+            let totalOpex = 0;
+            cachedExpenses.forEach(exp => {
+                if (start && exp.created_at && new Date(exp.created_at) < new Date(start)) return;
+                if (end && exp.created_at && new Date(exp.created_at) > new Date(end + 'T23:59:59')) return;
+                totalOpex += parseFloat(exp.amount) || 0;
+            });
+
+            const grossProfit = grossSales - totalCogs;
+            const netProfit = grossProfit - totalOpex;
+
+            document.getElementById('accGrossSales').innerText = `R ${grossSales.toFixed(2)}`;
+            document.getElementById('accCogs').innerText = `R ${totalCogs.toFixed(2)}`;
+            document.getElementById('accGrossProfit').innerText = `R ${grossProfit.toFixed(2)}`;
+            document.getElementById('accNetProfit').innerText = `R ${netProfit.toFixed(2)}`;
+            document.getElementById('accOpEx').innerText = `R ${totalOpex.toFixed(2)}`;
+            document.getElementById('accCashTendered').innerText = `R ${cashTendered.toFixed(2)}`;
+            document.getElementById('accCardTendered').innerText = `R ${cardTendered.toFixed(2)}`;
+            document.getElementById('accUnitsSold').innerText = `${unitsSold} Items`;
+        }
+
+        /* EXPORT UTILITIES */
+        function exportSupplierStatement() {
+            let csv = 'Order Ref,Item Name,Supplier,Date,Qty,Wholesale Cost,Status\n';
+            cachedOrders.forEach(o => {
+                csv += `"#${o.order_number || o.id.slice(0,6)}","${o.item_name || ''}","${o.supplier || ''}","${o.created_at || ''}",${o.quantity_dispatched || 1},${o.wholesale_floor_zar || 0},"${o.payout_status || ''}"\n`;
+            });
+            downloadCSV(csv, 'Nguni_Supplier_Settlement_Statement.csv');
         }
 
         function exportAccountingCSV() {
-            if (cachedOrders.length === 0) return alert('No sales data available for export.');
-            let csv = 'Transaction Ref,Timestamp,Product Name,Quantity,Gross Amount,Fulfillment Channel\n';
+            let csv = 'Order Ref,Timestamp,Item Name,Qty,Selling Price,Gross Total,Marketplace\n';
             cachedOrders.forEach(o => {
                 if (o.payout_status !== 'RETURNED / CANCELLED') {
                     const qty = parseInt(o.quantity_dispatched) || 1;
-                    const lineGross = (o.selling_price ? parseFloat(o.selling_price) * qty : (parseFloat(o.wholesale_floor_zar) || 0) * 1.3);
-                    csv += `"${o.order_number || o.id}","${o.created_at || ''}","${o.item_name}",${qty},${lineGross.toFixed(2)},"${o.marketplace || 'POS / In-Store'}"\n`;
+                    const price = o.selling_price ? parseFloat(o.selling_price) : 0;
+                    csv += `"#${o.order_number || o.id.slice(0,6)}","${o.created_at || ''}","${o.item_name || ''}",${qty},${price},${price * qty},"${o.marketplace || ''}"\n`;
                 }
             });
-            downloadCSV(csv, 'Nguni_Accounting_POS_Sales.csv');
+            downloadCSV(csv, 'Nguni_Accounting_PandL.csv');
         }
 
         function downloadCSV(csvContent, fileName) {
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", fileName);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', fileName);
+            link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            showNotification('File exported successfully as CSV.', 'success');
+        }
+
+        /* CAMERA BARCODE SCANNER INTEGRATION */
+        function toggleCameraScanner() {
+            const modal = document.getElementById('cameraScannerModal');
+            if (modal.style.display === 'block') {
+                stopCameraScanner();
+            } else {
+                modal.style.display = 'block';
+                startCameraScanner();
+            }
+        }
+
+        function startCameraScanner() {
+            if (typeof Html5Qrcode === 'undefined') {
+                showNotification('Barcode scanner library not loaded.', 'error');
+                return;
+            }
+            html5QrCodeScanner = new Html5Qrcode("interactive-camera");
+            html5QrCodeScanner.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 150 } },
+                (decodedText) => {
+                    document.getElementById('posBarcodeScan').value = decodedText;
+                    handleBarcodeScanInput();
+                    stopCameraScanner();
+                    showNotification(`Scanned barcode: ${decodedText}`, 'success');
+                },
+                (errorMessage) => {
+                    // Scanning frame tick error ignored
+                }
+            ).catch(err => {
+                showNotification('Unable to start camera: ' + err, 'error');
+                document.getElementById('cameraScannerModal').style.display = 'none';
+            });
+        }
+
+        function stopCameraScanner() {
+            if (html5QrCodeScanner) {
+                html5QrCodeScanner.stop().then(() => {
+                    html5QrCodeScanner.clear();
+                    html5QrCodeScanner = null;
+                }).catch(err => console.error(err));
+            }
+            document.getElementById('cameraScannerModal').style.display = 'none';
         }
     </script>
 </body>
