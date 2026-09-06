@@ -77,8 +77,8 @@
         /* TABS NAVIGATION */
         .tabs { 
             display: grid; 
-            grid-template-columns: repeat(9, 1fr); 
-            gap: 8px; 
+            grid-template-columns: repeat(10, 1fr); 
+            gap: 6px; 
             margin-bottom: 20px; 
             background: rgba(255, 255, 255, 0.02);
             padding: 6px;
@@ -91,10 +91,10 @@
             background: transparent; 
             border: 1px solid transparent; 
             color: var(--text-muted); 
-            padding: 10px 4px; 
+            padding: 10px 2px; 
             font-weight: 600; 
-            font-size: 10px; 
-            letter-spacing: 0.3px; 
+            font-size: 9px; 
+            letter-spacing: 0.2px; 
             cursor: pointer; 
             border-radius: 10px; 
             transition: all 0.25s ease; 
@@ -357,14 +357,15 @@
     <!-- MAIN MODULE TABS NAVIGATION -->
     <div class="tabs">
         <button class="tab-btn active" id="btnTab1" onclick="switchTab('tab1')">1. CASHIER POS SELL</button>
-        <button class="tab-btn" id="btnTab2" onclick="switchTab('tab2')">2. STOCK INTAKE</button>
-        <button class="tab-btn" id="btnTab9" onclick="switchTab('tab9')">3. TRADE LEDGER</button>
-        <button class="tab-btn" id="btnTab3" style="display: none;" onclick="switchTab('tab3')">4. SETTLEMENT LEDGER</button>
-        <button class="tab-btn" id="btnTab4" style="display: none;" onclick="switchTab('tab4')">5. STOCK ON-HAND</button>
-        <button class="tab-btn" id="btnTab5" style="display: none;" onclick="switchTab('tab5')">6. STAFF PROFILES</button>
-        <button class="tab-btn" id="btnTab6" style="display: none;" onclick="switchTab('tab6')">7. AUDIT LOGS</button>
-        <button class="tab-btn" id="btnTab7" onclick="switchTab('tab7')">8. RETURNS</button>
-        <button class="tab-btn" id="btnTab8" style="display: none;" onclick="switchTab('tab8')">9. ACCOUNTING</button>
+        <button class="tab-btn" id="btnTabCashup" onclick="switchTab('tabCashup')">2. CASHUP</button>
+        <button class="tab-btn" id="btnTab2" onclick="switchTab('tab2')">3. STOCK INTAKE</button>
+        <button class="tab-btn" id="btnTab9" onclick="switchTab('tab9')">4. TRADE LEDGER</button>
+        <button class="tab-btn" id="btnTab3" style="display: none;" onclick="switchTab('tab3')">5. SETTLEMENT LEDGER</button>
+        <button class="tab-btn" id="btnTab4" style="display: none;" onclick="switchTab('tab4')">6. STOCK ON-HAND</button>
+        <button class="tab-btn" id="btnTab5" style="display: none;" onclick="switchTab('tab5')">7. STAFF PROFILES</button>
+        <button class="tab-btn" id="btnTab6" style="display: none;" onclick="switchTab('tab6')">8. AUDIT LOGS</button>
+        <button class="tab-btn" id="btnTab7" onclick="switchTab('tab7')">9. RETURNS</button>
+        <button class="tab-btn" id="btnTab8" style="display: none;" onclick="switchTab('tab8')">10. ACCOUNTING</button>
     </div>
 
     <!-- TAB 1: CASHIER POS SELL -->
@@ -468,8 +469,8 @@
                         </div>
 
                         <div class="form-group" id="cashTenderGroup" style="margin-bottom: 8px;">
-                            <label>Cash Tendered (ZAR) <small style="color:var(--red-alert);">*Required</small></label>
-                            <input type="number" id="cashReceived" class="form-control" placeholder="Enter amount tendered..." oninput="calculateChange()">
+                            <label>Cash Tendered (ZAR) <small style="color:var(--text-muted);">(Leave blank for exact cash)</small></label>
+                            <input type="number" id="cashReceived" class="form-control" placeholder="0.00" oninput="calculateChange()">
                         </div>
 
                         <div class="form-group" id="changeDueGroup" style="margin-bottom: 12px;">
@@ -479,6 +480,74 @@
                     </div>
 
                     <button type="button" class="btn-submit" style="width: 100%; text-align: center;" onclick="checkoutBatchOrder()">COMPLETE SALE & PRINT RECEIPT</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB: CASHUP -->
+    <div id="tabCashup" class="tab-content">
+        <div class="section-title">
+            <span>Daily Cashup Reconciliation Terminal</span>
+            <span id="cashupUserBadge" style="color: var(--cyan-bright); font-size: 10px;">USER: UNASSIGNED</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+                <form id="cashupForm" onsubmit="submitCashup(event)">
+                    <div class="form-group">
+                        <label>Float / Opening Cash (ZAR)</label>
+                        <input type="number" id="cashupFloat" class="form-control" value="0.00" step="0.01" required oninput="calculateCashupVariance()">
+                    </div>
+                    <div class="form-group">
+                        <label>Total Cash Sales Counted / Declared (ZAR)</label>
+                        <input type="number" id="cashupActualCash" class="form-control" placeholder="0.00" step="0.01" required oninput="calculateCashupVariance()">
+                    </div>
+                    <div class="form-group">
+                        <label>Total Card / POS Sales Declared (ZAR)</label>
+                        <input type="number" id="cashupActualCard" class="form-control" placeholder="0.00" step="0.01" required oninput="calculateCashupVariance()">
+                    </div>
+                    <div class="form-group">
+                        <label>Cash Variance / Difference</label>
+                        <input type="text" id="cashupVariance" class="form-control" readonly value="R 0.00" style="font-weight: bold;">
+                    </div>
+                    <div class="form-group">
+                        <label>Notes / Explanations for Discrepancies</label>
+                        <textarea id="cashupNotes" class="form-control" placeholder="Optional comments..." rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn-submit" style="width: 100%;">SUBMIT CASHUP REPORT</button>
+                </form>
+            </div>
+
+            <div>
+                <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--gold-primary); margin-bottom: 8px;">System Expected Totals (Today)</div>
+                <div class="summary-grid" style="grid-template-columns: 1fr; gap: 10px; margin-bottom: 14px;">
+                    <div class="summary-card" style="padding: 12px 16px;">
+                        <div class="summary-label">Expected Cash Sales</div>
+                        <div class="summary-val" id="expectedCashSales" style="font-size: 18px; color: var(--cyan-bright);">R 0.00</div>
+                    </div>
+                    <div class="summary-card" style="padding: 12px 16px;">
+                        <div class="summary-label">Expected Card Sales</div>
+                        <div class="summary-val" id="expectedCardSales" style="font-size: 18px; color: var(--gold-light);">R 0.00</div>
+                    </div>
+                </div>
+
+                <div class="section-title" style="margin-top: 14px;">Manager Tracking / Cashup History</div>
+                <div class="pos-table-container" style="max-height: 240px; overflow-y: auto;">
+                    <table class="ledger-table">
+                        <thead>
+                            <tr>
+                                <th>Date/Time</th>
+                                <th>Cashier</th>
+                                <th>Declared Cash</th>
+                                <th>Variance</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cashupHistoryTable">
+                            <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No cashups recorded.</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -937,6 +1006,7 @@
         let cachedOrders = [];
         let cachedInventory = [];
         let cachedExpenses = [];
+        let cachedCashups = [];
         let activePosMatch = null;
         let posCart = [];
         let intakeBatch = [];
@@ -967,6 +1037,9 @@
             if (tabId === 'tab9') {
                 setTimeout(() => renderVelocityChart(cachedOrders), 100);
             }
+            if (tabId === 'tabCashup') {
+                prepareCashupView();
+            }
         }
 
         /* TENDER METHOD SELECTION */
@@ -989,7 +1062,7 @@
 
         function calculateChange() {
             const tenderedInput = document.getElementById('cashReceived').value;
-            const tendered = tenderedInput === '' ? 0 : parseFloat(tenderedInput) || 0;
+            const tendered = tenderedInput === '' ? currentGrandTotal : parseFloat(tenderedInput) || 0;
             const change = Math.max(0, tendered - currentGrandTotal);
             document.getElementById('changeDue').value = `R ${change.toFixed(2)}`;
         }
@@ -1049,7 +1122,7 @@
             document.getElementById('cashierBadgeDisplay').innerText = `CASHIER: ${currentUser.full_name.toUpperCase()}`;
             
             if (currentUser.role === 'supplier') {
-                ['btnTab1', 'btnTab2', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8'].forEach(id => {
+                ['btnTab1', 'btnTabCashup', 'btnTab2', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8'].forEach(id => {
                     if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
                 });
                 if (document.getElementById('btnTab9')) document.getElementById('btnTab9').style.display = 'block';
@@ -1067,7 +1140,7 @@
                 }
             } 
             else if (currentUser.role === 'pos_restricted') {
-                ['btnTab1', 'btnTab2', 'btnTab4', 'btnTab7'].forEach(id => {
+                ['btnTab1', 'btnTabCashup', 'btnTab2', 'btnTab4', 'btnTab7'].forEach(id => {
                     if (document.getElementById(id)) document.getElementById(id).style.display = 'block';
                 });
                 ['btnTab3', 'btnTab5', 'btnTab6', 'btnTab8', 'btnTab9'].forEach(id => {
@@ -1076,13 +1149,14 @@
                 switchTab('tab1');
             }
             else if (currentUser.role === 'manager') {
-                ['btnTab1', 'btnTab2', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8', 'btnTab9'].forEach(id => {
+                ['btnTab1', 'btnTabCashup', 'btnTab2', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8', 'btnTab9'].forEach(id => {
                     if (document.getElementById(id)) document.getElementById(id).style.display = 'block';
                 });
                 switchTab('tab1');
             } 
             else {
                 if (document.getElementById('btnTab1')) document.getElementById('btnTab1').style.display = 'block';
+                if (document.getElementById('btnTabCashup')) document.getElementById('btnTabCashup').style.display = 'block';
                 
                 ['btnTab2', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8', 'btnTab9'].forEach(id => {
                     if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
@@ -1108,12 +1182,16 @@
             const { data: expenses } = await supabaseClient.from('expenses').select('*').order('created_at', { ascending: false });
             cachedExpenses = expenses || [];
 
+            const { data: cashups } = await supabaseClient.from('cashups').select('*').order('created_at', { ascending: false });
+            cachedCashups = cashups || [];
+
             renderAdminOrders(cachedOrders);
             renderStockTable(cachedInventory);
             renderAccountingDashboard();
             populateSupplierTradeDropdown();
             renderSupplierPortal('ALL');
             fetchReturnsLog();
+            renderCashupHistory();
         }
 
         /* POS SCAN & CART LOGIC */
@@ -1262,23 +1340,6 @@
             if (!currentUser) return openLoginModal();
             if (posCart.length === 0) return alert('Add items to cart before checking out.');
 
-            // Strict Validation for Cash Tender
-            if (selectedTender === 'CASH') {
-                const tenderedInput = document.getElementById('cashReceived').value.trim();
-                const tendered = parseFloat(tenderedInput) || 0;
-                
-                if (tenderedInput === '' || isNaN(tendered)) {
-                    alert('Error: Cash tendered field cannot be blank. Please enter the cash received from the customer.');
-                    document.getElementById('cashReceived').focus();
-                    return;
-                }
-                if (tendered < currentGrandTotal) {
-                    alert(`Error: Insufficient cash tendered. Total due is R ${currentGrandTotal.toFixed(2)}, but only R ${tendered.toFixed(2)} was entered.`);
-                    document.getElementById('cashReceived').focus();
-                    return;
-                }
-            }
-
             let orderRef = document.getElementById('posOrderRef').value.trim();
             if (!orderRef) orderRef = `POS-${Math.floor(100000 + Math.random() * 900000)}`;
 
@@ -1286,7 +1347,7 @@
                 item_name: item.name,
                 order_number: orderRef,
                 quantity_dispatched: item.qty,
-                wholesale_floor_zar: item.wholesalePrice * item.qty,
+                wholesale_floor_zar: item.wholesalePrice * item.qty, // Strictly wholesale cost for ledger/suppliers
                 selling_price: item.sellingPrice,
                 supplier: item.supplier,
                 marketplace: `POS / ${selectedTender}`,
@@ -1338,6 +1399,115 @@
                 </div>
             `;
             document.getElementById('receiptModal').style.display = 'flex';
+        }
+
+        /* CASHUP MODULE LOGIC */
+        function prepareCashupView() {
+            if (currentUser) {
+                document.getElementById('cashupUserBadge').innerText = `USER: ${currentUser.full_name.toUpperCase()}`;
+            }
+            
+            // Calculate today's expected sales from cachedOrders
+            const todayStr = new Date().toDateString();
+            let expCash = 0;
+            let expCard = 0;
+
+            cachedOrders.forEach(o => {
+                if (o.payout_status !== 'RETURNED / CANCELLED' && o.created_at) {
+                    const orderDate = new Date(o.created_at);
+                    if (orderDate.toDateString() === todayStr) {
+                        const qty = parseInt(o.quantity_dispatched) || 1;
+                        const lineGross = (o.selling_price ? parseFloat(o.selling_price) * qty : (parseFloat(o.wholesale_floor_zar) || 0) * 1.3);
+                        const mkt = (o.marketplace || '').toUpperCase();
+                        if (mkt.includes('CASH')) expCash += lineGross;
+                        else expCard += lineGross;
+                    }
+                }
+            });
+
+            document.getElementById('expectedCashSales').innerText = `R ${expCash.toFixed(2)}`;
+            document.getElementById('expectedCardSales').innerText = `R ${expCard.toFixed(2)}`;
+            calculateCashupVariance();
+        }
+
+        function calculateCashupVariance() {
+            const floatVal = parseFloat(document.getElementById('cashupFloat').value) || 0;
+            const actualCash = parseFloat(document.getElementById('cashupActualCash').value) || 0;
+            const expectedCashStr = document.getElementById('expectedCashSales').innerText.replace('R', '').trim();
+            const expectedCash = parseFloat(expectedCashStr) || 0;
+
+            const totalActualCashWithFloat = actualCash + floatVal;
+            const expectedTotalCashWithFloat = expectedCash + floatVal;
+            const variance = totalActualCashWithFloat - expectedTotalCashWithFloat;
+
+            const varianceField = document.getElementById('cashupVariance');
+            varianceField.value = `R ${variance.toFixed(2)}`;
+            if (variance < 0) {
+                varianceField.style.color = 'var(--red-alert)';
+            } else if (variance > 0) {
+                varianceField.style.color = 'var(--gold-light)';
+            } else {
+                varianceField.style.color = 'var(--green-active)';
+            }
+        }
+
+        async function submitCashup(e) {
+            e.preventDefault();
+            if (!currentUser) return openLoginModal();
+
+            const floatVal = parseFloat(document.getElementById('cashupFloat').value) || 0;
+            const actualCash = parseFloat(document.getElementById('cashupActualCash').value) || 0;
+            const actualCard = parseFloat(document.getElementById('cashupActualCard').value) || 0;
+            const varianceStr = document.getElementById('cashupVariance').value;
+            const notes = document.getElementById('cashupNotes').value.trim();
+
+            const cashupPayload = {
+                user_name: currentUser.full_name,
+                float_amount: floatVal,
+                actual_cash: actualCash,
+                actual_card: actualCard,
+                variance: varianceStr,
+                notes: notes,
+                status: 'SUBMITTED'
+            };
+
+            if (supabaseClient) {
+                const { error } = await supabaseClient.from('cashups').insert([cashupPayload]);
+                if (error) {
+                    alert('Error submitting cashup: ' + error.message);
+                    return;
+                }
+            }
+
+            logAuditAction(`Submitted Cashup reconciliation (${currentUser.full_name}) - Variance: ${varianceStr}`);
+            alert('Cashup submitted successfully and logged for manager tracking!');
+            document.getElementById('cashupForm').reset();
+            document.getElementById('cashupFloat').value = '0.00';
+            fetchAdminOrders();
+        }
+
+        function renderCashupHistory() {
+            const tbody = document.getElementById('cashupHistoryTable');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            if (!cachedCashups || cachedCashups.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No cashups recorded.</td></tr>';
+                return;
+            }
+
+            cachedCashups.forEach(c => {
+                const dateStr = c.created_at ? new Date(c.created_at).toLocaleString() : 'Recent';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><small style="color: var(--text-muted);">${dateStr}</small></td>
+                    <td><strong>${c.user_name || 'Staff'}</strong></td>
+                    <td>R ${parseFloat(c.actual_cash || 0).toFixed(2)}</td>
+                    <td style="color: var(--gold-light);">${c.variance || 'R 0.00'}</td>
+                    <td><span class="status-badge status-settled">${c.status || 'SUBMITTED'}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
         /* INVENTORY INTAKE */
@@ -1450,7 +1620,7 @@
                 if (order.payout_status !== 'RETURNED / CANCELLED') {
                     totalUnits += (parseInt(order.quantity_dispatched) || 1);
                     if (order.payout_status === 'ESCROW PENDING' || !order.payout_status) {
-                        totalOwed += (parseFloat(order.wholesale_floor_zar) || 0);
+                        totalOwed += (parseFloat(order.wholesale_floor_zar) || 0); // Explicitly wholesale cost
                     }
                 }
             });
@@ -1466,7 +1636,7 @@
                 manifestList.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 40px;">No transaction records found for this partner.</div>';
             } else {
                 filteredOrders.forEach(order => {
-                    const wholesaleCostAmount = parseFloat(order.wholesale_floor_zar) || 0;
+                    const wholesaleCostAmount = parseFloat(order.wholesale_floor_zar) || 0; // Display wholesale cost instead of retail price
                     const status = order.payout_status || 'ESCROW PENDING';
                     const badgeClass = status === 'SETTLED' ? 'status-settled' : 'status-pending';
                     const dateStr = order.created_at ? new Date(order.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent';
