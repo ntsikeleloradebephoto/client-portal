@@ -884,7 +884,7 @@
             console.error("Supabase load error", e);
         }
 
-        const PLATFORM_FEE = 230; //[cite: 7]
+        const PLATFORM_FEE = 230; //
         let currentUser = null;
         let cachedOrders = [];
         let cachedInventory = [];
@@ -1006,10 +1006,10 @@
                 switchTab('tab1');
             } 
             else {
-                ['btnTab1', 'btnTab2', 'btnTab7', 'btnTab9'].forEach(id => {
-                    if (document.getElementById(id)) document.getElementById(id).style.display = 'block';
-                });
-                ['btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab8'].forEach(id => {
+                // CASHIER ACCESS: Show ONLY Cashier POS Sell
+                if (document.getElementById('btnTab1')) document.getElementById('btnTab1').style.display = 'block';
+                
+                ['btnTab2', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8', 'btnTab9'].forEach(id => {
                     if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
                 });
                 switchTab('tab1');
