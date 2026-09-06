@@ -884,7 +884,7 @@
             console.error("Supabase load error", e);
         }
 
-        const PLATFORM_FEE = 230; //
+        const PLATFORM_FEE = 230;
         let currentUser = null;
         let cachedOrders = [];
         let cachedInventory = [];
@@ -963,6 +963,10 @@
                 currentUser = { full_name: 'Default Manager', role: 'manager' }; 
                 applyUserSession(); 
             } 
+            else if (pin === '1111') {
+                currentUser = { full_name: 'Restricted POS User', role: 'pos_restricted' };
+                applyUserSession();
+            }
             else if (pin === '9999') { 
                 currentUser = { full_name: 'Supplier Partner', role: 'supplier' }; 
                 applyUserSession(); 
@@ -980,6 +984,7 @@
         async function authenticateUserPin() {
             const pin = document.getElementById('userPinInput').value.trim();
             if (pin === '1234') { currentUser = { full_name: 'Default Manager', role: 'manager' }; applyUserSession(); return; } 
+            if (pin === '1111') { currentUser = { full_name: 'Restricted POS User', role: 'pos_restricted' }; applyUserSession(); return; }
             if (pin === '9999') { currentUser = { full_name: 'Supplier Partner', role: 'supplier' }; applyUserSession(); return; }
             if (pin === '0000') { currentUser = { full_name: 'Cashier Floor', role: 'cashier' }; applyUserSession(); return; }
 
@@ -999,6 +1004,16 @@
                 if (document.getElementById('btnTab9')) document.getElementById('btnTab9').style.display = 'block';
                 switchTab('tab9');
             } 
+            else if (currentUser.role === 'pos_restricted') {
+                // PIN 1111 ACCESS: Show CASHIER POS SELL, STOCK INTAKE, STOCK ON-HAND, and RETURNS
+                ['btnTab1', 'btnTab2', 'btnTab4', 'btnTab7'].forEach(id => {
+                    if (document.getElementById(id)) document.getElementById(id).style.display = 'block';
+                });
+                ['btnTab3', 'btnTab5', 'btnTab6', 'btnTab8', 'btnTab9'].forEach(id => {
+                    if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
+                });
+                switchTab('tab1');
+            }
             else if (currentUser.role === 'manager') {
                 ['btnTab1', 'btnTab2', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8', 'btnTab9'].forEach(id => {
                     if (document.getElementById(id)) document.getElementById(id).style.display = 'block';
@@ -1006,7 +1021,7 @@
                 switchTab('tab1');
             } 
             else {
-                // CASHIER ACCESS: Show ONLY Cashier POS Sell
+                // DEFAULT CASHIER ACCESS: Show ONLY Cashier POS Sell
                 if (document.getElementById('btnTab1')) document.getElementById('btnTab1').style.display = 'block';
                 
                 ['btnTab2', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8', 'btnTab9'].forEach(id => {
@@ -1669,7 +1684,7 @@
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            if (!data || data.length === 0) return tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted); padding: 20px;">No custom staff profiles found. Default PINs active (1234 / 9999 / 0000).</td></tr>';
+            if (!data || data.length === 0) return tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted); padding: 20px;">No custom staff profiles found. Default PINs active (1234 / 1111 / 9999 / 0000).</td></tr>';
 
             data.forEach(s => {
                 const dateStr = s.created_at ? new Date(s.created_at).toLocaleDateString('en-GB') : 'Recent';
