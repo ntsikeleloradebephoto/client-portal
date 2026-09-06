@@ -367,7 +367,7 @@
         <button class="tab-btn" id="btnTab8" style="display: none;" onclick="switchTab('tab8')">9. ACCOUNTING</button>
     </div>
 
-    <!-- TAB 1: CASHIER POS SELL (INTEGRATED) -->
+    <!-- TAB 1: CASHIER POS SELL -->
     <div id="tab1" class="tab-content active">
         <div class="section-title">
             <span>Cashier Front Desk Terminal & Live POS Checkout</span>
@@ -375,7 +375,6 @@
         </div>
         
         <div class="pos-grid-layout">
-            <!-- LEFT COLUMN: SEARCH & SCAN PRODUCT DETAILS -->
             <div>
                 <div class="form-group">
                     <label>Scan Barcode / Type Item SKU (Auto-Adds on Enter)</label>
@@ -436,7 +435,6 @@
                 </div>
             </div>
 
-            <!-- RIGHT COLUMN: STAGED BATCH & PAYMENT TENDER -->
             <div>
                 <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--gold-primary); margin-bottom: 8px;">Staged Cart Items</div>
                 <div class="pos-table-container" style="max-height: 220px; overflow-y: auto;">
@@ -793,10 +791,10 @@
         </div>
     </div>
 
-    <!-- TAB 8: ACCOUNTING & SALES DASHBOARD -->
+    <!-- TAB 8: FULL FINANCIAL ACCOUNTING & P&L DASHBOARD -->
     <div id="tab8" class="tab-content">
         <div class="section-title">
-            <span>Accounting & Sales Analytics</span>
+            <span>Enterprise Accounting & Financial Profit & Loss (P&L)</span>
             <div style="display: flex; gap: 8px;">
                 <input type="date" id="accFilterStart" class="form-control" style="width: 130px; padding: 4px 8px;" onchange="renderAccountingDashboard()">
                 <input type="date" id="accFilterEnd" class="form-control" style="width: 130px; padding: 4px 8px;" onchange="renderAccountingDashboard()">
@@ -804,26 +802,75 @@
             </div>
         </div>
 
+        <!-- PRIMARY FINANCIAL METRICS GRID -->
         <div class="summary-grid">
             <div class="summary-card">
-                <div class="summary-label">Gross Store Sales</div>
+                <div class="summary-label">Gross Sales Revenue</div>
                 <div class="summary-val" id="accGrossSales" style="color: var(--cyan-bright);">R 0.00</div>
             </div>
             <div class="summary-card">
-                <div class="summary-label">Platform Fees (Fixed)</div>
-                <div class="summary-val" style="color: var(--gold-primary);">R 230.00</div>
+                <div class="summary-label">Cost of Goods Sold (COGS)</div>
+                <div class="summary-val" id="accCogs" style="color: var(--red-alert);">R 0.00</div>
             </div>
             <div class="summary-card">
-                <div class="summary-label">Net Store Revenue</div>
-                <div class="summary-val" id="accNetRevenue" style="color: var(--green-active);">R 0.00</div>
+                <div class="summary-label">Gross Profit</div>
+                <div class="summary-val" id="accGrossProfit" style="color: var(--gold-light);">R 0.00</div>
             </div>
             <div class="summary-card">
-                <div class="summary-label">Total Units Sold</div>
-                <div class="summary-val" id="accUnitsSold" style="color: #fff;">0 Items</div>
+                <div class="summary-label">Net Profit (EBITDA)</div>
+                <div class="summary-val" id="accNetProfit" style="color: var(--green-active);">R 0.00</div>
             </div>
         </div>
 
-        <div class="section-title">Itemized Transaction Sales Ledger</div>
+        <!-- SECONDARY FINANCIAL BREAKDOWN GRID -->
+        <div class="summary-grid" style="grid-template-columns: repeat(5, 1fr);">
+            <div class="summary-card">
+                <div class="summary-label">Platform Fees (Fixed)</div>
+                <div class="summary-val" style="font-size: 18px; color: var(--gold-primary);">R 230.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Operating Expenses (OpEx)</div>
+                <div class="summary-val" id="accOpEx" style="font-size: 18px; color: var(--red-alert);">R 0.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Cash Collected</div>
+                <div class="summary-val" id="accCashTendered" style="font-size: 18px; color: #fff;">R 0.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Card / Digital Sales</div>
+                <div class="summary-val" id="accCardTendered" style="font-size: 18px; color: #fff;">R 0.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Units Sold</div>
+                <div class="summary-val" id="accUnitsSold" style="font-size: 18px; color: #fff;">0 Items</div>
+            </div>
+        </div>
+
+        <!-- OPERATIONAL EXPENSE INPUT MODULE -->
+        <div class="section-title">Log Operating Expense (OpEx)</div>
+        <form id="expenseForm" onsubmit="handleLogExpense(event)" style="margin-bottom: 24px; display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; align-items: end;">
+            <div class="form-group" style="margin:0;">
+                <label>Expense Description</label>
+                <input type="text" id="expDesc" class="form-control" placeholder="e.g. Monthly Internet / Packaging Bags" required>
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label>Category</label>
+                <select id="expCategory" class="form-control">
+                    <option value="Rent">Rent & Utilities</option>
+                    <option value="Packaging">Packaging & Supplies</option>
+                    <option value="Bank Fees">Card & Merchant Fees</option>
+                    <option value="Salaries">Staff Wages</option>
+                    <option value="Transport">Logistics / Freight</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label>Amount (ZAR)</label>
+                <input type="number" id="expAmount" class="form-control" placeholder="0.00" step="0.01" required>
+            </div>
+            <button type="submit" class="btn-submit" style="height: 38px;">+ Log Expense</button>
+        </form>
+
+        <div class="section-title">Itemized Financial Sales & Transaction Ledger</div>
         <div class="pos-table-container">
             <table class="ledger-table">
                 <thead>
@@ -889,6 +936,7 @@
         let currentUser = null;
         let cachedOrders = [];
         let cachedInventory = [];
+        let cachedExpenses = [];
         let activePosMatch = null;
         let posCart = [];
         let intakeBatch = [];
@@ -1005,7 +1053,6 @@
                 if (document.getElementById('btnTab9')) document.getElementById('btnTab9').style.display = 'block';
                 switchTab('tab9');
 
-                // Auto-select matching supplier name in dropdown if available
                 const supplierSelect = document.getElementById('supplierSelect');
                 if (supplierSelect) {
                     const matchingOpt = Array.from(supplierSelect.options).find(opt => 
@@ -1033,7 +1080,6 @@
                 switchTab('tab1');
             } 
             else {
-                // DEFAULT CASHIER ACCESS
                 if (document.getElementById('btnTab1')) document.getElementById('btnTab1').style.display = 'block';
                 
                 ['btnTab2', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8', 'btnTab9'].forEach(id => {
@@ -1056,6 +1102,9 @@
             
             const { data: inventory } = await supabaseClient.from('inventory').select('*').order('created_at', { ascending: false });
             cachedInventory = inventory || [];
+
+            const { data: expenses } = await supabaseClient.from('expenses').select('*').order('created_at', { ascending: false });
+            cachedExpenses = expenses || [];
 
             renderAdminOrders(cachedOrders);
             renderStockTable(cachedInventory);
@@ -1141,12 +1190,14 @@
             if (qty > onHand) return alert(`Insufficient stock available (${onHand} remaining).`);
 
             const sellingPrice = parseFloat(activePosMatch.sellingPrice) || 0;
+            const wholesalePrice = parseFloat(activePosMatch.price) || 0;
 
             posCart.push({
                 sku: activePosMatch.sku,
                 name: activePosMatch.name,
                 supplier: activePosMatch.supplier,
                 qty: qty,
+                wholesalePrice: wholesalePrice,
                 sellingPrice: sellingPrice,
                 subtotal: qty * sellingPrice
             });
@@ -1206,7 +1257,8 @@
                 item_name: item.name,
                 order_number: orderRef,
                 quantity_dispatched: item.qty,
-                wholesale_floor_zar: item.subtotal,
+                wholesale_floor_zar: item.wholesalePrice * item.qty,
+                selling_price: item.sellingPrice,
                 supplier: item.supplier,
                 marketplace: `POS / ${selectedTender}`,
                 payout_status: 'ESCROW PENDING',
@@ -1566,34 +1618,50 @@
             }
         }
 
+        /* INTEGRATED ACCOUNTING & P&L DASHBOARD LOGIC */
         function renderAccountingDashboard() {
             const startVal = document.getElementById('accFilterStart')?.value;
             const endVal = document.getElementById('accFilterEnd')?.value;
 
-            let filtered = [...cachedOrders];
+            let filteredOrders = [...cachedOrders];
+            let filteredExpenses = [...cachedExpenses];
 
-            if (startVal) filtered = filtered.filter(o => new Date(o.created_at) >= new Date(startVal));
+            if (startVal) {
+                filteredOrders = filteredOrders.filter(o => new Date(o.created_at) >= new Date(startVal));
+                filteredExpenses = filteredExpenses.filter(e => new Date(e.created_at) >= new Date(startVal));
+            }
             if (endVal) {
                 const endDate = new Date(endVal);
                 endDate.setHours(23, 59, 59, 999);
-                filtered = filtered.filter(o => new Date(o.created_at) <= endDate);
+                filteredOrders = filteredOrders.filter(o => new Date(o.created_at) <= endDate);
+                filteredExpenses = filteredExpenses.filter(e => new Date(e.created_at) <= endDate);
             }
 
             let grossSales = 0;
+            let cogs = 0;
+            let cashTendered = 0;
+            let cardTendered = 0;
             let totalUnits = 0;
 
             const tbody = document.getElementById('accountingTableBody');
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            filtered.forEach(o => {
+            filteredOrders.forEach(o => {
                 if (o.payout_status !== 'RETURNED / CANCELLED') {
-                    const lineAmount = parseFloat(o.wholesale_floor_zar) || 0;
                     const qty = parseInt(o.quantity_dispatched) || 1;
-                    const unitPrice = qty > 0 ? lineAmount / qty : lineAmount;
+                    const wholesaleCost = parseFloat(o.wholesale_floor_zar) || 0;
+                    
+                    // Selling price derived or fallback
+                    const lineGross = (o.selling_price ? parseFloat(o.selling_price) * qty : wholesaleCost);
 
-                    grossSales += lineAmount;
+                    grossSales += lineGross;
+                    cogs += wholesaleCost;
                     totalUnits += qty;
+
+                    const mkt = (o.marketplace || '').toUpperCase();
+                    if (mkt.includes('CASH')) cashTendered += lineGross;
+                    else cardTendered += lineGross;
 
                     const dateStr = o.created_at ? new Date(o.created_at).toLocaleString() : 'Recent';
 
@@ -1603,18 +1671,54 @@
                         <td>${dateStr}</td>
                         <td>${o.item_name}</td>
                         <td>${qty}</td>
-                        <td>R ${unitPrice.toFixed(2)}</td>
-                        <td style="color: var(--cyan-bright); font-weight: 600;">R ${lineAmount.toFixed(2)}</td>
+                        <td>R ${(lineGross / qty).toFixed(2)}</td>
+                        <td style="color: var(--cyan-bright); font-weight: 600;">R ${lineGross.toFixed(2)}</td>
                         <td>${o.marketplace || 'POS / In-Store'}</td>
                     `;
                     tbody.appendChild(tr);
                 }
             });
 
-            const netRev = Math.max(0, grossSales - PLATFORM_FEE);
+            // Calculate Operational Expenses
+            let totalOpEx = filteredExpenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+
+            // Compute Financial Ratios
+            const grossProfit = grossSales - cogs;
+            const netProfit = grossProfit - PLATFORM_FEE - totalOpEx;
+
             if (document.getElementById('accGrossSales')) document.getElementById('accGrossSales').innerText = `R ${grossSales.toFixed(2)}`;
-            if (document.getElementById('accNetRevenue')) document.getElementById('accNetRevenue').innerText = `R ${netRev.toFixed(2)}`;
+            if (document.getElementById('accCogs')) document.getElementById('accCogs').innerText = `R ${cogs.toFixed(2)}`;
+            if (document.getElementById('accGrossProfit')) document.getElementById('accGrossProfit').innerText = `R ${grossProfit.toFixed(2)}`;
+            if (document.getElementById('accOpEx')) document.getElementById('accOpEx').innerText = `R ${totalOpEx.toFixed(2)}`;
+            if (document.getElementById('accNetProfit')) document.getElementById('accNetProfit').innerText = `R ${netProfit.toFixed(2)}`;
+            
+            if (document.getElementById('accCashTendered')) document.getElementById('accCashTendered').innerText = `R ${cashTendered.toFixed(2)}`;
+            if (document.getElementById('accCardTendered')) document.getElementById('accCardTendered').innerText = `R ${cardTendered.toFixed(2)}`;
             if (document.getElementById('accUnitsSold')) document.getElementById('accUnitsSold').innerText = `${totalUnits} Items`;
+        }
+
+        async function handleLogExpense(e) {
+            e.preventDefault();
+            const desc = document.getElementById('expDesc').value.trim();
+            const cat = document.getElementById('expCategory').value;
+            const amt = parseFloat(document.getElementById('expAmount').value) || 0;
+
+            if (!desc || amt <= 0) return alert('Please enter a valid description and amount.');
+
+            const { error } = await supabaseClient.from('expenses').insert([{
+                description: desc,
+                category: cat,
+                amount: amt,
+                logged_by: currentUser ? currentUser.full_name : 'Manager'
+            }]);
+
+            if (error) {
+                alert('Error logging expense: ' + error.message);
+            } else {
+                logAuditAction(`Logged OpEx Expense: ${desc} (R ${amt.toFixed(2)})`);
+                document.getElementById('expenseForm').reset();
+                fetchAdminOrders();
+            }
         }
 
         /* RETURNS & STAFF MANAGEMENT */
