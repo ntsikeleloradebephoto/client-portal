@@ -377,9 +377,9 @@
         <div class="pos-grid-layout">
             <div>
                 <div class="form-group">
-                    <label>Scan Barcode / Type Item SKU (Auto-Adds Instantly)</label>
+                    <label>Scan Barcode / Type Item SKU (Auto-Adds on Enter)</label>
                     <div style="display: flex; gap: 10px;">
-                        <input type="text" id="posBarcodeScan" class="form-control" placeholder="Scan barcode or type item number..." oninput="handleBarcodeScanInput()" autofocus>
+                        <input type="text" id="posBarcodeScan" class="form-control" placeholder="Scan barcode or type item number..." oninput="handleBarcodeScanInput()" onkeydown="handleBarcodeKeydown(event)" autofocus>
                         <button type="button" class="btn-sec" onclick="toggleCameraScanner()" style="white-space: nowrap;">📷 Scan Camera</button>
                     </div>
                 </div>
@@ -425,6 +425,13 @@
                         <label>Quantity per Scan</label>
                         <input type="number" id="posQty" class="form-control" value="1" min="1" oninput="calculateSlotLineTotal()">
                     </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Subtotal (ZAR)</label>
+                        <input type="text" id="slotLineTotal" class="form-control" readonly placeholder="R 0.00" style="color: var(--gold-light); font-weight: bold;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <button type="button" class="btn-submit" style="width:100%; height: 38px;" onclick="addItemToCart()">+ Add Item to Cart</button>
+                    </div>
                 </div>
             </div>
 
@@ -461,7 +468,7 @@
                         </div>
 
                         <div class="form-group" id="cashTenderGroup" style="margin-bottom: 8px;">
-                            <label>Cash Tendered (ZAR) - Optional if Exact Cash</label>
+                            <label>Cash Tendered (ZAR) <small style="color:var(--text-muted);">(Leave blank for exact cash)</small></label>
                             <input type="number" id="cashReceived" class="form-control" placeholder="0.00" oninput="calculateChange()">
                         </div>
 
@@ -618,7 +625,7 @@
             </div>
             <div class="summary-card">
                 <div class="summary-label">Platform Fees (Store Retention)</div>
-                <div class="summary-val" style="color: var(--gold-primary);">R 230.00[cite: 3]</div>
+                <div class="summary-val" style="color: var(--gold-primary);">R 230.00</div>
             </div>
             <div class="summary-card">
                 <div class="summary-label">Net Payable Balance</div>
@@ -819,7 +826,7 @@
         <div class="summary-grid" style="grid-template-columns: repeat(5, 1fr);">
             <div class="summary-card">
                 <div class="summary-label">Platform Fees (Fixed)</div>
-                <div class="summary-val" style="font-size: 18px; color: var(--gold-primary);">R 230.00[cite: 3]</div>
+                <div class="summary-val" style="font-size: 18px; color: var(--gold-primary);">R 230.00</div>
             </div>
             <div class="summary-card">
                 <div class="summary-label">Operating Expenses (OpEx)</div>
@@ -925,7 +932,7 @@
             console.error("Supabase load error", e);
         }
 
-        const PLATFORM_FEE = 230;[cite: 3]
+        const PLATFORM_FEE = 230;
         let currentUser = null;
         let cachedOrders = [];
         let cachedInventory = [];
@@ -981,8 +988,8 @@
         }
 
         function calculateChange() {
-            const rawTendered = document.getElementById('cashReceived').value.trim();
-            const tendered = rawTendered === '' ? currentGrandTotal : parseFloat(rawTendered) || 0;
+            const tenderedInput = document.getElementById('cashReceived').value;
+            const tendered = tenderedInput === '' ? currentGrandTotal : parseFloat(tenderedInput) || 0;
             const change = Math.max(0, tendered - currentGrandTotal);
             document.getElementById('changeDue').value = `R ${change.toFixed(2)}`;
         }
@@ -1109,13 +1116,10 @@
             fetchReturnsLog();
         }
 
-        /* POS SCAN & AUTO-ADD CART LOGIC */
+        /* POS SCAN & CART LOGIC */
         function handleBarcodeScanInput() {
             const query = document.getElementById('posBarcodeScan').value.trim().toLowerCase();
-            if (!query) {
-                clearPosSlots();
-                return;
-            }
+            if (!query) return clearPosSlots();
 
             const stockMap = {};
             cachedInventory.forEach(item => {
@@ -1143,9 +1147,7 @@
             let match = null;
             Object.keys(stockMap).forEach(key => {
                 const item = stockMap[key];
-                if (item.sku.toLowerCase() === query || item.name.toLowerCase() === query || item.name.toLowerCase().includes(query)) {
-                    match = item;
-                }
+                if (item.sku.toLowerCase() === query || item.name.toLowerCase().includes(query)) match = item;
             });
 
             if (match) {
@@ -1157,29 +1159,27 @@
                 document.getElementById('slotUnitPrice').value = `R ${match.price.toFixed(2)}`;
                 document.getElementById('slotSellingPrice').value = `R ${match.sellingPrice.toFixed(2)}`;
                 document.getElementById('slotSupplier').value = match.supplier;
-                
-                // Auto-add instantly upon complete code match or Enter trigger
-                if (query === match.sku.toLowerCase() || event && event.inputType === 'insertLineBreak') {
-                    addItemToCart();
-                }
+                calculateSlotLineTotal();
             } else {
                 clearPosSlots();
             }
         }
 
-        // Listen for Enter keypress on barcode input for instant scanning
-        document.getElementById('posBarcodeScan')?.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
+        function handleBarcodeKeydown(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
                 handleBarcodeScanInput();
                 if (activePosMatch) {
                     addItemToCart();
                 }
             }
-        });
+        }
 
         function calculateSlotLineTotal() {
             if (!activePosMatch) return;
+            const qty = parseInt(document.getElementById('posQty').value) || 1;
+            const sellingPrice = parseFloat(activePosMatch.sellingPrice) || 0;
+            document.getElementById('slotLineTotal').value = `R ${(qty * sellingPrice).toFixed(2)}`;
         }
 
         function clearPosSlots() {
@@ -1190,18 +1190,16 @@
             document.getElementById('slotUnitPrice').value = 'R 0.00';
             document.getElementById('slotSellingPrice').value = 'R 0.00';
             document.getElementById('slotSupplier').value = '';
+            document.getElementById('slotLineTotal').value = 'R 0.00';
         }
 
         function addItemToCart() {
-            if (!activePosMatch) return;
+            if (!activePosMatch) return alert('Scan or select an item first.');
 
             const qty = parseInt(document.getElementById('posQty').value) || 1;
             const onHand = parseInt(document.getElementById('slotStockOnHand').value) || 0;
 
-            if (qty > onHand) {
-                alert(`Insufficient stock available (${onHand} remaining).`);
-                return;
-            }
+            if (qty > onHand) return alert(`Insufficient stock available (${onHand} remaining).`);
 
             const sellingPrice = parseFloat(activePosMatch.sellingPrice) || 0;
             const wholesalePrice = parseFloat(activePosMatch.price) || 0;
@@ -1271,7 +1269,7 @@
                 item_name: item.name,
                 order_number: orderRef,
                 quantity_dispatched: item.qty,
-                wholesale_floor_zar: item.wholesalePrice * item.qty,
+                wholesale_floor_zar: item.wholesalePrice * item.qty, // Strictly wholesale cost for ledger/suppliers
                 selling_price: item.sellingPrice,
                 supplier: item.supplier,
                 marketplace: `POS / ${selectedTender}`,
@@ -1309,10 +1307,6 @@
                 `;
             });
 
-            const rawTendered = document.getElementById('cashReceived').value.trim();
-            const tenderedVal = rawTendered === '' ? grandTotal : parseFloat(rawTendered) || grandTotal;
-            const changeVal = Math.max(0, tenderedVal - grandTotal);
-
             content.innerHTML = `
                 <p style="margin: 0;"><strong>DATE:</strong> ${new Date().toLocaleString()}</p>
                 <p style="margin: 0;"><strong>REF #:</strong> ${ref}</p>
@@ -1325,15 +1319,6 @@
                     <span>GRAND TOTAL:</span>
                     <span>R${grandTotal.toFixed(2)}</span>
                 </div>
-                ${selectedTender === 'CASH' ? `
-                <div style="display: flex; justify-content: space-between; font-size: 11px; margin-top: 4px;">
-                    <span>CASH TENDERED:</span>
-                    <span>R${tenderedVal.toFixed(2)}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 11px; margin-top: 2px;">
-                    <span>CHANGE DUE:</span>
-                    <span>R${changeVal.toFixed(2)}</span>
-                </div>` : ''}
             `;
             document.getElementById('receiptModal').style.display = 'flex';
         }
@@ -1448,7 +1433,7 @@
                 if (order.payout_status !== 'RETURNED / CANCELLED') {
                     totalUnits += (parseInt(order.quantity_dispatched) || 1);
                     if (order.payout_status === 'ESCROW PENDING' || !order.payout_status) {
-                        totalOwed += (parseFloat(order.wholesale_floor_zar) || 0);
+                        totalOwed += (parseFloat(order.wholesale_floor_zar) || 0); // Explicitly wholesale cost
                     }
                 }
             });
@@ -1464,7 +1449,7 @@
                 manifestList.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 40px;">No transaction records found for this partner.</div>';
             } else {
                 filteredOrders.forEach(order => {
-                    const wholesaleCostAmount = parseFloat(order.wholesale_floor_zar) || 0;
+                    const wholesaleCostAmount = parseFloat(order.wholesale_floor_zar) || 0; // Display wholesale cost instead of retail price
                     const status = order.payout_status || 'ESCROW PENDING';
                     const badgeClass = status === 'SETTLED' ? 'status-settled' : 'status-pending';
                     const dateStr = order.created_at ? new Date(order.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent';
