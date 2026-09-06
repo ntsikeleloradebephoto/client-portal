@@ -3,22 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nguni Homeware | Enterprise POS Hub (tvOS Glass)</title>
+    <title>Nguni Homeware | Enterprise POS & Ledger Hub</title>
     <link rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root {
-            --bg-dark: #000000;
+            --bg-dark: #08080a;
             --bg-surface: rgba(28, 28, 30, 0.55);
             --panel-glass: rgba(28, 28, 35, 0.45);
-            --panel-solid: #1c1c1e;
             --gold-primary: #d4af37;
             --gold-light: #f3c649;
-            --text-light: #ffffff;
+            --text-light: #f5f5f7;
             --text-muted: rgba(235, 235, 245, 0.6);
             --border-glass: rgba(212, 175, 55, 0.25);
-            --border-subtle: rgba(255, 255, 255, 0.15);
+            --border-subtle: rgba(255, 255, 255, 0.12);
             --green-active: #30d158;
             --red-alert: #ff453a;
             --cyan-bright: #64d2ff;
@@ -26,98 +25,101 @@
             --glass-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.15);
         }
 
-        body {
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
             background: radial-gradient(circle at 50% 0%, #1a1508 0%, #000000 70%);
             background-attachment: fixed;
             color: var(--text-light);
-            margin: 0;
-            padding: 32px;
-            -webkit-font-smoothing: antialiased;
+            padding: 28px;
             min-height: 100vh;
         }
 
+        /* HEADER & BAR */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 28px;
-            margin-bottom: 28px;
+            padding: 18px 24px;
+            margin-bottom: 24px;
             background: var(--panel-glass);
             backdrop-filter: var(--glass-blur);
             -webkit-backdrop-filter: var(--glass-blur);
             border: 1px solid var(--border-subtle);
-            border-radius: 24px;
+            border-radius: 20px;
             box-shadow: var(--glass-shadow);
         }
 
         .header-title { display: flex; align-items: center; gap: 14px; }
-        .header h1 { font-size: 15px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: var(--gold-primary); margin: 0; }
-        
+        .header h1 { font-size: 15px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: var(--gold-primary); }
+
         .role-badge { 
             background: rgba(255, 255, 255, 0.08); 
             border: 1px solid var(--border-glass); 
             color: var(--gold-light); 
-            padding: 8px 18px; 
+            padding: 8px 16px; 
             border-radius: 980px; 
             font-size: 11px; 
             font-weight: 600; 
             display: flex; 
             align-items: center; 
             gap: 12px;
-            backdrop-filter: var(--glass-blur);
-            -webkit-backdrop-filter: var(--glass-blur);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
+        /* TABS NAVIGATION */
         .tabs { 
             display: grid; 
-            grid-template-columns: repeat(8, 1fr); 
+            grid-template-columns: repeat(9, 1fr); 
             gap: 8px; 
-            margin-bottom: 28px; 
+            margin-bottom: 24px; 
             background: rgba(255, 255, 255, 0.04);
             padding: 8px;
-            border-radius: 20px;
+            border-radius: 18px;
             border: 1px solid var(--border-subtle);
             backdrop-filter: var(--glass-blur);
-            -webkit-backdrop-filter: var(--glass-blur);
         }
+
         .tab-btn { 
             background: transparent; 
             border: 1px solid transparent; 
             color: var(--text-muted); 
-            padding: 12px 6px; 
+            padding: 12px 4px; 
             font-weight: 600; 
             font-size: 10px; 
             letter-spacing: 0.3px; 
             cursor: pointer; 
-            border-radius: 14px; 
-            transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1); 
+            border-radius: 12px; 
+            transition: all 0.25s ease; 
             text-align: center; 
         }
-        .tab-btn:hover { color: var(--text-light); background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.15); }
+
+        .tab-btn:hover { color: var(--text-light); background: rgba(255,255,255,0.1); }
         .tab-btn.active { 
             background: linear-gradient(135deg, rgba(247, 220, 111, 0.9) 0%, rgba(212, 175, 55, 0.9) 100%); 
             color: #000; 
             font-weight: 700;
             box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
-            border-color: rgba(255, 255, 255, 0.4);
         }
 
         .tab-content { 
             display: none; 
             background: var(--panel-glass); 
             border: 1px solid var(--border-glass); 
-            padding: 32px; 
-            border-radius: 28px; 
+            padding: 28px; 
+            border-radius: 24px; 
             backdrop-filter: var(--glass-blur);
-            -webkit-backdrop-filter: var(--glass-blur);
             box-shadow: var(--glass-shadow);
         }
         .tab-content.active { display: block; animation: glassFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
 
         @keyframes glassFadeIn {
-            from { opacity: 0; transform: translateY(12px) scale(0.99); }
+            from { opacity: 0; transform: translateY(10px) scale(0.99); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
@@ -127,53 +129,48 @@
             text-transform: uppercase; 
             letter-spacing: 1.5px; 
             color: var(--gold-primary); 
-            margin-top: 0; 
-            margin-bottom: 24px; 
+            margin-bottom: 20px; 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
         }
 
-        .form-group { margin-bottom: 20px; }
+        /* FORMS & INPUTS */
+        .form-group { margin-bottom: 18px; }
         .form-group label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 0.5px; }
         
-        .form-control, .table-input { 
+        .form-control { 
             width: 100%; 
             padding: 12px 16px; 
-            background: rgba(0, 0, 0, 0.4); 
+            background: rgba(0, 0, 0, 0.45); 
             border: 1px solid var(--border-subtle); 
             color: #fff; 
-            border-radius: 14px; 
-            box-sizing: border-box; 
+            border-radius: 12px; 
             font-size: 13px;
-            font-family: inherit;
-            transition: all 0.25s ease;
-            backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
         }
-        .form-control:focus, .table-input:focus {
+        .form-control:focus {
             outline: none;
             border-color: var(--gold-primary);
-            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.25);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.25);
             background: rgba(0, 0, 0, 0.65);
         }
 
+        /* GRIDS & LAYOUTS */
         .item-slots-grid {
             display: grid;
             grid-template-columns: 2fr 1.2fr 1fr 1fr 1fr 1.5fr;
-            gap: 14px;
+            gap: 12px;
             background: rgba(0, 0, 0, 0.3);
-            padding: 20px;
-            border-radius: 20px;
+            padding: 18px;
+            border-radius: 18px;
             border: 1px solid var(--border-subtle);
             margin-bottom: 20px;
-            backdrop-filter: blur(20px);
         }
 
         .slot-box { display: flex; flex-direction: column; gap: 6px; }
-        .slot-label { font-size: 10px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase; }
-        .slot-input { background: rgba(0,0,0,0.5); border: 1px solid var(--border-subtle); color: #fff; padding: 12px; font-size: 13px; border-radius: 12px; width: 100%; box-sizing: border-box; }
-        .slot-input.highlight-stock { color: var(--cyan-bright); font-weight: 600; }
-        .slot-input.highlight-price { color: var(--gold-light); font-weight: 600; }
+        .slot-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+        .slot-input { background: rgba(0,0,0,0.5); border: 1px solid var(--border-subtle); color: #fff; padding: 10px 12px; font-size: 13px; border-radius: 10px; width: 100%; }
 
         .transaction-slots-grid {
             display: grid;
@@ -183,10 +180,15 @@
             align-items: end;
         }
 
-        .pos-table-container { background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); border-radius: 20px; overflow: hidden; margin-bottom: 24px; backdrop-filter: blur(20px); }
+        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .summary-card { background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); padding: 20px; border-radius: 18px; }
+        .summary-label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1.2px; }
+        .summary-val { font-size: 24px; font-weight: 700; margin-top: 8px; }
+
+        .pos-table-container { background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); border-radius: 18px; overflow: hidden; margin-bottom: 24px; }
         .pos-table, .ledger-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .pos-table th, .ledger-table th { background: rgba(255,255,255,0.06); color: var(--gold-primary); text-align: left; padding: 14px 18px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; border-bottom: 1px solid var(--border-subtle); }
-        .pos-table td, .ledger-table td { padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,0.06); vertical-align: middle; }
+        .pos-table th, .ledger-table th { background: rgba(255,255,255,0.06); color: var(--gold-primary); text-align: left; padding: 12px 16px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border-subtle); }
+        .pos-table td, .ledger-table td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.06); vertical-align: middle; }
 
         .pos-summary-bar {
             display: flex;
@@ -194,54 +196,46 @@
             align-items: center;
             background: rgba(0, 0, 0, 0.4);
             border: 1px solid var(--border-subtle);
-            padding: 20px 26px;
-            border-radius: 20px;
-            backdrop-filter: blur(20px);
+            padding: 18px 24px;
+            border-radius: 18px;
         }
-        .grand-total-text { font-size: 28px; font-weight: 700; color: var(--cyan-bright); margin: 0; letter-spacing: -0.5px; }
 
-        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 28px; }
-        .summary-card { background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); padding: 22px; border-radius: 20px; backdrop-filter: blur(20px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.1); }
-        .summary-label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1.2px; }
-        .summary-val { font-size: 24px; font-weight: 700; margin-top: 10px; letter-spacing: -0.5px; }
-
-        .status-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 5px 12px; border-radius: 980px; display: inline-block; backdrop-filter: blur(10px); }
-        .status-pending { color: var(--gold-light); background: rgba(212, 175, 55, 0.18); border: 1px solid rgba(212, 175, 55, 0.4); }
-        .status-settled { color: var(--green-active); background: rgba(48, 209, 88, 0.18); border: 1px solid rgba(48, 209, 88, 0.4); }
-        .status-returned { color: var(--red-alert); background: rgba(255, 69, 58, 0.18); border: 1px solid rgba(255, 69, 58, 0.4); }
-
-        .btn-action { padding: 8px 14px; font-size: 10px; font-weight: 700; text-transform: uppercase; border: none; border-radius: 10px; cursor: pointer; margin-right: 6px; transition: all 0.2s ease; backdrop-filter: blur(10px); }
-        .btn-action:hover { transform: translateY(-1px) scale(1.02); }
-        .btn-pending { background: rgba(212, 175, 55, 0.25); color: var(--gold-light); border: 1px solid rgba(212, 175, 55, 0.5); }
-        .btn-settled { background: rgba(48, 209, 88, 0.25); color: var(--green-active); border: 1px solid rgba(48, 209, 88, 0.5); }
-        .btn-delete { background: rgba(255, 69, 58, 0.25); color: var(--red-alert); border: 1px solid rgba(255, 69, 58, 0.5); }
-        
-        .btn-export { background: rgba(255,255,255,0.08); border: 1px solid var(--border-subtle); color: var(--text-light); font-weight: 600; cursor: pointer; padding: 10px 18px; border-radius: 14px; text-transform: uppercase; font-size: 11px; transition: all 0.2s; backdrop-filter: blur(10px); }
-        .btn-export:hover { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.3); }
-
-        .btn-sec { background: rgba(255,255,255,0.08); border: 1px solid var(--border-subtle); color: var(--gold-light); cursor: pointer; padding: 10px 18px; border-radius: 14px; font-size: 11px; font-weight: 600; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; backdrop-filter: blur(10px); }
-        .btn-sec:hover { background: rgba(255,255,255,0.18); border-color: var(--gold-primary); color: #fff; }
-
+        /* BUTTONS & BADGES */
         .btn-submit { 
             background: linear-gradient(135deg, rgba(247, 220, 111, 0.95) 0%, rgba(212, 175, 55, 0.95) 100%); 
             color: #000; 
             font-weight: 700; 
-            padding: 14px 24px; 
+            padding: 12px 20px; 
             border: 1px solid rgba(255,255,255,0.4); 
-            border-radius: 16px; 
+            border-radius: 14px; 
             cursor: pointer; 
             text-transform: uppercase; 
-            letter-spacing: 0.8px; 
-            width: 100%; 
-            font-size: 12px;
-            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.35);
-            transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+            font-size: 11px;
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.3);
+            transition: all 0.2s ease;
         }
-        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 12px 35px rgba(212, 175, 55, 0.5); }
-        .btn-submit:active { transform: translateY(1px); }
+        .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 10px 30px rgba(212, 175, 55, 0.4); }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); display: flex; justify-content: center; align-items: center; z-index: 999; animation: glassFadeIn 0.25s ease; }
-        .modal-card { background: rgba(30, 30, 35, 0.7); border: 1px solid var(--border-glass); padding: 36px; border-radius: 28px; width: 380px; text-align: center; box-shadow: var(--glass-shadow); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); }
+        .btn-sec { background: rgba(255,255,255,0.08); border: 1px solid var(--border-subtle); color: var(--gold-light); cursor: pointer; padding: 8px 14px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .btn-sec:hover { background: rgba(255,255,255,0.18); color: #fff; }
+
+        .btn-action { padding: 6px 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; border: none; border-radius: 8px; cursor: pointer; margin-right: 4px; }
+        .btn-pending { background: rgba(212, 175, 55, 0.25); color: var(--gold-light); border: 1px solid rgba(212, 175, 55, 0.5); }
+        .btn-settled { background: rgba(48, 209, 88, 0.25); color: var(--green-active); border: 1px solid rgba(48, 209, 88, 0.5); }
+        .btn-delete { background: rgba(255, 69, 58, 0.25); color: var(--red-alert); border: 1px solid rgba(255, 69, 58, 0.5); }
+
+        .status-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 980px; display: inline-block; }
+        .status-pending { color: var(--gold-light); background: rgba(212, 175, 55, 0.18); border: 1px solid rgba(212, 175, 55, 0.4); }
+        .status-settled { color: var(--green-active); background: rgba(48, 209, 88, 0.18); border: 1px solid rgba(48, 209, 88, 0.4); }
+        .status-returned { color: var(--red-alert); background: rgba(255, 69, 58, 0.18); border: 1px solid rgba(255, 69, 58, 0.4); }
+
+        /* SUPPLIER TRADE PORTAL SPECIFICS */
+        .manifest-list { display: flex; flex-direction: column; gap: 10px; max-height: 480px; overflow-y: auto; }
+        .manifest-item { background: rgba(0, 0, 0, 0.35); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; }
+
+        /* MODALS */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); display: flex; justify-content: center; align-items: center; z-index: 999; }
+        .modal-card { background: rgba(30, 30, 35, 0.85); border: 1px solid var(--border-glass); padding: 32px; border-radius: 24px; width: 380px; text-align: center; box-shadow: var(--glass-shadow); }
 
         @media print {
             body * { visibility: hidden; }
@@ -253,46 +247,46 @@
 </head>
 <body>
 
+    <!-- APPLICATION HEADER -->
     <div class="header">
         <div class="header-title">
-            <img src="logo.png" alt="Nguni Logo" style="height: 34px;" onerror="this.style.display='none'">
-            <h1>NGUNI HOMEWARE | ENTERPRISE POS HUB</h1>
+            <img src="logo.png" alt="Nguni Logo" style="height: 32px;" onerror="this.style.display='none'">
+            <h1>NGUNI HOMEWARE | ENTERPRISE POS & LEDGER HUB</h1>
         </div>
         <div class="role-badge">
             <span id="roleLabel">ACTIVE USER: NOT LOGGED IN</span>
-            <a href="pos-sell.html" class="btn-sec" style="padding: 6px 12px; font-size: 10px;">Front Desk POS &rarr;</a>
             <button class="btn-sec" onclick="openLoginModal()" style="padding: 6px 12px; font-size: 10px;">SWITCH USER</button>
         </div>
     </div>
 
+    <!-- MAIN MODULE TABS NAVIGATION -->
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('tab1')">1. POS SCAN OUT</button>
+        <button class="tab-btn active" onclick="switchTab('tab1')">1. POS DISPATCH</button>
         <button class="tab-btn" onclick="switchTab('tab2')">2. STOCK INTAKE</button>
-        <button class="tab-btn" id="btnTab3" style="display: none;" onclick="switchTab('tab3')">3. SETTLEMENT LEDGER</button>
-        <button class="tab-btn" id="btnTab4" style="display: none;" onclick="switchTab('tab4')">4. STOCK ON-HAND</button>
-        <button class="tab-btn" id="btnTab5" style="display: none;" onclick="switchTab('tab5')">5. STAFF PROFILES</button>
-        <button class="tab-btn" id="btnTab6" style="display: none;" onclick="switchTab('tab6')">6. AUDIT LOGS</button>
-        <button class="tab-btn" id="btnTab7" onclick="switchTab('tab7')">7. RETURNS</button>
-        <button class="tab-btn" id="btnTab8" style="display: none;" onclick="switchTab('tab8')">8. ACCOUNTING & POS SALES</button>
+        <button class="tab-btn" onclick="switchTab('tab9')">3. TRADE LEDGER</button>
+        <button class="tab-btn" id="btnTab3" style="display: none;" onclick="switchTab('tab3')">4. SETTLEMENT LEDGER</button>
+        <button class="tab-btn" id="btnTab4" style="display: none;" onclick="switchTab('tab4')">5. STOCK ON-HAND</button>
+        <button class="tab-btn" id="btnTab5" style="display: none;" onclick="switchTab('tab5')">6. STAFF PROFILES</button>
+        <button class="tab-btn" id="btnTab6" style="display: none;" onclick="switchTab('tab6')">7. AUDIT LOGS</button>
+        <button class="tab-btn" id="btnTab7" onclick="switchTab('tab7')">8. RETURNS</button>
+        <button class="tab-btn" id="btnTab8" style="display: none;" onclick="switchTab('tab8')">9. ACCOUNTING</button>
     </div>
 
-    <!-- TAB 1: ENTERPRISE POS TERMINAL WITH BATCH CART -->
+    <!-- TAB 1: POS DISPATCH & CHECKOUT -->
     <div id="tab1" class="tab-content active">
-        <div class="section-title">POS Dispatch / Terminal Checkout</div>
+        <div class="section-title">POS Front Desk Dispatch & Terminal Checkout</div>
         
-        <div class="scan-bar-grid">
-            <div class="form-group">
-                <label>Scan Barcode / Type SKU</label>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="posBarcodeScan" class="form-control" placeholder="Scan Barcode or Type Item No..." oninput="handleBarcodeScanInput()" autofocus>
-                    <button type="button" class="btn-sec" onclick="toggleCameraScanner()" style="white-space: nowrap;">📷 Scan Camera</button>
-                </div>
+        <div class="form-group">
+            <label>Scan Barcode / Type Item SKU</label>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="posBarcodeScan" class="form-control" placeholder="Scan Barcode or Type Item Name/SKU..." oninput="handleBarcodeScanInput()" autofocus>
+                <button type="button" class="btn-sec" onclick="toggleCameraScanner()" style="white-space: nowrap;">📷 Scan Camera</button>
             </div>
         </div>
 
-        <div id="cameraScannerModal" style="display: none; background: rgba(0,0,0,0.5); border: 1px solid var(--border-glass); padding: 16px; border-radius: 20px; margin-bottom: 20px; text-align: center; backdrop-filter: blur(20px);">
-            <div id="interactive-camera" style="width: 100%; max-width: 400px; margin: 0 auto; border-radius: 14px; overflow: hidden;"></div>
-            <button type="button" class="btn-sec" onclick="stopCameraScanner()" style="margin-top: 12px; color: var(--red-alert); border-color: rgba(255,69,58,0.4);">Close Camera</button>
+        <div id="cameraScannerModal" style="display: none; background: rgba(0,0,0,0.5); border: 1px solid var(--border-glass); padding: 16px; border-radius: 18px; margin-bottom: 20px; text-align: center;">
+            <div id="interactive-camera" style="width: 100%; max-width: 400px; margin: 0 auto; border-radius: 12px; overflow: hidden;"></div>
+            <button type="button" class="btn-sec" onclick="stopCameraScanner()" style="margin-top: 12px; color: var(--red-alert);">Close Camera</button>
         </div>
 
         <div class="item-slots-grid">
@@ -306,15 +300,15 @@
             </div>
             <div class="slot-box">
                 <span class="slot-label">Stock Available</span>
-                <input type="text" id="slotStockOnHand" class="slot-input highlight-stock" readonly placeholder="0">
+                <input type="text" id="slotStockOnHand" class="slot-input" style="color: var(--cyan-bright);" readonly placeholder="0">
             </div>
             <div class="slot-box">
                 <span class="slot-label">Wholesale Cost (ZAR)</span>
-                <input type="text" id="slotUnitPrice" class="slot-input highlight-price" readonly placeholder="R 0.00">
+                <input type="text" id="slotUnitPrice" class="slot-input" style="color: var(--gold-light);" readonly placeholder="R 0.00">
             </div>
             <div class="slot-box">
                 <span class="slot-label">Selling Price (ZAR)</span>
-                <input type="text" id="slotSellingPrice" class="slot-input highlight-price" readonly placeholder="R 0.00" style="color: var(--cyan-bright);">
+                <input type="text" id="slotSellingPrice" class="slot-input" style="color: var(--cyan-bright);" readonly placeholder="R 0.00">
             </div>
             <div class="slot-box">
                 <span class="slot-label">Consignor / Supplier</span>
@@ -327,19 +321,16 @@
                 <label>Order Reference / Transaction No.</label>
                 <input type="text" id="posOrderRef" class="form-control" placeholder="e.g. #1043 or POS-8923">
             </div>
-
             <div class="form-group" style="margin-bottom:0;">
                 <label>Quantity</label>
                 <input type="number" id="posQty" class="form-control" value="1" min="1" oninput="calculateSlotLineTotal()">
             </div>
-
             <div class="form-group" style="margin-bottom:0;">
                 <label>Subtotal (ZAR)</label>
                 <input type="text" id="slotLineTotal" class="form-control" readonly placeholder="R 0.00" style="color: var(--gold-light); font-weight: bold;">
             </div>
-
             <div class="form-group" style="margin-bottom:0;">
-                <button type="button" class="btn-submit" onclick="addItemToCart()">+ Stage Item to Batch</button>
+                <button type="button" class="btn-submit" style="width:100%;" onclick="addItemToCart()">+ Stage Item to Batch</button>
             </div>
         </div>
 
@@ -357,7 +348,7 @@
                     </tr>
                 </thead>
                 <tbody id="cartTableBody">
-                    <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No items added to current transaction batch.</td></tr>
+                    <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No items staged in transaction batch.</td></tr>
                 </tbody>
             </table>
         </div>
@@ -369,19 +360,19 @@
             <div style="display: flex; align-items: center; gap: 24px;">
                 <div>
                     <span class="slot-label">GRAND TOTAL (ZAR)</span>
-                    <h2 class="grand-total-text" id="cartGrandTotal">R 0.00</h2>
+                    <h2 id="cartGrandTotal" style="font-size: 26px; font-weight: 700; color: var(--cyan-bright); margin: 0;">R 0.00</h2>
                 </div>
-                <button type="button" class="btn-submit" style="padding: 16px 32px; font-size: 13px;" onclick="checkoutBatchOrder()">DISPATCH & PRINT RECEIPT</button>
+                <button type="button" class="btn-submit" style="padding: 14px 28px;" onclick="checkoutBatchOrder()">DISPATCH & PRINT RECEIPT</button>
             </div>
         </div>
     </div>
 
-    <!-- TAB 2: ENTERPRISE CONSIGNMENT STOCK INTAKE -->
+    <!-- TAB 2: CONSIGNMENT STOCK INTAKE -->
     <div id="tab2" class="tab-content">
         <div class="section-title">Consignment Stock Intake & Batch Staging</div>
-        <form id="stockForm" onsubmit="addStockItemToBatch(event)" style="margin-bottom: 28px;">
+        <form id="stockForm" onsubmit="addStockItemToBatch(event)" style="margin-bottom: 24px;">
             <div class="form-group">
-                <label>Item Number / Barcode SKU (Optional - Auto Generated if Empty)</label>
+                <label>Item Barcode / SKU (Auto-generated if blank)</label>
                 <input type="text" id="stockSku" class="form-control" placeholder="e.g. 600123456789 or ITEM-101">
             </div>
             <div class="form-group">
@@ -404,7 +395,7 @@
                 <label>Consignor / Wholesale Supplier Partner</label>
                 <input type="text" id="stockSupplier" class="form-control" required placeholder="e.g. Craft Master Wholesalers">
             </div>
-            <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(212,175,55,0.95) 100%); color: #000;">+ Stage Stock Line</button>
+            <button type="submit" class="btn-submit" style="width: 100%;">+ Stage Stock Line</button>
         </form>
 
         <div class="section-title">Batch Intake Staging Queue</div>
@@ -422,16 +413,56 @@
                     </tr>
                 </thead>
                 <tbody id="intakeBatchTableBody">
-                    <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No items staged for intake batch.</td></tr>
+                    <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No inventory staged for intake.</td></tr>
                 </tbody>
             </table>
         </div>
 
         <div class="pos-summary-bar">
+            <div><span class="slot-label">STAGED LINES: <span id="intakeBatchCount" style="color:#fff;">0</span></span></div>
+            <button type="button" class="btn-submit" onclick="commitIntakeBatch()">COMMIT ALL STAGED INVENTORY</button>
+        </div>
+    </div>
+
+    <!-- TAB 9: SUPPLIER TRADE LEDGER (PARTNER VIEW) -->
+    <div id="tab9" class="tab-content">
+        <div class="section-title">Supplier Partner Trade Ledger Portal</div>
+        
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); padding: 18px 24px; border-radius: 18px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
             <div>
-                <span class="slot-label">STAGED LINES: <span id="intakeBatchCount" style="color:#fff;">0</span></span>
+                <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted);">Partner Ledger View</span>
+                <div id="activeSupplierName" style="font-size: 16px; font-weight: 700; color: var(--gold-light);">All Consignment Partners</div>
             </div>
-            <button type="button" class="btn-submit" style="width: auto; padding: 14px 28px;" onclick="commitIntakeBatch()">COMMIT ALL STAGED INVENTORY</button>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <label style="font-size: 11px; text-transform: uppercase; color: var(--text-muted);">Filter Partner:</label>
+                <select id="supplierSelect" class="form-control" style="width: 240px;" onchange="filterSupplierLedger()">
+                    <option value="ALL">-- All Suppliers / Master --</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-label">Total Units Sold</div>
+                <div class="summary-val" id="tradeUnits">0 Units</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Wholesale Payout Owed</div>
+                <div class="summary-val" id="tradeOwed" style="color: var(--gold-light);">R 0.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Active Pilot Lines</div>
+                <div class="summary-val" id="tradeSkus" style="color: var(--cyan-bright);">0 Lines</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Settlement Cycle</div>
+                <div class="summary-val" style="font-size: 20px;">15–30 Days</div>
+            </div>
+        </div>
+
+        <div class="section-title">Consignment Sales Manifest</div>
+        <div class="manifest-list" id="manifestList">
+            <div style="color: var(--text-muted); text-align: center; padding: 40px;">Loading live manifest records...</div>
         </div>
     </div>
 
@@ -440,15 +471,15 @@
         <div class="section-title">
             <span>Settlement Ledger & Supplier Split Breakdown</span>
             <div style="display: flex; gap: 8px;">
-                <input type="date" id="filterStartDate" class="form-control" style="width: 140px; padding: 8px 12px;" onchange="renderAdminOrders(cachedOrders)">
-                <input type="date" id="filterEndDate" class="form-control" style="width: 140px; padding: 8px 12px;" onchange="renderAdminOrders(cachedOrders)">
-                <button class="btn-export" onclick="exportSupplierStatement()">Export CSV</button>
+                <input type="date" id="filterStartDate" class="form-control" style="width: 140px; padding: 6px 10px;" onchange="renderAdminOrders(cachedOrders)">
+                <input type="date" id="filterEndDate" class="form-control" style="width: 140px; padding: 6px 10px;" onchange="renderAdminOrders(cachedOrders)">
+                <button class="btn-sec" onclick="exportSupplierStatement()">Export CSV</button>
             </div>
         </div>
 
         <div class="summary-grid">
             <div class="summary-card">
-                <div class="summary-label">Wholesale Payout Owed (Escrow)</div>
+                <div class="summary-label">Escrow Pending (Owed)</div>
                 <div class="summary-val" id="adminOwed" style="color: var(--gold-light);">R 0.00</div>
             </div>
             <div class="summary-card">
@@ -456,11 +487,11 @@
                 <div class="summary-val" id="adminSettled" style="color: var(--green-active);">R 0.00</div>
             </div>
             <div class="summary-card">
-                <div class="summary-label">Fixed Platform Fees (Store Retention)</div>
+                <div class="summary-label">Platform Fees (Store Retention)</div>
                 <div class="summary-val" style="color: var(--gold-primary);">R 230.00</div>
             </div>
             <div class="summary-card">
-                <div class="summary-label">Net Supplier Payout Owed</div>
+                <div class="summary-label">Net Payable Balance</div>
                 <div class="summary-val" id="adminNet" style="color: #fff;">R 0.00</div>
             </div>
         </div>
@@ -480,7 +511,7 @@
                     </tr>
                 </thead>
                 <tbody id="adminOrderTable">
-                    <tr><td colspan="8" style="color: var(--text-muted); padding: 24px;">Loading ledger...</td></tr>
+                    <tr><td colspan="8" style="color: var(--text-muted); padding: 20px;">Loading ledger...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -503,7 +534,7 @@
                     </tr>
                 </thead>
                 <tbody id="stockTableBody">
-                    <tr><td colspan="7" style="color: var(--text-muted); padding: 24px;">Loading captured stock...</td></tr>
+                    <tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">Loading active inventory...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -512,24 +543,24 @@
     <!-- TAB 5: STAFF PROFILES -->
     <div id="tab5" class="tab-content">
         <div class="section-title">Cashier & Staff Profile Management</div>
-        <form id="createStaffForm" onsubmit="handleCreateStaff(event)" style="margin-bottom: 28px;">
+        <form id="createStaffForm" onsubmit="handleCreateStaff(event)" style="margin-bottom: 24px;">
             <div class="form-group">
-                <label>Cashier / Staff Member Full Name</label>
+                <label>Full Name</label>
                 <input type="text" id="staffNameInput" class="form-control" required placeholder="e.g. Sipho Ndlovu">
             </div>
             <div class="form-group">
-                <label>4 to 6-Digit Login PIN</label>
+                <label>PIN Code (4-6 Digits)</label>
                 <input type="password" id="staffPinInput" class="form-control" maxlength="6" required placeholder="e.g. 5678">
             </div>
             <div class="form-group">
-                <label>Access Role</label>
+                <label>Access Level Role</label>
                 <select id="staffRoleSelect" class="form-control">
                     <option value="cashier" style="background:#1c1c1e;">Cashier (POS Dispatch Only)</option>
                     <option value="staff" style="background:#1c1c1e;">Staff (POS & Intake Only)</option>
                     <option value="manager" style="background:#1c1c1e;">Manager (Full Access & Ledger)</option>
                 </select>
             </div>
-            <button type="submit" class="btn-submit">Create Cashier / Staff Profile</button>
+            <button type="submit" class="btn-submit" style="width:100%;">Create Cashier / Staff Profile</button>
         </form>
 
         <div class="section-title">Active Staff & Cashier Accounts</div>
@@ -544,7 +575,7 @@
                     </tr>
                 </thead>
                 <tbody id="staffProfileTable">
-                    <tr><td colspan="4" style="color: var(--text-muted); padding: 24px;">Loading profiles...</td></tr>
+                    <tr><td colspan="4" style="color: var(--text-muted); padding: 20px;">Loading staff profiles...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -552,7 +583,7 @@
 
     <!-- TAB 6: AUDIT LOGS -->
     <div id="tab6" class="tab-content">
-        <div class="section-title">System Audit Trail & Manager Activity History</div>
+        <div class="section-title">System Audit Trail & Activity Logs</div>
         <div class="pos-table-container">
             <table class="ledger-table">
                 <thead>
@@ -563,20 +594,20 @@
                     </tr>
                 </thead>
                 <tbody id="auditTableBody">
-                    <tr><td colspan="3" style="color: var(--text-muted); padding: 24px;">Loading audit logs...</td></tr>
+                    <tr><td colspan="3" style="color: var(--text-muted); padding: 20px;">Loading audit logs...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- TAB 7: RETURNS & DAMAGES -->
+    <!-- TAB 7: RETURNS & RESTOCK -->
     <div id="tab7" class="tab-content">
         <div class="section-title">Customer Order Returns & Inventory Restock</div>
-        <form id="returnForm" onsubmit="handleReturnSubmit(event)" style="margin-bottom: 32px;">
+        <form id="returnForm" onsubmit="handleReturnSubmit(event)" style="margin-bottom: 28px;">
             <div class="form-group">
-                <label>Select Dispatched Order / Transaction</label>
-                <select id="returnOrderSelect" class="form-control" onchange="autofillReturnDetails()" required>
-                    <option value="" style="background:#1c1c1e;">-- Choose Order to Return --</option>
+                <label>Select Order / Transaction</label>
+                <select id="returnOrderSelect" class="form-control" required>
+                    <option value="">-- Choose Dispatched Order --</option>
                 </select>
             </div>
             <div class="form-group">
@@ -586,24 +617,23 @@
             <div class="form-group">
                 <label>Reason for Return</label>
                 <select id="returnReason" class="form-control" required>
-                    <option value="Customer Change of Mind" style="background:#1c1c1e;">Customer Change of Mind</option>
-                    <option value="Defective / Damaged Item" style="background:#1c1c1e;">Defective / Damaged Item</option>
-                    <option value="Incorrect Item Dispatched" style="background:#1c1c1e;">Incorrect Item Dispatched</option>
-                    <option value="Exchanged for Other Product" style="background:#1c1c1e;">Exchanged for Other Product</option>
+                    <option value="Customer Change of Mind">Customer Change of Mind</option>
+                    <option value="Defective / Damaged Item">Defective / Damaged Item</option>
+                    <option value="Incorrect Item Dispatched">Incorrect Item Dispatched</option>
                 </select>
             </div>
             <div class="form-group">
-                <label>Inventory Restock Action</label>
+                <label>Restock Action</label>
                 <select id="restockAction" class="form-control" required>
-                    <option value="YES_RESTOCK" style="background:#1c1c1e;">YES - Restock item back to active inventory</option>
-                    <option value="NO_RESTOCK" style="background:#1c1c1e;">NO - Do not restock (Damaged / Written off)</option>
+                    <option value="YES_RESTOCK">YES - Restock item back into active inventory</option>
+                    <option value="NO_RESTOCK">NO - Do not restock (Write-off / Damaged)</option>
                 </select>
             </div>
-            <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, rgba(255, 69, 58, 0.95) 0%, rgba(197, 40, 32, 0.95) 100%); color: #fff;">Process Return & Adjust Stock</button>
+            <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, rgba(255, 69, 58, 0.95) 0%, rgba(197, 40, 32, 0.95) 100%); color:#fff; width:100%;">Process Order Return</button>
         </form>
 
-        <div class="section-title">Processed Returns Log</div>
-        <div class="pos-table-container" style="margin-bottom: 30px;">
+        <div class="section-title">Processed Returns History</div>
+        <div class="pos-table-container">
             <table class="ledger-table">
                 <thead>
                     <tr>
@@ -613,38 +643,38 @@
                         <th>Reason</th>
                         <th>Restocked?</th>
                         <th>Processed By</th>
-                        <th>Action</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody id="returnsLogTable">
-                    <tr><td colspan="7" style="color: var(--text-muted); padding: 24px;">Loading returns log...</td></tr>
+                    <tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">Loading return history...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- TAB 8: ACCOUNTING & POS SALES -->
+    <!-- TAB 8: ACCOUNTING & SALES DASHBOARD -->
     <div id="tab8" class="tab-content">
         <div class="section-title">
-            <span>Accounting & POS Sales Dashboard</span>
+            <span>Accounting & Sales Analytics</span>
             <div style="display: flex; gap: 8px;">
-                <input type="date" id="accFilterStart" class="form-control" style="width: 140px; padding: 8px 12px;" onchange="renderAccountingDashboard()">
-                <input type="date" id="accFilterEnd" class="form-control" style="width: 140px; padding: 8px 12px;" onchange="renderAccountingDashboard()">
-                <button class="btn-export" onclick="exportAccountingCSV()">Export CSV</button>
+                <input type="date" id="accFilterStart" class="form-control" style="width: 140px; padding: 6px 10px;" onchange="renderAccountingDashboard()">
+                <input type="date" id="accFilterEnd" class="form-control" style="width: 140px; padding: 6px 10px;" onchange="renderAccountingDashboard()">
+                <button class="btn-sec" onclick="exportAccountingCSV()">Export CSV</button>
             </div>
         </div>
 
         <div class="summary-grid">
             <div class="summary-card">
-                <div class="summary-label">Gross Sales</div>
+                <div class="summary-label">Gross Store Sales</div>
                 <div class="summary-val" id="accGrossSales" style="color: var(--cyan-bright);">R 0.00</div>
             </div>
             <div class="summary-card">
                 <div class="summary-label">Platform Fees (Fixed)</div>
-                <div class="summary-val" id="accPlatformFees" style="color: var(--gold-primary);">R 230.00</div>
+                <div class="summary-val" style="color: var(--gold-primary);">R 230.00</div>
             </div>
             <div class="summary-card">
-                <div class="summary-label">Net Revenue</div>
+                <div class="summary-label">Net Store Revenue</div>
                 <div class="summary-val" id="accNetRevenue" style="color: var(--green-active);">R 0.00</div>
             </div>
             <div class="summary-card">
@@ -653,7 +683,7 @@
             </div>
         </div>
 
-        <div class="section-title">Itemized POS Transaction Ledger</div>
+        <div class="section-title">Itemized Transaction Sales Ledger</div>
         <div class="pos-table-container">
             <table class="ledger-table">
                 <thead>
@@ -668,41 +698,42 @@
                     </tr>
                 </thead>
                 <tbody id="accountingTableBody">
-                    <tr><td colspan="7" style="color: var(--text-muted); padding: 24px;">Loading POS sales transactions...</td></tr>
+                    <tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">Loading accounting records...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- MODALS -->
+    <!-- MODAL OVERLAYS -->
     <div class="modal-overlay" id="loginModal">
         <div class="modal-card">
-            <h3 style="color: var(--gold-primary); margin-top: 0; font-size: 16px; font-weight: 700; letter-spacing: 0.8px;">CASHIER / USER LOGIN</h3>
-            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 24px;">Enter PIN code for instant secure access.</p>
+            <h3 style="color: var(--gold-primary); margin-bottom: 8px;">USER / CASHIER AUTHENTICATION</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px;">Enter your PIN code to access terminal sessions.</p>
             <div class="form-group">
-                <input type="password" id="userPinInput" class="form-control" style="text-align: center; font-size: 24px; letter-spacing: 8px; padding: 14px;" maxlength="6" placeholder="••••" oninput="checkAutoLoginPin()" autofocus>
+                <input type="password" id="userPinInput" class="form-control" style="text-align: center; font-size: 24px; letter-spacing: 8px;" maxlength="6" placeholder="••••" oninput="checkAutoLoginPin()" autofocus>
             </div>
-            <button class="btn-submit" onclick="authenticateUserPin()">LOGIN SESSION</button>
+            <button class="btn-submit" style="width: 100%;" onclick="authenticateUserPin()">LOGIN SESSION</button>
         </div>
     </div>
 
     <div class="modal-overlay" id="receiptModal" style="display: none;">
-        <div class="modal-card" style="background: rgba(255, 255, 255, 0.95); color: #000; text-align: left; font-family: monospace; width: 380px; border-radius: 24px; backdrop-filter: blur(40px);">
-            <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 12px; margin-bottom: 12px;">
-                <h3 style="margin: 0; font-size: 16px;">NGUNI HOMEWARE</h3>
-                <p style="margin: 4px 0 0 0; font-size: 10px;">Consignment & Retail POS Hub</p>
+        <div class="modal-card" style="background: #fff; color: #000; text-align: left; font-family: monospace;">
+            <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;">
+                <h3 style="margin:0; font-size: 16px;">NGUNI HOMEWARE</h3>
+                <p style="margin: 2px 0 0 0; font-size: 10px;">Consignment & Retail POS Hub</p>
             </div>
-            <div id="receiptContent" style="font-size: 11px; line-height: 1.6;"></div>
-            <div style="text-align: center; border-top: 1px dashed #000; padding-top: 12px; margin-top: 12px;">
+            <div id="receiptContent" style="font-size: 11px; line-height: 1.5;"></div>
+            <div style="text-align: center; border-top: 1px dashed #000; padding-top: 10px; margin-top: 10px;">
                 <p style="margin: 0; font-size: 10px;">Thank you for shopping local!</p>
             </div>
-            <div class="no-print" style="margin-top: 20px; text-align: center; display: flex; gap: 8px;">
-                <button class="btn-submit" onclick="window.print()" style="flex: 2; padding: 12px;">Print Slip</button>
-                <button class="btn-sec" style="flex: 1; color: #000; border-color: #000; background: rgba(0,0,0,0.08);" onclick="closeModal('receiptModal')">Close</button>
+            <div class="no-print" style="margin-top: 16px; display: flex; gap: 8px;">
+                <button class="btn-submit" onclick="window.print()" style="flex:2;">Print Slip</button>
+                <button class="btn-sec" onclick="closeModal('receiptModal')" style="flex:1; color:#000; border-color:#000;">Close</button>
             </div>
         </div>
     </div>
 
+    <!-- JAVASCRIPT APPLICATION LOGIC -->
     <script>
         const SUPABASE_URL = 'https://aivsmcdhxfdccsbqmejt.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_NDE9uLsqMD2QiIa6LMw-Lw_IBOmeebV';
@@ -728,332 +759,22 @@
             fetchAdminOrders();
 
             if (supabaseClient) {
-                supabaseClient.channel('admin_realtime').on('postgres_changes', { event: '*', schema: 'public' }, () => {
+                supabaseClient.channel('enterprise_realtime').on('postgres_changes', { event: '*', schema: 'public' }, () => {
                     fetchAdminOrders();
                 }).subscribe();
             }
         });
 
-        function handleBarcodeScanInput() {
-            const query = document.getElementById('posBarcodeScan').value.trim().toLowerCase();
-            if (!query) {
-                clearPosSlots();
-                return;
-            }
-
-            const stockMap = {};
-            cachedInventory.forEach(item => {
-                const name = (item.item_name || item.item_description || item.sku || 'Unknown Item').trim();
-                const sku = item.sku || '';
-                stockMap[name] = stockMap[name] || { 
-                    name: name, 
-                    sku: sku, 
-                    intake: 0, 
-                    dispatched: 0, 
-                    supplier: item.supplier || 'General Wholesaler', 
-                    price: item.wholesale_floor_zar || item.unit_price || item.cost_price || 0,
-                    sellingPrice: item.selling_price || item.retail_price || (item.wholesale_floor_zar ? item.wholesale_floor_zar * 1.3 : 0)
-                };
-                stockMap[name].intake += (parseInt(item.quantity_allocated || item.quantity) || 0);
-            });
-
-            cachedOrders.forEach(order => {
-                if (order.payout_status !== 'RETURNED / CANCELLED') {
-                    const name = (order.item_name || '').trim();
-                    if (stockMap[name]) stockMap[name].dispatched += (parseInt(order.quantity_dispatched) || 1);
-                }
-            });
-
-            let match = null;
-            Object.keys(stockMap).forEach(key => {
-                const item = stockMap[key];
-                if (item.sku.toLowerCase() === query || item.name.toLowerCase().includes(query)) {
-                    match = item;
-                }
-            });
-
-            if (match) {
-                activePosMatch = match;
-                const onHand = match.intake - match.dispatched;
-
-                document.getElementById('slotProductName').value = match.name;
-                document.getElementById('slotBarcode').value = match.sku || 'N/A';
-                document.getElementById('slotStockOnHand').value = onHand;
-                document.getElementById('slotUnitPrice').value = `R ${parseFloat(match.price).toFixed(2)}`;
-                document.getElementById('slotSellingPrice').value = `R ${parseFloat(match.sellingPrice).toFixed(2)}`;
-                document.getElementById('slotSupplier').value = match.supplier;
-
-                calculateSlotLineTotal();
-            } else {
-                clearPosSlots();
-            }
+        /* TAB MANAGEMENT */
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            const targetBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick')?.includes(tabId));
+            if (targetBtn) targetBtn.classList.add('active');
         }
 
-        function calculateSlotLineTotal() {
-            if (!activePosMatch) return;
-            const qty = parseInt(document.getElementById('posQty').value) || 1;
-            const sellingPrice = parseFloat(activePosMatch.sellingPrice) || 0;
-            document.getElementById('slotLineTotal').value = `R ${(qty * sellingPrice).toFixed(2)}`;
-        }
-
-        function clearPosSlots() {
-            activePosMatch = null;
-            document.getElementById('slotProductName').value = '';
-            document.getElementById('slotBarcode').value = '';
-            document.getElementById('slotStockOnHand').value = '0';
-            document.getElementById('slotUnitPrice').value = 'R 0.00';
-            document.getElementById('slotSellingPrice').value = 'R 0.00';
-            document.getElementById('slotSupplier').value = '';
-            document.getElementById('slotLineTotal').value = 'R 0.00';
-        }
-
-        function addItemToCart() {
-            if (!activePosMatch) return alert('Scan or select an item first.');
-
-            const qty = parseInt(document.getElementById('posQty').value) || 1;
-            const onHand = parseInt(document.getElementById('slotStockOnHand').value) || 0;
-
-            if (qty > onHand) return alert(`Insufficient stock. Only ${onHand} units available.`);
-
-            const sellingPrice = parseFloat(activePosMatch.sellingPrice) || 0;
-
-            posCart.push({
-                sku: activePosMatch.sku,
-                name: activePosMatch.name,
-                supplier: activePosMatch.supplier,
-                qty: qty,
-                sellingPrice: sellingPrice,
-                subtotal: qty * sellingPrice
-            });
-
-            renderCartTable();
-            document.getElementById('posBarcodeScan').value = '';
-            clearPosSlots();
-            document.getElementById('posBarcodeScan').focus();
-        }
-
-        function renderCartTable() {
-            const tbody = document.getElementById('cartTableBody');
-            tbody.innerHTML = '';
-
-            if (posCart.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No items added to current transaction batch.</td></tr>';
-                document.getElementById('cartItemCount').innerText = '0';
-                document.getElementById('cartGrandTotal').innerText = 'R 0.00';
-                return;
-            }
-
-            let grandTotal = 0;
-            let totalItems = 0;
-
-            posCart.forEach((item, idx) => {
-                grandTotal += item.subtotal;
-                totalItems += item.qty;
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="color: var(--gold-light); font-weight: 600;">${item.sku || 'N/A'}</td>
-                    <td>${item.name}</td>
-                    <td>${item.supplier}</td>
-                    <td>${item.qty}</td>
-                    <td>R ${item.sellingPrice.toFixed(2)}</td>
-                    <td style="color: var(--cyan-bright); font-weight: 600;">R ${item.subtotal.toFixed(2)}</td>
-                    <td><button class="btn-action btn-delete" onclick="removeCartItem(${idx})">Remove</button></td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            document.getElementById('cartItemCount').innerText = totalItems;
-            document.getElementById('cartGrandTotal').innerText = `R ${grandTotal.toFixed(2)}`;
-        }
-
-        function removeCartItem(idx) {
-            posCart.splice(idx, 1);
-            renderCartTable();
-        }
-
-        async function checkoutBatchOrder() {
-            if (!currentUser) return openLoginModal();
-            if (posCart.length === 0) return alert('Add items to the transaction batch before checking out.');
-
-            let orderRef = document.getElementById('posOrderRef').value.trim();
-            if (!orderRef) orderRef = `POS-${Math.floor(100000 + Math.random() * 900000)}`;
-
-            const inserts = posCart.map(item => ({
-                item_name: item.name,
-                order_number: orderRef,
-                quantity_dispatched: item.qty,
-                wholesale_floor_zar: item.subtotal,
-                supplier: item.supplier,
-                marketplace: 'POS / In-Store',
-                payout_status: 'ESCROW PENDING',
-                processed_by: currentUser.full_name
-            }));
-
-            const { error } = await supabaseClient.from('orders').insert(inserts);
-
-            if (error) {
-                alert('Checkout Error: ' + error.message);
-            } else {
-                logAuditAction(`Dispatched Batch Order #${orderRef} (${posCart.length} lines) by cashier/user ${currentUser.full_name}`);
-                showBatchReceipt(orderRef, posCart, currentUser.full_name);
-                posCart = [];
-                renderCartTable();
-                document.getElementById('posOrderRef').value = '';
-                fetchAdminOrders();
-            }
-        }
-
-        function showBatchReceipt(ref, cart, cashier) {
-            const content = document.getElementById('receiptContent');
-            let itemsHtml = '';
-            let grandTotal = 0;
-
-            cart.forEach(item => {
-                grandTotal += item.subtotal;
-                itemsHtml += `
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                        <span>${item.qty}x ${item.name.slice(0, 20)}</span>
-                        <span>R${item.subtotal.toFixed(2)}</span>
-                    </div>
-                `;
-            });
-
-            content.innerHTML = `
-                <p style="margin: 0;"><strong>DATE:</strong> ${new Date().toLocaleString()}</p>
-                <p style="margin: 0;"><strong>REF #:</strong> ${ref}</p>
-                <p style="margin: 0 0 8px 0;"><strong>CASHIER:</strong> ${cashier}</p>
-                <hr style="border: 0; border-top: 1px dashed #000; margin: 8px 0;">
-                ${itemsHtml}
-                <hr style="border: 0; border-top: 1px dashed #000; margin: 8px 0;">
-                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 13px;">
-                    <span>GRAND TOTAL:</span>
-                    <span>R${grandTotal.toFixed(2)}</span>
-                </div>
-            `;
-            document.getElementById('receiptModal').style.display = 'flex';
-        }
-
-        function addStockItemToBatch(e) {
-            e.preventDefault();
-
-            const customSku = document.getElementById('stockSku').value.trim();
-            const stockName = document.getElementById('stockName').value.trim();
-            const qty = parseInt(document.getElementById('stockQty').value) || 0;
-            const unitPrice = parseFloat(document.getElementById('stockUnitPrice').value) || 0;
-            const sellingPrice = parseFloat(document.getElementById('stockSellingPrice').value) || 0;
-            const supplier = document.getElementById('stockSupplier').value.trim();
-
-            const generatedSku = customSku ? customSku.toUpperCase() : (stockName.toUpperCase().replace(/[^A-Z0-9]/g, '-').slice(0, 12) + '-' + Math.floor(100 + Math.random() * 900));
-
-            intakeBatch.push({
-                sku: generatedSku,
-                item_name: stockName,
-                item_description: stockName,
-                quantity_allocated: qty,
-                quantity: qty,
-                unit_price: unitPrice,
-                cost_price: unitPrice,
-                wholesale_floor_zar: unitPrice,
-                selling_price: sellingPrice,
-                supplier: supplier,
-                added_by: currentUser ? currentUser.full_name : 'Staff'
-            });
-
-            renderIntakeBatchTable();
-            document.getElementById('stockForm').reset();
-            document.getElementById('stockSku').focus();
-        }
-
-        function renderIntakeBatchTable() {
-            const tbody = document.getElementById('intakeBatchTableBody');
-            tbody.innerHTML = '';
-
-            if (intakeBatch.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No items staged for intake batch.</td></tr>';
-                document.getElementById('intakeBatchCount').innerText = '0';
-                return;
-            }
-
-            intakeBatch.forEach((item, idx) => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="color: var(--gold-light); font-weight: 600;">${item.sku}</td>
-                    <td>${item.item_name}</td>
-                    <td>${item.supplier}</td>
-                    <td>${item.quantity}</td>
-                    <td>R ${item.unit_price.toFixed(2)}</td>
-                    <td style="color: var(--cyan-bright);">R ${(item.selling_price || 0).toFixed(2)}</td>
-                    <td><button class="btn-action btn-delete" onclick="removeIntakeBatchItem(${idx})">Remove</button></td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            document.getElementById('intakeBatchCount').innerText = intakeBatch.length;
-        }
-
-        function removeIntakeBatchItem(idx) {
-            intakeBatch.splice(idx, 1);
-            renderIntakeBatchTable();
-        }
-
-        async function commitIntakeBatch() {
-            if (!currentUser) return openLoginModal();
-            if (intakeBatch.length === 0) return alert('No inventory lines staged to commit.');
-
-            const { error } = await supabaseClient.from('inventory').insert(intakeBatch);
-
-            if (error) {
-                alert('Error processing batch intake: ' + error.message);
-            } else {
-                logAuditAction(`Committed intake batch of ${intakeBatch.length} inventory lines by ${currentUser.full_name}`);
-                alert(`Successfully imported ${intakeBatch.length} inventory lines!`);
-                intakeBatch = [];
-                renderIntakeBatchTable();
-                fetchAdminOrders();
-            }
-        }
-
-        function toggleCameraScanner() {
-            const modal = document.getElementById('cameraScannerModal');
-            if (modal.style.display === 'none' || modal.style.display === '') {
-                modal.style.display = 'block';
-                startCameraScanner();
-            } else {
-                stopCameraScanner();
-            }
-        }
-
-        function startCameraScanner() {
-            if (!html5QrCodeScanner) {
-                html5QrCodeScanner = new Html5Qrcode("interactive-camera");
-            }
-            html5QrCodeScanner.start(
-                { facingMode: "environment" }, 
-                { fps: 10, qrbox: { width: 250, height: 150 } }, 
-                (decodedText) => {
-                    document.getElementById('posBarcodeScan').value = decodedText;
-                    handleBarcodeScanInput();
-                    stopCameraScanner();
-                }
-            ).catch(err => {
-                alert("Camera error: " + err);
-                stopCameraScanner();
-            });
-        }
-
-        function stopCameraScanner() {
-            if (html5QrCodeScanner && html5QrCodeScanner.isScanning) {
-                html5QrCodeScanner.stop().then(() => {
-                    document.getElementById('cameraScannerModal').style.display = 'none';
-                }).catch(() => {
-                    document.getElementById('cameraScannerModal').style.display = 'none';
-                });
-            } else {
-                document.getElementById('cameraScannerModal').style.display = 'none';
-            }
-        }
-
+        /* LOGIN & SESSION HANDLERS */
         function openLoginModal() {
             currentUser = null;
             document.getElementById('roleLabel').innerText = 'ACTIVE USER: NOT LOGGED IN';
@@ -1093,27 +814,19 @@
                 ['btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab8'].forEach(id => {
                     if (document.getElementById(id)) document.getElementById(id).style.display = 'block';
                 });
-                switchTab('tab1');
             } else {
                 ['btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab8'].forEach(id => {
                     if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
                 });
-                switchTab('tab1');
             }
+            switchTab('tab1');
             closeModal('loginModal');
-            logAuditAction(`User logged in (${currentUser.full_name} - ${currentUser.role})`);
+            logAuditAction(`Logged in (${currentUser.full_name} - ${currentUser.role})`);
             fetchAdminOrders();
             fetchStaffProfiles();
         }
 
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            const targetBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick')?.includes(tabId));
-            if (targetBtn) targetBtn.classList.add('active');
-        }
-
+        /* DATA FETCHING & REALTIME REFRESH */
         async function fetchAdminOrders() {
             if (!supabaseClient) return;
             const { data: orders } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
@@ -1125,18 +838,360 @@
             renderAdminOrders(cachedOrders);
             renderStockTable(cachedInventory);
             renderAccountingDashboard();
+            populateSupplierTradeDropdown();
+            renderSupplierPortal('ALL');
         }
 
+        /* POS SCAN & CART LOGIC */
+        function handleBarcodeScanInput() {
+            const query = document.getElementById('posBarcodeScan').value.trim().toLowerCase();
+            if (!query) return clearPosSlots();
+
+            const stockMap = {};
+            cachedInventory.forEach(item => {
+                const name = (item.item_name || item.item_description || item.sku || 'Unknown').trim();
+                const sku = item.sku || '';
+                stockMap[name] = stockMap[name] || { 
+                    name: name, 
+                    sku: sku, 
+                    intake: 0, 
+                    dispatched: 0, 
+                    supplier: item.supplier || 'General Wholesaler', 
+                    price: item.wholesale_floor_zar || item.unit_price || item.cost_price || 0,
+                    sellingPrice: item.selling_price || item.retail_price || (item.wholesale_floor_zar ? item.wholesale_floor_zar * 1.3 : 0)
+                };
+                stockMap[name].intake += (parseInt(item.quantity_allocated || item.quantity) || 0);
+            });
+
+            cachedOrders.forEach(order => {
+                if (order.payout_status !== 'RETURNED / CANCELLED') {
+                    const name = (order.item_name || '').trim();
+                    if (stockMap[name]) stockMap[name].dispatched += (parseInt(order.quantity_dispatched) || 1);
+                }
+            });
+
+            let match = null;
+            Object.keys(stockMap).forEach(key => {
+                const item = stockMap[key];
+                if (item.sku.toLowerCase() === query || item.name.toLowerCase().includes(query)) match = item;
+            });
+
+            if (match) {
+                activePosMatch = match;
+                const onHand = match.intake - match.dispatched;
+                document.getElementById('slotProductName').value = match.name;
+                document.getElementById('slotBarcode').value = match.sku || 'N/A';
+                document.getElementById('slotStockOnHand').value = onHand;
+                document.getElementById('slotUnitPrice').value = `R ${parseFloat(match.price).toFixed(2)}`;
+                document.getElementById('slotSellingPrice').value = `R ${parseFloat(match.sellingPrice).toFixed(2)}`;
+                document.getElementById('slotSupplier').value = match.supplier;
+                calculateSlotLineTotal();
+            } else {
+                clearPosSlots();
+            }
+        }
+
+        function calculateSlotLineTotal() {
+            if (!activePosMatch) return;
+            const qty = parseInt(document.getElementById('posQty').value) || 1;
+            const sellingPrice = parseFloat(activePosMatch.sellingPrice) || 0;
+            document.getElementById('slotLineTotal').value = `R ${(qty * sellingPrice).toFixed(2)}`;
+        }
+
+        function clearPosSlots() {
+            activePosMatch = null;
+            document.getElementById('slotProductName').value = '';
+            document.getElementById('slotBarcode').value = '';
+            document.getElementById('slotStockOnHand').value = '0';
+            document.getElementById('slotUnitPrice').value = 'R 0.00';
+            document.getElementById('slotSellingPrice').value = 'R 0.00';
+            document.getElementById('slotSupplier').value = '';
+            document.getElementById('slotLineTotal').value = 'R 0.00';
+        }
+
+        function addItemToCart() {
+            if (!activePosMatch) return alert('Scan or select an item first.');
+
+            const qty = parseInt(document.getElementById('posQty').value) || 1;
+            const onHand = parseInt(document.getElementById('slotStockOnHand').value) || 0;
+
+            if (qty > onHand) return alert(`Insufficient stock available (${onHand} remaining).`);
+
+            const sellingPrice = parseFloat(activePosMatch.sellingPrice) || 0;
+
+            posCart.push({
+                sku: activePosMatch.sku,
+                name: activePosMatch.name,
+                supplier: activePosMatch.supplier,
+                qty: qty,
+                sellingPrice: sellingPrice,
+                subtotal: qty * sellingPrice
+            });
+
+            renderCartTable();
+            document.getElementById('posBarcodeScan').value = '';
+            clearPosSlots();
+            document.getElementById('posBarcodeScan').focus();
+        }
+
+        function renderCartTable() {
+            const tbody = document.getElementById('cartTableBody');
+            tbody.innerHTML = '';
+
+            if (posCart.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No items added to current transaction batch.</td></tr>';
+                document.getElementById('cartItemCount').innerText = '0';
+                document.getElementById('cartGrandTotal').innerText = 'R 0.00';
+                return;
+            }
+
+            let grandTotal = 0;
+            let totalItems = 0;
+
+            posCart.forEach((item, idx) => {
+                grandTotal += item.subtotal;
+                totalItems += item.qty;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="color: var(--gold-light); font-weight: 600;">${item.sku || 'N/A'}</td>
+                    <td>${item.name}</td>
+                    <td>${item.supplier}</td>
+                    <td>${item.qty}</td>
+                    <td>R ${item.sellingPrice.toFixed(2)}</td>
+                    <td style="color: var(--cyan-bright); font-weight: 600;">R ${item.subtotal.toFixed(2)}</td>
+                    <td><button class="btn-action btn-delete" onclick="removeCartItem(${idx})">Remove</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('cartItemCount').innerText = totalItems;
+            document.getElementById('cartGrandTotal').innerText = `R ${grandTotal.toFixed(2)}`;
+        }
+
+        function removeCartItem(idx) {
+            posCart.splice(idx, 1);
+            renderCartTable();
+        }
+
+        async function checkoutBatchOrder() {
+            if (!currentUser) return openLoginModal();
+            if (posCart.length === 0) return alert('Add items to batch before checking out.');
+
+            let orderRef = document.getElementById('posOrderRef').value.trim();
+            if (!orderRef) orderRef = `POS-${Math.floor(100000 + Math.random() * 900000)}`;
+
+            const inserts = posCart.map(item => ({
+                item_name: item.name,
+                order_number: orderRef,
+                quantity_dispatched: item.qty,
+                wholesale_floor_zar: item.subtotal,
+                supplier: item.supplier,
+                marketplace: 'POS / In-Store',
+                payout_status: 'ESCROW PENDING',
+                processed_by: currentUser.full_name
+            }));
+
+            const { error } = await supabaseClient.from('orders').insert(inserts);
+
+            if (error) alert('Checkout error: ' + error.message);
+            else {
+                logAuditAction(`Dispatched Batch Order #${orderRef} (${posCart.length} lines)`);
+                showBatchReceipt(orderRef, posCart, currentUser.full_name);
+                posCart = [];
+                renderCartTable();
+                document.getElementById('posOrderRef').value = '';
+                fetchAdminOrders();
+            }
+        }
+
+        function showBatchReceipt(ref, cart, cashier) {
+            const content = document.getElementById('receiptContent');
+            let itemsHtml = '';
+            let grandTotal = 0;
+
+            cart.forEach(item => {
+                grandTotal += item.subtotal;
+                itemsHtml += `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span>${item.qty}x ${item.name.slice(0, 20)}</span>
+                        <span>R${item.subtotal.toFixed(2)}</span>
+                    </div>
+                `;
+            });
+
+            content.innerHTML = `
+                <p style="margin: 0;"><strong>DATE:</strong> ${new Date().toLocaleString()}</p>
+                <p style="margin: 0;"><strong>REF #:</strong> ${ref}</p>
+                <p style="margin: 0 0 8px 0;"><strong>CASHIER:</strong> ${cashier}</p>
+                <hr style="border: 0; border-top: 1px dashed #000; margin: 8px 0;">
+                ${itemsHtml}
+                <hr style="border: 0; border-top: 1px dashed #000; margin: 8px 0;">
+                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px;">
+                    <span>GRAND TOTAL:</span>
+                    <span>R${grandTotal.toFixed(2)}</span>
+                </div>
+            `;
+            document.getElementById('receiptModal').style.display = 'flex';
+        }
+
+        /* INVENTORY INTAKE */
+        function addStockItemToBatch(e) {
+            e.preventDefault();
+            const customSku = document.getElementById('stockSku').value.trim();
+            const stockName = document.getElementById('stockName').value.trim();
+            const qty = parseInt(document.getElementById('stockQty').value) || 0;
+            const unitPrice = parseFloat(document.getElementById('stockUnitPrice').value) || 0;
+            const sellingPrice = parseFloat(document.getElementById('stockSellingPrice').value) || 0;
+            const supplier = document.getElementById('stockSupplier').value.trim();
+
+            const generatedSku = customSku ? customSku.toUpperCase() : (stockName.toUpperCase().replace(/[^A-Z0-9]/g, '-').slice(0, 12) + '-' + Math.floor(100 + Math.random() * 900));
+
+            intakeBatch.push({
+                sku: generatedSku,
+                item_name: stockName,
+                item_description: stockName,
+                quantity_allocated: qty,
+                quantity: qty,
+                unit_price: unitPrice,
+                cost_price: unitPrice,
+                wholesale_floor_zar: unitPrice,
+                selling_price: sellingPrice,
+                supplier: supplier,
+                added_by: currentUser ? currentUser.full_name : 'Staff'
+            });
+
+            renderIntakeBatchTable();
+            document.getElementById('stockForm').reset();
+            document.getElementById('stockSku').focus();
+        }
+
+        function renderIntakeBatchTable() {
+            const tbody = document.getElementById('intakeBatchTableBody');
+            tbody.innerHTML = '';
+
+            if (intakeBatch.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No inventory lines staged.</td></tr>';
+                document.getElementById('intakeBatchCount').innerText = '0';
+                return;
+            }
+
+            intakeBatch.forEach((item, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="color: var(--gold-light); font-weight: 600;">${item.sku}</td>
+                    <td>${item.item_name}</td>
+                    <td>${item.supplier}</td>
+                    <td>${item.quantity}</td>
+                    <td>R ${item.unit_price.toFixed(2)}</td>
+                    <td style="color: var(--cyan-bright);">R ${(item.selling_price || 0).toFixed(2)}</td>
+                    <td><button class="btn-action btn-delete" onclick="removeIntakeBatchItem(${idx})">Remove</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('intakeBatchCount').innerText = intakeBatch.length;
+        }
+
+        function removeIntakeBatchItem(idx) {
+            intakeBatch.splice(idx, 1);
+            renderIntakeBatchTable();
+        }
+
+        async function commitIntakeBatch() {
+            if (!currentUser) return openLoginModal();
+            if (intakeBatch.length === 0) return alert('No staged inventory lines to commit.');
+
+            const { error } = await supabaseClient.from('inventory').insert(intakeBatch);
+
+            if (error) alert('Intake Error: ' + error.message);
+            else {
+                logAuditAction(`Committed intake batch of ${intakeBatch.length} items`);
+                alert(`Successfully committed ${intakeBatch.length} inventory lines!`);
+                intakeBatch = [];
+                renderIntakeBatchTable();
+                fetchAdminOrders();
+            }
+        }
+
+        /* SUPPLIER TRADE PORTAL LOGIC */
+        function populateSupplierTradeDropdown() {
+            const select = document.getElementById('supplierSelect');
+            if (!select) return;
+            const suppliers = [...new Set(cachedOrders.map(o => o.supplier).filter(Boolean))];
+            select.innerHTML = '<option value="ALL">-- All Suppliers / Master --</option>';
+            suppliers.forEach(supp => {
+                const opt = document.createElement('option');
+                opt.value = supp;
+                opt.innerText = supp;
+                select.appendChild(opt);
+            });
+        }
+
+        function filterSupplierLedger() {
+            const selectedSupplier = document.getElementById('supplierSelect').value;
+            document.getElementById('activeSupplierName').innerText = selectedSupplier === 'ALL' ? 'All Consignment Partners' : selectedSupplier;
+            renderSupplierPortal(selectedSupplier);
+        }
+
+        function renderSupplierPortal(supplierFilter) {
+            const filteredOrders = supplierFilter === 'ALL' ? cachedOrders : cachedOrders.filter(o => o.supplier === supplierFilter);
+            const filteredInventory = supplierFilter === 'ALL' ? cachedInventory : cachedInventory.filter(i => i.supplier === supplierFilter);
+
+            let totalUnits = 0;
+            let totalOwed = 0;
+
+            filteredOrders.forEach(order => {
+                if (order.payout_status !== 'RETURNED / CANCELLED') {
+                    totalUnits += (parseInt(order.quantity_dispatched) || 1);
+                    if (order.payout_status === 'ESCROW PENDING' || !order.payout_status) {
+                        totalOwed += (parseFloat(order.wholesale_floor_zar) || 0);
+                    }
+                }
+            });
+
+            document.getElementById('tradeUnits').innerText = `${totalUnits} Units`;
+            document.getElementById('tradeOwed').innerText = `R ${totalOwed.toFixed(2)}`;
+            document.getElementById('tradeSkus').innerText = `${filteredInventory.length} Lines`;
+
+            const manifestList = document.getElementById('manifestList');
+            manifestList.innerHTML = '';
+
+            if (filteredOrders.length === 0) {
+                manifestList.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 40px;">No transaction records found for this partner.</div>';
+                return;
+            }
+
+            filteredOrders.forEach(order => {
+                const amount = parseFloat(order.wholesale_floor_zar) || 0;
+                const status = order.payout_status || 'ESCROW PENDING';
+                const badgeClass = status === 'SETTLED' ? 'status-settled' : 'status-pending';
+                const dateStr = order.created_at ? new Date(order.created_at).toLocaleDateString('en-GB') : 'Recent';
+
+                const div = document.createElement('div');
+                div.className = 'manifest-item';
+                div.innerHTML = `
+                    <div>
+                        <div style="font-size: 13px; font-weight: 600; color: #fff;">${order.item_name || 'Consigned Item'}</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">Ref: #${order.order_number || order.id.slice(0, 8)} • ${dateStr}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 14px; font-weight: 700; color: var(--gold-light);">R ${amount.toFixed(2)}</div>
+                        <span class="status-badge ${badgeClass}">${status}</span>
+                    </div>
+                `;
+                manifestList.appendChild(div);
+            });
+        }
+
+        /* ADMIN & SETTLEMENT LEDGER */
         function renderAdminOrders(orders) {
             const startVal = document.getElementById('filterStartDate')?.value;
             const endVal = document.getElementById('filterEndDate')?.value;
 
             let filtered = [...orders];
 
-            if (startVal) {
-                const startDate = new Date(startVal);
-                filtered = filtered.filter(o => new Date(o.created_at) >= startDate);
-            }
+            if (startVal) filtered = filtered.filter(o => new Date(o.created_at) >= new Date(startVal));
             if (endVal) {
                 const endDate = new Date(endVal);
                 endDate.setHours(23, 59, 59, 999);
@@ -1150,9 +1205,7 @@
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="color: var(--text-muted); padding: 24px;">No ledger transactions found for this period.</td></tr>';
-            }
+            if (filtered.length === 0) tbody.innerHTML = '<tr><td colspan="8" style="color: var(--text-muted); padding: 20px;">No ledger transactions found.</td></tr>';
 
             filtered.forEach(o => {
                 const amount = parseFloat(o.wholesale_floor_zar) || 0;
@@ -1205,10 +1258,7 @@
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            if (inventory.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="color: var(--text-muted); padding: 24px;">No active inventory records found.</td></tr>';
-                return;
-            }
+            if (inventory.length === 0) return tbody.innerHTML = '<tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">No inventory records found.</td></tr>';
 
             inventory.forEach(item => {
                 const tr = document.createElement('tr');
@@ -1229,7 +1279,7 @@
             if (!confirm("Are you sure you want to delete this inventory item?")) return;
             const { error } = await supabaseClient.from('inventory').delete().eq('id', id);
             if (!error) {
-                logAuditAction(`Deleted inventory item (ID: ${id})`);
+                logAuditAction(`Deleted inventory record (ID: ${id})`);
                 fetchAdminOrders();
             }
         }
@@ -1240,10 +1290,7 @@
 
             let filtered = [...cachedOrders];
 
-            if (startVal) {
-                const startDate = new Date(startVal);
-                filtered = filtered.filter(o => new Date(o.created_at) >= startDate);
-            }
+            if (startVal) filtered = filtered.filter(o => new Date(o.created_at) >= new Date(startVal));
             if (endVal) {
                 const endDate = new Date(endVal);
                 endDate.setHours(23, 59, 59, 999);
@@ -1288,17 +1335,15 @@
             if (document.getElementById('accUnitsSold')) document.getElementById('accUnitsSold').innerText = `${totalUnits} Items`;
         }
 
+        /* RETURNS & STAFF MANAGEMENT */
         function populateReturnOrderSelect(orders) {
             const select = document.getElementById('returnOrderSelect');
             if (!select) return;
-
-            select.innerHTML = '<option value="" style="background:#1c1c1e;">-- Choose Order to Return --</option>';
-
+            select.innerHTML = '<option value="">-- Choose Order to Return --</option>';
             orders.forEach(o => {
                 if (o.payout_status !== 'RETURNED / CANCELLED') {
                     const opt = document.createElement('option');
                     opt.value = o.id;
-                    opt.style.background = '#1c1c1e';
                     opt.innerText = `#${o.order_number || o.id.slice(0,6)} - ${o.item_name} (${o.quantity_dispatched || 1} units)`;
                     select.appendChild(opt);
                 }
@@ -1317,10 +1362,8 @@
             const targetOrder = cachedOrders.find(o => o.id === orderId);
             if (!targetOrder) return;
 
-            // Mark order as returned
             await supabaseClient.from('orders').update({ payout_status: 'RETURNED / CANCELLED' }).eq('id', orderId);
 
-            // Log return
             await supabaseClient.from('returns_log').insert([{
                 order_id: orderId,
                 order_ref: targetOrder.order_number,
@@ -1331,7 +1374,6 @@
                 processed_by: currentUser ? currentUser.full_name : 'Staff'
             }]);
 
-            // Restock if selected
             if (restock === 'YES_RESTOCK') {
                 const matchedStockItem = cachedInventory.find(inv => (inv.item_name || '').toLowerCase() === (targetOrder.item_name || '').toLowerCase());
                 if (matchedStockItem) {
@@ -1347,35 +1389,6 @@
             alert('Return processed successfully.');
             document.getElementById('returnForm').reset();
             fetchAdminOrders();
-            fetchReturnsLog();
-        }
-
-        async function fetchReturnsLog() {
-            if (!supabaseClient) return;
-            const { data } = await supabaseClient.from('returns_log').select('*').order('created_at', { ascending: false });
-            const tbody = document.getElementById('returnsLogTable');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-
-            if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="color: var(--text-muted); padding: 24px;">No returns recorded yet.</td></tr>';
-                return;
-            }
-
-            data.forEach(r => {
-                const dateStr = r.created_at ? new Date(r.created_at).toLocaleDateString('en-GB') : 'Recent';
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${dateStr}</td>
-                    <td><strong>#${r.order_ref}</strong><br><small style="color: var(--text-muted);">${r.item_name}</small></td>
-                    <td>${r.quantity}</td>
-                    <td>${r.reason}</td>
-                    <td>${r.restocked ? '<span style="color:var(--green-active);">YES</span>' : '<span style="color:var(--red-alert);">NO</span>'}</td>
-                    <td>${r.processed_by || 'Staff'}</td>
-                    <td><span class="status-badge status-returned">RETURNED</span></td>
-                `;
-                tbody.appendChild(tr);
-            });
         }
 
         async function handleCreateStaff(e) {
@@ -1386,10 +1399,9 @@
 
             const { error } = await supabaseClient.from('staff_profiles').insert([{ full_name: name, pin_code: pin, role: role }]);
 
-            if (error) {
-                alert('Error creating staff profile: ' + error.message);
-            } else {
-                logAuditAction(`Created new staff profile for ${name} (${role})`);
+            if (error) alert('Staff Error: ' + error.message);
+            else {
+                logAuditAction(`Created staff profile for ${name}`);
                 alert(`Staff account created for ${name}!`);
                 document.getElementById('createStaffForm').reset();
                 fetchStaffProfiles();
@@ -1403,10 +1415,7 @@
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted); padding: 24px;">No custom staff profiles found. Default PINs active (1234 / 0000).</td></tr>';
-                return;
-            }
+            if (!data || data.length === 0) return tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted); padding: 20px;">No custom staff profiles found. Default PINs active (1234 / 0000).</td></tr>';
 
             data.forEach(s => {
                 const dateStr = s.created_at ? new Date(s.created_at).toLocaleDateString('en-GB') : 'Recent';
@@ -1446,10 +1455,7 @@
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="color: var(--text-muted); padding: 24px;">No audit trail events captured yet.</td></tr>';
-                return;
-            }
+            if (!data || data.length === 0) return tbody.innerHTML = '<tr><td colspan="3" style="color: var(--text-muted); padding: 20px;">No audit events recorded.</td></tr>';
 
             data.forEach(log => {
                 const dateStr = log.created_at ? new Date(log.created_at).toLocaleString() : 'Recent';
@@ -1463,6 +1469,39 @@
             });
         }
 
+        /* BARCODE CAMERA UTILITY */
+        function toggleCameraScanner() {
+            const modal = document.getElementById('cameraScannerModal');
+            if (modal.style.display === 'none' || modal.style.display === '') {
+                modal.style.display = 'block';
+                startCameraScanner();
+            } else stopCameraScanner();
+        }
+
+        function startCameraScanner() {
+            if (!html5QrCodeScanner) html5QrCodeScanner = new Html5Qrcode("interactive-camera");
+            html5QrCodeScanner.start(
+                { facingMode: "environment" }, 
+                { fps: 10, qrbox: { width: 250, height: 150 } }, 
+                (decodedText) => {
+                    document.getElementById('posBarcodeScan').value = decodedText;
+                    handleBarcodeScanInput();
+                    stopCameraScanner();
+                }
+            ).catch(err => {
+                alert("Camera error: " + err);
+                stopCameraScanner();
+            });
+        }
+
+        function stopCameraScanner() {
+            if (html5QrCodeScanner && html5QrCodeScanner.isScanning) {
+                html5QrCodeScanner.stop().then(() => document.getElementById('cameraScannerModal').style.display = 'none')
+                .catch(() => document.getElementById('cameraScannerModal').style.display = 'none');
+            } else document.getElementById('cameraScannerModal').style.display = 'none';
+        }
+
+        /* CSV EXPORTS */
         function exportSupplierStatement() {
             if (cachedOrders.length === 0) return alert('No data available for export.');
             let csv = 'Order Ref,Item Name,Supplier,Quantity,Wholesale Amount,Payout Status,Date\n';
