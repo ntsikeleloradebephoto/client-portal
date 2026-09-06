@@ -2817,3 +2817,58 @@
     </script>
 </body>
 </html>
+// 1. Fetch live expected totals from Supabase on page load / tab open
+async function loadDailyCashupTotals() {
+  const { data, error } = await supabase
+    .from('daily_cashup_summary')
+    .select('*')
+    .single();
+
+  if (error) {
+    console.error("Failed to load cashup totals:", error);
+    return;
+  }
+
+  const expectedCash = data ? parseFloat(data.expected_cash) : 0;
+  const expectedCard = data ? parseFloat(data.expected_card) : 0;
+
+  // Update UI expected display
+  document.getElementById('expectedCashDisplay').innerText = `R ${expectedCash.toFixed(2)}`;
+  document.getElementById('expectedCardDisplay').innerText = `R ${expectedCard.toFixed(2)}`;
+
+  // Store variables globally for variance calculation
+  window.systemExpectedCash = expectedCash;
+  window.systemExpectedCard = expectedCard;
+
+  calculateVariances();
+}
+
+// 2. Real-time variance calculation on declared input change
+function calculateVariances() {
+  const floatCash = parseFloat(document.getElementById('floatCashInput')?.value || 0);
+  const declaredCash = parseFloat(document.getElementById('declaredCashInput')?.value || 0);
+  const declaredCard = parseFloat(document.getElementById('declaredCardInput')?.value || 0);
+
+  // Variance = (Declared Cash - Float) - System Expected Cash
+  const cashVariance = (declaredCash - floatCash) - (window.systemExpectedCash || 0);
+  const cardVariance = declaredCard - (window.systemExpectedCard || 0);
+
+  // Update Discrepancy / Variance fields
+  const cashVarElem = document.getElementById('cashVarianceDisplay');
+  const cardVarElem = document.getElementById('cardVarianceDisplay');
+
+  if (cashVarElem) {
+    cashVarElem.value = `R ${cashVariance.toFixed(2)}`;
+    cashVarElem.style.color = cashVariance < 0 ? '#ff4d4d' : cashVariance === 0 ? '#00e676' : '#ffc107';
+  }
+
+  if (cardVarElem) {
+    cardVarElem.value = `R ${cardVariance.toFixed(2)}`;
+    cardVarElem.style.color = cardVariance < 0 ? '#ff4d4d' : cardVariance === 0 ? '#00e676' : '#ffc107';
+  }
+}
+
+// Attach event listeners to declared input boxes
+document.getElementById('declaredCashInput')?.addEventListener('input', calculateVariances);
+document.getElementById('declaredCardInput')?.addEventListener('input', calculateVariances);
+document.getElementById('floatCashInput')?.addEventListener('input', calculateVariances);
