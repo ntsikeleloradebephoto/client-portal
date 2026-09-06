@@ -3,1034 +3,1842 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consignment Admin & Double-Entry Accounting Suite</title>
+    <title>Nguni Homeware | Enterprise POS & Ledger Hub</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root {
-            --primary: #1e293b;
-            --primary-accent: #0f172a;
-            --accent: #2563eb;
-            --accent-hover: #1d4ed8;
-            --bg-main: #f8fafc;
-            --bg-card: #ffffff;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-            --success: #16a34a;
-            --danger: #dc2626;
-            --warning: #d97706;
+            --bg-dark: #08080a;
+            --bg-surface: rgba(28, 28, 30, 0.55);
+            --panel-glass: rgba(20, 20, 24, 0.65);
+            --gold-primary: #d4af37;
+            --gold-light: #f3c649;
+            --text-light: #f5f5f7;
+            --text-muted: rgba(235, 235, 245, 0.55);
+            --border-glass: rgba(212, 175, 55, 0.22);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --green-active: #30d158;
+            --red-alert: #ff453a;
+            --cyan-bright: #64d2ff;
+            --glass-blur: blur(40px) saturate(190%);
+            --glass-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
         }
 
         body {
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            display: flex;
+            background: #050507;
+            background-image: radial-gradient(circle at 50% -20%, #1c1608 0%, #050507 80%);
+            background-attachment: fixed;
+            color: var(--text-light);
+            padding: 24px;
             min-height: 100vh;
         }
 
-        /* Sidebar Navigation */
-        .sidebar {
-            width: 260px;
-            background-color: var(--primary);
-            color: #fff;
-            padding: 1.5rem 1rem;
+        /* HEADER & BAR */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            margin-bottom: 20px;
+            background: var(--panel-glass);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-subtle);
+            border-radius: 18px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .header-title { display: flex; align-items: center; gap: 14px; }
+        .header h1 { font-size: 14px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; color: var(--gold-primary); }
+
+        .role-badge { 
+            background: rgba(255, 255, 255, 0.05); 
+            border: 1px solid var(--border-glass); 
+            color: var(--gold-light); 
+            padding: 6px 14px; 
+            border-radius: 980px; 
+            font-size: 11px; 
+            font-weight: 600; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px;
+        }
+
+        /* TABS NAVIGATION */
+        .tabs { 
+            display: grid; 
+            grid-template-columns: repeat(9, 1fr); 
+            gap: 8px; 
+            margin-bottom: 20px; 
+            background: rgba(255, 255, 255, 0.02);
+            padding: 6px;
+            border-radius: 16px;
+            border: 1px solid var(--border-subtle);
+            backdrop-filter: var(--glass-blur);
+        }
+
+        .tab-btn { 
+            background: transparent; 
+            border: 1px solid transparent; 
+            color: var(--text-muted); 
+            padding: 10px 4px; 
+            font-weight: 600; 
+            font-size: 10px; 
+            letter-spacing: 0.3px; 
+            cursor: pointer; 
+            border-radius: 10px; 
+            transition: all 0.25s ease; 
+            text-align: center; 
+        }
+
+        .tab-btn:hover { color: var(--text-light); background: rgba(255,255,255,0.06); }
+        .tab-btn.active { 
+            background: linear-gradient(135deg, rgba(247, 220, 111, 0.9) 0%, rgba(212, 175, 55, 0.9) 100%); 
+            color: #000; 
+            font-weight: 700;
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3);
+        }
+
+        .tab-content { 
+            display: none; 
+            background: var(--panel-glass); 
+            border: 1px solid var(--border-subtle); 
+            padding: 24px; 
+            border-radius: 22px; 
+            backdrop-filter: var(--glass-blur);
+            box-shadow: var(--glass-shadow);
+        }
+        .tab-content.active { display: block; animation: glassFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+
+        @keyframes glassFadeIn {
+            from { opacity: 0; transform: translateY(8px) scale(0.995); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .section-title { 
+            font-size: 11px; 
+            font-weight: 700;
+            text-transform: uppercase; 
+            letter-spacing: 1.5px; 
+            color: var(--gold-primary); 
+            margin-bottom: 18px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+
+        /* FORMS & INPUTS */
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; letter-spacing: 0.5px; }
+        
+        .form-control { 
+            width: 100%; 
+            padding: 10px 14px; 
+            background: rgba(0, 0, 0, 0.5); 
+            border: 1px solid var(--border-subtle); 
+            color: #fff; 
+            border-radius: 10px; 
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--gold-primary);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        /* TRADE LEDGER SPECIFIC LAYOUT */
+        .trade-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 15, 18, 0.7);
+            border: 1px solid var(--border-subtle);
+            padding: 16px 20px;
+            border-radius: 16px;
+            margin-bottom: 18px;
+        }
+
+        .sync-pill {
+            background: rgba(48, 209, 88, 0.12);
+            border: 1px solid rgba(48, 209, 88, 0.3);
+            color: var(--green-active);
+            padding: 4px 12px;
+            border-radius: 980px;
+            font-size: 10px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green-active); }
+
+        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+        .summary-card { background: rgba(15, 15, 18, 0.6); border: 1px solid var(--border-subtle); padding: 18px 20px; border-radius: 16px; }
+        .summary-label { font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1.2px; }
+        .summary-val { font-size: 22px; font-weight: 700; margin-top: 8px; color: #fff; }
+
+        .trade-grid-container {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 18px;
+        }
+
+        .chart-panel {
+            background: rgba(15, 15, 18, 0.6);
+            border: 1px solid var(--border-subtle);
+            border-radius: 18px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
-            flex-shrink: 0;
         }
 
-        .sidebar h2 {
-            font-size: 1.1rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #94a3b8;
-            margin-bottom: 1rem;
-            padding-left: 0.5rem;
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            height: 320px;
+            margin-top: 10px;
         }
 
-        .nav-btn {
-            background: transparent;
-            border: none;
-            color: #cbd5e1;
-            padding: 0.75rem 1rem;
-            text-align: left;
-            border-radius: 6px;
+        .manifest-panel {
+            background: rgba(15, 15, 18, 0.6);
+            border: 1px solid var(--border-subtle);
+            border-radius: 18px;
+            padding: 20px;
+        }
+
+        .manifest-list { display: flex; flex-direction: column; gap: 10px; max-height: 330px; overflow-y: auto; padding-right: 4px; }
+        .manifest-item { 
+            background: rgba(25, 25, 30, 0.5); 
+            border: 1px solid var(--border-subtle); 
+            border-radius: 12px; 
+            padding: 12px 16px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+
+        /* TABLES & POS COMPONENTS */
+        .pos-grid-layout {
+            display: grid;
+            grid-template-columns: 1.8fr 1.2fr;
+            gap: 20px;
+        }
+
+        .item-slots-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 16px;
+            border-radius: 16px;
+            border: 1px solid var(--border-subtle);
+            margin-bottom: 18px;
+        }
+
+        .slot-box { display: flex; flex-direction: column; gap: 4px; }
+        .slot-label { font-size: 9px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+        .slot-input { background: rgba(0,0,0,0.5); border: 1px solid var(--border-subtle); color: #fff; padding: 8px 10px; font-size: 12px; border-radius: 8px; width: 100%; }
+
+        .transaction-slots-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .pos-table-container { background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); border-radius: 16px; overflow: hidden; margin-bottom: 20px; }
+        .pos-table, .ledger-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .pos-table th, .ledger-table th { background: rgba(255,255,255,0.04); color: var(--gold-primary); text-align: left; padding: 10px 14px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border-subtle); }
+        .pos-table td, .ledger-table td { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+
+        .pos-summary-bar {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-subtle);
+            padding: 18px;
+            border-radius: 16px;
+        }
+
+        .tender-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .tender-btn {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-light);
+            padding: 10px;
+            border-radius: 10px;
             cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 10px;
+            text-transform: uppercase;
             transition: all 0.2s;
         }
 
-        .nav-btn:hover {
-            background-color: var(--primary-accent);
-            color: #fff;
+        .tender-btn.active {
+            border-color: var(--gold-primary);
+            background: rgba(212, 175, 55, 0.15);
+            color: var(--gold-light);
         }
 
-        .nav-btn.active {
-            background-color: var(--accent);
-            color: #fff;
+        /* BUTTONS & BADGES */
+        .btn-submit { 
+            background: linear-gradient(135deg, rgba(247, 220, 111, 0.95) 0%, rgba(212, 175, 55, 0.95) 100%); 
+            color: #000; 
+            font-weight: 700; 
+            padding: 12px 18px; 
+            border: 1px solid rgba(255,255,255,0.4); 
+            border-radius: 12px; 
+            cursor: pointer; 
+            text-transform: uppercase; 
+            font-size: 10px;
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.25);
+            transition: all 0.2s ease;
         }
+        .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(212, 175, 55, 0.35); }
 
-        /* Main Content Area */
-        .main-content {
-            flex-grow: 1;
-            padding: 2rem;
-            overflow-y: auto;
-        }
+        .btn-sec { background: rgba(255,255,255,0.06); border: 1px solid var(--border-subtle); color: var(--gold-light); cursor: pointer; padding: 6px 12px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+        .btn-sec:hover { background: rgba(255,255,255,0.14); color: #fff; }
 
-        .tab-content {
-            display: none;
-        }
+        .btn-action { padding: 5px 10px; font-size: 9px; font-weight: 700; text-transform: uppercase; border: none; border-radius: 6px; cursor: pointer; margin-right: 4px; }
+        .btn-pending { background: rgba(212, 175, 55, 0.2); color: var(--gold-light); border: 1px solid rgba(212, 175, 55, 0.4); }
+        .btn-settled { background: rgba(48, 209, 88, 0.2); color: var(--green-active); border: 1px solid rgba(48, 209, 88, 0.4); }
+        .btn-delete { background: rgba(255, 69, 58, 0.2); color: var(--red-alert); border: 1px solid rgba(255, 69, 58, 0.4); }
 
-        .tab-content.active {
-            display: block;
-        }
+        .status-badge { font-size: 8px; font-weight: 700; text-transform: uppercase; padding: 3px 8px; border-radius: 980px; display: inline-block; }
+        .status-pending { color: var(--gold-light); background: rgba(212, 175, 55, 0.15); border: 1px solid rgba(212, 175, 55, 0.3); }
+        .status-settled { color: var(--green-active); background: rgba(48, 209, 88, 0.15); border: 1px solid rgba(48, 209, 88, 0.3); }
+        .status-returned { color: var(--red-alert); background: rgba(255, 69, 58, 0.15); border: 1px solid rgba(255, 69, 58, 0.3); }
 
-        .page-header {
-            margin-bottom: 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        /* MODALS */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); display: flex; justify-content: center; align-items: center; z-index: 999; }
+        .modal-card { background: rgba(25, 25, 30, 0.9); border: 1px solid var(--border-glass); padding: 28px; border-radius: 20px; width: 360px; text-align: center; box-shadow: var(--glass-shadow); }
 
-        .page-header h1 {
-            font-size: 1.5rem;
-            font-weight: 700;
-        }
-
-        /* Card Component */
-        .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .card h3 {
-            margin-bottom: 1rem;
-            font-size: 1.1rem;
-            color: var(--primary);
-        }
-
-        /* Grid Layouts */
-        .grid-2 {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1.5rem;
-        }
-
-        .grid-4 {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
-        }
-
-        .kpi-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem 1.25rem;
-        }
-
-        .kpi-card .label {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            font-weight: 600;
-        }
-
-        .kpi-card .value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-top: 0.25rem;
-        }
-
-        /* Form Elements */
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-bottom: 0.35rem;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 0.6rem 0.75rem;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            font-size: 0.9rem;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        .btn {
-            background-color: var(--accent);
-            color: white;
-            border: none;
-            padding: 0.6rem 1.2rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn:hover {
-            background-color: var(--accent-hover);
-        }
-
-        .btn-secondary {
-            background-color: #64748b;
-        }
-
-        .btn-secondary:hover {
-            background-color: #475569;
-        }
-
-        .btn-success {
-            background-color: var(--success);
-        }
-
-        /* Tables */
-        .table-container {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.875rem;
-            text-align: left;
-        }
-
-        th, td {
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid var(--border);
-        }
-
-        th {
-            background-color: #f1f5f9;
-            font-weight: 600;
-            color: var(--text-muted);
-        }
-
-        tr:hover {
-            background-color: #f8fafc;
-        }
-
-        .text-right {
-            text-align: right;
-        }
-
-        .badge {
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .badge-success { background: #dcfce7; color: #15803d; }
-        .badge-warning { background: #fef3c7; color: #b45309; }
-
-        /* Statements Layout */
-        .statement-line {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.5rem 0;
-            border-bottom: 1px dashed var(--border);
-        }
-
-        .statement-line.header {
-            font-weight: 700;
-            border-bottom: 2px solid var(--primary);
-            margin-top: 1rem;
-        }
-
-        .statement-line.total {
-            font-weight: 700;
-            border-bottom: 2px double var(--primary);
-            border-top: 1px solid var(--primary);
-            margin-top: 0.5rem;
-        }
-
-        .indent {
-            padding-left: 1.5rem;
+        @media print {
+            body * { visibility: hidden; }
+            #receiptModal, #receiptModal * { visibility: visible; }
+            #receiptModal { position: absolute; left: 0; top: 0; width: 100%; background: #fff; color: #000; padding: 0; }
+            .no-print { display: none !important; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Sidebar Navigation -->
-    <div class="sidebar">
-        <h2>Consignment POS</h2>
-        <button class="nav-btn active" onclick="switchTab('tab-sales')">1. Sales Entry</button>
-        <button class="nav-btn" onclick="switchTab('tab-inventory')">2. Inventory Ledger</button>
-        <button class="nav-btn" onclick="switchTab('tab-settlement')">3. Settlement Ledger</button>
+    <!-- APPLICATION HEADER -->
+    <div class="header">
+        <div class="header-title">
+            <img src="logo.png" alt="Nguni Logo" style="height: 28px;" onerror="this.style.display='none'">
+            <h1>NGUNI HOMEWARE | ENTERPRISE POS & LEDGER HUB</h1>
+        </div>
+        <div class="role-badge">
+            <span id="roleLabel">ACTIVE USER: NOT LOGGED IN</span>
+            <button class="btn-sec" onclick="openLoginModal()" style="padding: 4px 10px; font-size: 9px;">SWITCH USER</button>
+        </div>
+    </div>
+
+    <!-- MAIN MODULE TABS NAVIGATION -->
+    <div class="tabs">
+        <button class="tab-btn active" id="btnTab1" onclick="switchTab('tab1')">1. CASHIER POS SELL</button>
+        <button class="tab-btn" id="btnTab2" onclick="switchTab('tab2')">2. STOCK INTAKE</button>
+        <button class="tab-btn" id="btnTab9" onclick="switchTab('tab9')">3. TRADE LEDGER</button>
+        <button class="tab-btn" id="btnTab3" style="display: none;" onclick="switchTab('tab3')">4. SETTLEMENT LEDGER</button>
+        <button class="tab-btn" id="btnTab4" style="display: none;" onclick="switchTab('tab4')">5. STOCK ON-HAND</button>
+        <button class="tab-btn" id="btnTab5" style="display: none;" onclick="switchTab('tab5')">6. STAFF PROFILES</button>
+        <button class="tab-btn" id="btnTab6" style="display: none;" onclick="switchTab('tab6')">7. AUDIT LOGS</button>
+        <button class="tab-btn" id="btnTab7" onclick="switchTab('tab7')">8. RETURNS</button>
+        <button class="tab-btn" id="btnTab8" style="display: none;" onclick="switchTab('tab8')">9. ACCOUNTING</button>
+    </div>
+
+    <!-- TAB 1: CASHIER POS SELL (INTEGRATED) -->
+    <div id="tab1" class="tab-content active">
+        <div class="section-title">
+            <span>Cashier Front Desk Terminal & Live POS Checkout</span>
+            <span id="cashierBadgeDisplay" style="color: var(--cyan-bright); font-size: 10px;">CASHIER: UNASSIGNED</span>
+        </div>
         
-        <h2 style="margin-top: 1.5rem;">Accounting Suite</h2>
-        <button class="nav-btn" onclick="switchTab('tab-coa')">4. Chart of Accounts</button>
-        <button class="nav-btn" onclick="switchTab('tab-journal')">5. Journal Entries</button>
-        <button class="nav-btn" onclick="switchTab('tab-expenses')">6. Operating Expenses</button>
-        <button class="nav-btn" onclick="switchTab('tab-statements')">7. Financial Statements</button>
-        <button class="nav-btn" onclick="switchTab('tab-dashboard')">8. Accounting Dashboard</button>
+        <div class="pos-grid-layout">
+            <!-- LEFT COLUMN: SEARCH & SCAN PRODUCT DETAILS -->
+            <div>
+                <div class="form-group">
+                    <label>Scan Barcode / Type Item SKU (Auto-Adds on Enter)</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="posBarcodeScan" class="form-control" placeholder="Scan barcode or type item number..." oninput="handleBarcodeScanInput()" autofocus>
+                        <button type="button" class="btn-sec" onclick="toggleCameraScanner()" style="white-space: nowrap;">📷 Scan Camera</button>
+                    </div>
+                </div>
+
+                <div id="cameraScannerModal" style="display: none; background: rgba(0,0,0,0.5); border: 1px solid var(--border-glass); padding: 16px; border-radius: 18px; margin-bottom: 20px; text-align: center;">
+                    <div id="interactive-camera" style="width: 100%; max-width: 400px; margin: 0 auto; border-radius: 12px; overflow: hidden;"></div>
+                    <button type="button" class="btn-sec" onclick="stopCameraScanner()" style="margin-top: 12px; color: var(--red-alert);">Close Camera</button>
+                </div>
+
+                <div class="item-slots-grid">
+                    <div class="slot-box" style="grid-column: span 2;">
+                        <span class="slot-label">Product Description / Name</span>
+                        <input type="text" id="slotProductName" class="slot-input" readonly placeholder="Waiting for scan...">
+                    </div>
+                    <div class="slot-box">
+                        <span class="slot-label">Barcode / SKU</span>
+                        <input type="text" id="slotBarcode" class="slot-input" readonly placeholder="--">
+                    </div>
+                    <div class="slot-box">
+                        <span class="slot-label">Stock Available</span>
+                        <input type="text" id="slotStockOnHand" class="slot-input" style="color: var(--cyan-bright);" readonly placeholder="0">
+                    </div>
+                    <div class="slot-box">
+                        <span class="slot-label">Wholesale Cost (ZAR)</span>
+                        <input type="text" id="slotUnitPrice" class="slot-input" style="color: var(--gold-light);" readonly placeholder="R 0.00">
+                    </div>
+                    <div class="slot-box">
+                        <span class="slot-label">Selling Price (ZAR)</span>
+                        <input type="text" id="slotSellingPrice" class="slot-input" style="color: var(--cyan-bright);" readonly placeholder="R 0.00">
+                    </div>
+                    <div class="slot-box" style="grid-column: span 2;">
+                        <span class="slot-label">Consignor / Supplier</span>
+                        <input type="text" id="slotSupplier" class="slot-input" readonly placeholder="--">
+                    </div>
+                </div>
+
+                <div class="transaction-slots-grid">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Order Reference / Transaction No.</label>
+                        <input type="text" id="posOrderRef" class="form-control" placeholder="e.g. #1043 or POS-8923">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Quantity per Scan</label>
+                        <input type="number" id="posQty" class="form-control" value="1" min="1" oninput="calculateSlotLineTotal()">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Subtotal (ZAR)</label>
+                        <input type="text" id="slotLineTotal" class="form-control" readonly placeholder="R 0.00" style="color: var(--gold-light); font-weight: bold;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <button type="button" class="btn-submit" style="width:100%; height: 38px;" onclick="addItemToCart()">+ Add Item to Cart</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: STAGED BATCH & PAYMENT TENDER -->
+            <div>
+                <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--gold-primary); margin-bottom: 8px;">Staged Cart Items</div>
+                <div class="pos-table-container" style="max-height: 220px; overflow-y: auto;">
+                    <table class="pos-table">
+                        <thead>
+                            <tr>
+                                <th>PRODUCT</th>
+                                <th>QTY</th>
+                                <th>PRICE</th>
+                                <th>SUBTOTAL</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="cartTableBody">
+                            <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No items in checkout batch.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pos-summary-bar">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="slot-label">GRAND TOTAL</span>
+                        <h2 id="cartGrandTotal" style="font-size: 22px; font-weight: 700; color: var(--gold-light); margin: 0;">R 0.00</h2>
+                    </div>
+
+                    <div>
+                        <label style="font-size: 9px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Payment Tender Method</label>
+                        <div class="tender-options">
+                            <button type="button" class="tender-btn active" id="tenderCash" onclick="setTender('CASH')">Cash</button>
+                            <button type="button" class="tender-btn" id="tenderCard" onclick="setTender('CARD')">Card / POS</button>
+                        </div>
+
+                        <div class="form-group" id="cashTenderGroup" style="margin-bottom: 8px;">
+                            <label>Cash Tendered (ZAR)</label>
+                            <input type="number" id="cashReceived" class="form-control" placeholder="0.00" oninput="calculateChange()">
+                        </div>
+
+                        <div class="form-group" id="changeDueGroup" style="margin-bottom: 12px;">
+                            <label>Change Due</label>
+                            <input type="text" id="changeDue" class="form-control" readonly value="R 0.00" style="color: var(--green-active); font-weight: bold;">
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn-submit" style="width: 100%; text-align: center;" onclick="checkoutBatchOrder()">COMPLETE SALE & PRINT RECEIPT</button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-
-        <!-- TAB 1: SALES ENTRY -->
-        <div id="tab-sales" class="tab-content active">
-            <div class="page-header">
-                <h1>Record POS Sale</h1>
+    <!-- TAB 2: CONSIGNMENT STOCK INTAKE -->
+    <div id="tab2" class="tab-content">
+        <div class="section-title">Consignment Stock Intake & Batch Staging</div>
+        <form id="stockForm" onsubmit="addStockItemToBatch(event)" style="margin-bottom: 24px;">
+            <div class="form-group">
+                <label>Item Barcode / SKU (Auto-generated if blank)</label>
+                <input type="text" id="stockSku" class="form-control" placeholder="e.g. 600123456789 or ITEM-101">
             </div>
-            <div class="grid-2">
-                <div class="card">
-                    <h3>New Sale Entry</h3>
-                    <form id="sales-form" onsubmit="handleSaleSubmit(event)">
-                        <div class="form-group">
-                            <label>Item Name / SKU</label>
-                            <input type="text" id="sale-item-name" class="form-control" required placeholder="e.g. Vintage Leather Jacket">
-                        </div>
-                        <div class="form-group">
-                            <label>Consignor / Supplier Name</label>
-                            <input type="text" id="sale-supplier" class="form-control" required placeholder="e.g. John Doe">
-                        </div>
-                        <div class="grid-2">
-                            <div class="form-group">
-                                <label>Gross Retail Price (R)</label>
-                                <input type="number" step="0.01" id="sale-gross-price" class="form-control" required oninput="calculateSaleBreakdown()">
-                            </div>
-                            <div class="form-group">
-                                <label>Consignor Floor Price (R)</label>
-                                <input type="number" step="0.01" id="sale-floor-price" class="form-control" required oninput="calculateSaleBreakdown()">
-                            </div>
-                        </div>
-                        <div class="grid-2">
-                            <div class="form-group">
-                                <label>Payment Method</label>
-                                <select id="sale-payment-method" class="form-control" onchange="calculateSaleBreakdown()">
-                                    <option value="Card">Card Clearance Account</option>
-                                    <option value="Cash">Cash Account</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>VAT Treatment</label>
-                                <select id="sale-vat-rate" class="form-control" onchange="calculateSaleBreakdown()">
-                                    <option value="15">15% Standard Rate (SARS)</option>
-                                    <option value="0">0% Exempt / Zero Rated</option>
-                                </select>
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-success" style="width: 100%;">Post Sale & Generate Journal</button>
-                    </form>
-                </div>
-
-                <div class="card">
-                    <h3>Real-time Transaction Calculation</h3>
-                    <div class="statement-line"><span>Gross Store Sales (Incl. VAT):</span><span id="calc-gross">R 0.00</span></div>
-                    <div class="statement-line indent"><span>Less: Output VAT Portion:</span><span id="calc-vat">R 0.00</span></div>
-                    <div class="statement-line indent"><span>Gross Excl. VAT:</span><span id="calc-excl-vat">R 0.00</span></div>
-                    <div class="statement-line"><span>Consignor Payout Escrow (Floor Price):</span><span id="calc-floor">R 0.00</span></div>
-                    <div class="statement-line"><span>Fixed Platform Fee Allocation:</span><span id="calc-platform">R 230.00</span></div>
-                    <div class="statement-line indent"><span>Estimated Merchant Gateway Fee (~2.5% Card):</span><span id="calc-merchant-fee">R 0.00</span></div>
-                    <div class="statement-line total"><span>Store Net Margin:</span><span id="calc-net-margin">R 0.00</span></div>
-                </div>
+            <div class="form-group">
+                <label>SKU Description / Product Name</label>
+                <input type="text" id="stockName" class="form-control" required placeholder="e.g. Ceramic Teaset">
             </div>
+            <div class="form-group">
+                <label>Quantity Intake</label>
+                <input type="number" id="stockQty" class="form-control" value="10" required>
+            </div>
+            <div class="form-group">
+                <label>Wholesale Floor Price per Unit (ZAR)</label>
+                <input type="number" id="stockUnitPrice" class="form-control" required placeholder="e.g. 260">
+            </div>
+            <div class="form-group">
+                <label>Retail Selling Price per Unit (ZAR)</label>
+                <input type="number" id="stockSellingPrice" class="form-control" required placeholder="e.g. 450">
+            </div>
+            <div class="form-group">
+                <label>Consignor / Wholesale Supplier Partner</label>
+                <input type="text" id="stockSupplier" class="form-control" required placeholder="e.g. Craft Master Wholesalers">
+            </div>
+            <button type="submit" class="btn-submit" style="width: 100%;">+ Stage Stock Line</button>
+        </form>
+
+        <div class="section-title">Batch Intake Staging Queue</div>
+        <div class="pos-table-container">
+            <table class="pos-table">
+                <thead>
+                    <tr>
+                        <th>BARCODE / SKU</th>
+                        <th>PRODUCT NAME</th>
+                        <th>SUPPLIER</th>
+                        <th>QTY</th>
+                        <th>FLOOR PRICE</th>
+                        <th>SELLING PRICE</th>
+                        <th>ACTION</th>
+                    </tr>
+                </thead>
+                <tbody id="intakeBatchTableBody">
+                    <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No inventory staged for intake.</td></tr>
+                </tbody>
+            </table>
         </div>
 
-        <!-- TAB 2: INVENTORY LEDGER -->
-        <div id="tab-inventory" class="tab-content">
-            <div class="page-header">
-                <h1>Inventory Asset Ledger</h1>
-            </div>
-            <div class="card">
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Date Added</th>
-                                <th>Item Description</th>
-                                <th>Consignor</th>
-                                <th>Floor Price (Valuation)</th>
-                                <th>Target Retail Price</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="inventory-table-body">
-                            <!-- Populated dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        <div class="pos-summary-bar">
+            <div><span class="slot-label">STAGED LINES: <span id="intakeBatchCount" style="color:#fff;">0</span></span></div>
+            <button type="button" class="btn-submit" onclick="commitIntakeBatch()">COMMIT ALL STAGED INVENTORY</button>
         </div>
-
-        <!-- TAB 3: SETTLEMENT LEDGER -->
-        <div id="tab-settlement" class="tab-content">
-            <div class="page-header">
-                <h1>Supplier Settlement Ledger</h1>
-                <button class="btn btn-success" onclick="batchSettlePayouts()">Batch Settle Selected</button>
-            </div>
-            <div class="card">
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th><input type="checkbox" id="select-all-settlements" onclick="toggleSelectAllSettlements(this)"></th>
-                                <th>Transaction ID</th>
-                                <th>Supplier Name</th>
-                                <th>Item Description</th>
-                                <th>Gross Sale</th>
-                                <th>Payout Amount (Floor)</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="settlement-table-body">
-                            <!-- Populated dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- TAB 4: CHART OF ACCOUNTS -->
-        <div id="tab-coa" class="tab-content">
-            <div class="page-header">
-                <h1>Chart of Accounts (COA)</h1>
-                <button class="btn" onclick="document.getElementById('coa-modal').style.display='block'">+ Add Account</button>
-            </div>
-            <div class="card">
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Code</th>
-                                <th>Account Name</th>
-                                <th>Category</th>
-                                <th>Sub-Category</th>
-                                <th class="text-right">Current Balance (R)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="coa-table-body">
-                            <!-- Dynamic rendering of accounts -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- TAB 5: JOURNAL ENTRIES -->
-        <div id="tab-journal" class="tab-content">
-            <div class="page-header">
-                <h1>Double-Entry General Journal</h1>
-            </div>
-            <div class="card">
-                <h3>Post Manual Journal Entry</h3>
-                <form id="journal-form" onsubmit="handleManualJournalSubmit(event)">
-                    <div class="grid-2">
-                        <div class="form-group">
-                            <label>Date</label>
-                            <input type="date" id="manual-journal-date" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Description / Reference</label>
-                            <input type="text" id="manual-journal-desc" class="form-control" placeholder="e.g. Bank Charges adjustment" required>
-                        </div>
-                    </div>
-                    <div class="grid-2">
-                        <div class="form-group">
-                            <label>Debit Account</label>
-                            <select id="manual-debit-acc" class="form-control" required></select>
-                        </div>
-                        <div class="form-group">
-                            <label>Credit Account</label>
-                            <select id="manual-credit-acc" class="form-control" required></select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Amount (R)</label>
-                        <input type="number" step="0.01" id="manual-journal-amount" class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn">Post Double-Entry Record</button>
-                </form>
-            </div>
-
-            <div class="card">
-                <h3>Journal Transaction History</h3>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Txn #</th>
-                                <th>Date</th>
-                                <th>Description</th>
-                                <th>Account & Code</th>
-                                <th class="text-right">Debit (R)</th>
-                                <th class="text-right">Credit (R)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="journal-table-body">
-                            <!-- Populated dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- TAB 6: OPERATING EXPENSES -->
-        <div id="tab-expenses" class="tab-content">
-            <div class="page-header">
-                <h1>Operating Expenses (OpEx)</h1>
-            </div>
-            <div class="grid-2">
-                <div class="card">
-                    <h3>Record Store Expense</h3>
-                    <form id="expense-form" onsubmit="handleExpenseSubmit(event)">
-                        <div class="form-group">
-                            <label>Expense Date</label>
-                            <input type="date" id="expense-date" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Expense Category</label>
-                            <select id="expense-account" class="form-control" required></select>
-                        </div>
-                        <div class="form-group">
-                            <label>Description / Vendor</label>
-                            <input type="text" id="expense-desc" class="form-control" placeholder="e.g. Store Rent - Commercial" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Total Amount Paid (R)</label>
-                            <input type="number" step="0.01" id="expense-amount" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Payment Source Account</label>
-                            <select id="expense-source" class="form-control" required>
-                                <option value="1010">1010 - Bank Account</option>
-                                <option value="1020">1020 - Cash Account</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn btn-success">Record Expense & Update Ledger</button>
-                    </form>
-                </div>
-                <div class="card">
-                    <h3>Recent Recorded Expenses</h3>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Category</th>
-                                    <th>Description</th>
-                                    <th class="text-right">Amount (R)</th>
-                                </tr>
-                            </thead>
-                            <tbody id="expense-table-body">
-                                <!-- Dynamic entries -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- TAB 7: FINANCIAL STATEMENTS -->
-        <div id="tab-statements" class="tab-content">
-            <div class="page-header">
-                <h1>Financial Statements Suite</h1>
-                <button class="btn btn-secondary" onclick="window.print()">Export / Print Statements</button>
-            </div>
-
-            <div class="grid-2">
-                <!-- Income Statement -->
-                <div class="card">
-                    <h3>Income Statement (Profit & Loss)</h3>
-                    <div class="statement-line header"><span>REVENUE</span><span></span></div>
-                    <div class="statement-line indent"><span>Retail Sales Revenue (Excl. VAT)</span><span id="stmt-sales-rev">R 0.00</span></div>
-                    <div class="statement-line indent"><span>Fixed Platform Fee Revenue</span><span id="stmt-platform-rev">R 0.00</span></div>
-                    <div class="statement-line header"><span>COST OF GOODS SOLD (COGS)</span><span></span></div>
-                    <div class="statement-line indent"><span>Consignor Payout Expenses</span><span id="stmt-cogs">R 0.00</span></div>
-                    <div class="statement-line total"><span>GROSS PROFIT</span><span id="stmt-gross-profit">R 0.00</span></div>
-                    
-                    <div class="statement-line header"><span>OPERATING EXPENSES</span><span></span></div>
-                    <div id="stmt-opex-list">
-                        <!-- Populated dynamically -->
-                    </div>
-                    <div class="statement-line indent"><span>Merchant Processing Gateway Fees</span><span id="stmt-merchant-fees">R 0.00</span></div>
-                    <div class="statement-line total"><span>NET PROFIT BEFORE TAX</span><span id="stmt-net-profit">R 0.00</span></div>
-                </div>
-
-                <!-- Balance Sheet -->
-                <div class="card">
-                    <h3>Balance Sheet</h3>
-                    <div class="statement-line header"><span>ASSETS</span><span></span></div>
-                    <div class="statement-line indent"><span>Bank Account</span><span id="bs-bank">R 0.00</span></div>
-                    <div class="statement-line indent"><span>Cash Account</span><span id="bs-cash">R 0.00</span></div>
-                    <div class="statement-line indent"><span>POS Card Clearing Account</span><span id="bs-card-clearing">R 0.00</span></div>
-                    <div class="statement-line indent"><span>Inventory Valuation (Consignment Asset)</span><span id="bs-inventory">R 0.00</span></div>
-                    <div class="statement-line total"><span>TOTAL ASSETS</span><span id="bs-total-assets">R 0.00</span></div>
-
-                    <div class="statement-line header"><span>LIABILITIES</span><span></span></div>
-                    <div class="statement-line indent"><span>Consignor Payout Escrow (Payable)</span><span id="bs-escrow">R 0.00</span></div>
-                    <div class="statement-line indent"><span>SARS VAT Payable Account</span><span id="bs-vat">R 0.00</span></div>
-                    <div class="statement-line total"><span>TOTAL LIABILITIES</span><span id="bs-total-liabilities">R 0.00</span></div>
-
-                    <div class="statement-line header"><span>EQUITY</span><span></span></div>
-                    <div class="statement-line indent"><span>Retained Earnings / Current Period Net Income</span><span id="bs-retained-earnings">R 0.00</span></div>
-                    <div class="statement-line total"><span>TOTAL EQUITY & LIABILITIES</span><span id="bs-total-equity-liab">R 0.00</span></div>
-                </div>
-            </div>
-            
-            <!-- Cash Flow Statement -->
-            <div class="card">
-                <h3>Statement of Cash Flows</h3>
-                <div class="statement-line header"><span>CASH FLOW FROM OPERATING ACTIVITIES</span><span></span></div>
-                <div class="statement-line indent"><span>Collections from Retail Sales (Gross Inflow)</span><span id="cf-sales-inflow">R 0.00</span></div>
-                <div class="statement-line indent"><span>Payouts Disbursed to Consignors</span><span id="cf-consignor-payouts">R 0.00</span></div>
-                <div class="statement-line indent"><span>Operating Expenses & Merchant Fees Paid</span><span id="cf-opex-outflow">R 0.00</span></div>
-                <div class="statement-line total"><span>NET CASH GENERATED FROM OPERATING ACTIVITIES</span><span id="cf-net-cash">R 0.00</span></div>
-            </div>
-        </div>
-
-        <!-- TAB 8: ACCOUNTING & SALES DASHBOARD -->
-        <div id="tab-dashboard" class="tab-content">
-            <div class="page-header">
-                <h1>Accounting & Sales Dashboard</h1>
-            </div>
-            <div class="grid-4" style="margin-bottom: 1.5rem;">
-                <div class="kpi-card">
-                    <div class="label">Total Gross Sales</div>
-                    <div class="value" id="dash-gross-sales">R 0.00</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="label">Consignor Escrow Owed</div>
-                    <div class="value" style="color: var(--warning);" id="dash-escrow-owed">R 0.00</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="label">SARS VAT Payable</div>
-                    <div class="value" id="dash-vat-payable">R 0.00</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="label">Net Store Margin</div>
-                    <div class="value" style="color: var(--success);" id="dash-net-margin">R 0.00</div>
-                </div>
-            </div>
-        </div>
-
     </div>
 
-    <!-- JavaScript Data Models Engine & Logic -->
+    <!-- TAB 9: SUPPLIER TRADE LEDGER -->
+    <div id="tab9" class="tab-content">
+        <div class="trade-header-bar">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 16px; font-weight: 700; font-style: italic; color: #fff;">⚡</span>
+                <span style="font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--gold-light);">NGUNI HOMEWARE | SUPPLIER TRADE LEDGER</span>
+            </div>
+            <div class="sync-pill">
+                <span class="sync-dot"></span>
+                <span>Realtime Sync Active</span>
+            </div>
+        </div>
+
+        <div style="background: rgba(15,15,18,0.6); border: 1px solid var(--border-subtle); padding: 14px 20px; border-radius: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <span style="font-size: 9px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 1px;">VIEWING PARTNER LEDGER</span>
+                <div id="activeSupplierName" style="font-size: 15px; font-weight: 700; color: #fff; margin-top: 2px;">All Consignment Partners</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <label style="font-size: 9px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 1px;">SELECT PARTNER:</label>
+                <select id="supplierSelect" class="form-control" style="width: 240px; background: rgba(0,0,0,0.6);" onchange="filterSupplierLedger()">
+                    <option value="ALL">-- All Suppliers / Master View --</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-label">TOTAL UNITS CONSIGNED & SOLD</div>
+                <div class="summary-val" id="tradeUnits">0 Units</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">LOCKED WHOLESALE PAYOUT OWED</div>
+                <div class="summary-val" id="tradeOwed" style="color: var(--gold-light);">R 0.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">ACTIVE PILOT SKUS</div>
+                <div class="summary-val" id="tradeSkus" style="color: var(--cyan-bright);">0 Lines</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">SETTLEMENT CYCLE</div>
+                <div class="summary-val" style="font-size: 20px;">15–30 Days</div>
+            </div>
+        </div>
+
+        <div class="trade-grid-container">
+            <div class="chart-panel">
+                <div class="section-title" style="margin-bottom: 0;">WEEKLY UNIT SALES VELOCITY</div>
+                <div class="chart-wrapper">
+                    <canvas id="salesVelocityChart"></canvas>
+                </div>
+            </div>
+
+            <div class="manifest-panel">
+                <div class="section-title">CONSIGNMENT SALES MANIFEST</div>
+                <div class="manifest-list" id="manifestList">
+                    <div style="color: var(--text-muted); text-align: center; padding: 40px;">Loading live manifest records...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: SETTLEMENT LEDGER -->
+    <div id="tab3" class="tab-content">
+        <div class="section-title">
+            <span>Settlement Ledger & Supplier Split Breakdown</span>
+            <div style="display: flex; gap: 8px;">
+                <input type="date" id="filterStartDate" class="form-control" style="width: 130px; padding: 4px 8px;" onchange="renderAdminOrders(cachedOrders)">
+                <input type="date" id="filterEndDate" class="form-control" style="width: 130px; padding: 4px 8px;" onchange="renderAdminOrders(cachedOrders)">
+                <button class="btn-sec" onclick="exportSupplierStatement()">Export CSV</button>
+            </div>
+        </div>
+
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-label">Escrow Pending (Owed)</div>
+                <div class="summary-val" id="adminOwed" style="color: var(--gold-light);">R 0.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Total Settled Payouts</div>
+                <div class="summary-val" id="adminSettled" style="color: var(--green-active);">R 0.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Platform Fees (Store Retention)</div>
+                <div class="summary-val" style="color: var(--gold-primary);">R 230.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Net Payable Balance</div>
+                <div class="summary-val" id="adminNet" style="color: #fff;">R 0.00</div>
+            </div>
+        </div>
+
+        <div class="pos-table-container">
+            <table class="ledger-table">
+                <thead>
+                    <tr>
+                        <th>Order Ref / Item</th>
+                        <th>Supplier</th>
+                        <th>Date</th>
+                        <th>Processed By</th>
+                        <th>Qty</th>
+                        <th>Wholesale Amount</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="adminOrderTable">
+                    <tr><td colspan="8" style="color: var(--text-muted); padding: 20px;">Loading ledger...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 4: STOCK ON-HAND -->
+    <div id="tab4" class="tab-content">
+        <div class="section-title">Active Stock Inventory Management</div>
+        <div class="pos-table-container">
+            <table class="ledger-table">
+                <thead>
+                    <tr>
+                        <th>SKU / Barcode</th>
+                        <th>Product / Description</th>
+                        <th>Supplier Partner</th>
+                        <th>Intake Qty</th>
+                        <th>Wholesale Cost</th>
+                        <th>Selling Price</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="stockTableBody">
+                    <tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">Loading active inventory...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 5: STAFF PROFILES -->
+    <div id="tab5" class="tab-content">
+        <div class="section-title">Cashier, Staff & Supplier Profile Management</div>
+        <form id="createStaffForm" onsubmit="handleCreateStaff(event)" style="margin-bottom: 24px;">
+            <div class="form-group">
+                <label>Full Name / Supplier Name</label>
+                <input type="text" id="staffNameInput" class="form-control" required placeholder="e.g. Sipho Ndlovu or Craft Master Wholesalers">
+            </div>
+            <div class="form-group">
+                <label>PIN Code (4-6 Digits)</label>
+                <input type="password" id="staffPinInput" class="form-control" maxlength="6" required placeholder="e.g. 5678">
+            </div>
+            <div class="form-group">
+                <label>Access Level Role</label>
+                <select id="staffRoleSelect" class="form-control">
+                    <option value="cashier" style="background:#1c1c1e;">Cashier (POS Dispatch Only)</option>
+                    <option value="staff" style="background:#1c1c1e;">Staff (POS & Intake Only)</option>
+                    <option value="supplier" style="background:#1c1c1e;">Supplier Partner (Trade Ledger Portal Only)</option>
+                    <option value="manager" style="background:#1c1c1e;">Manager (Full Access & Ledger)</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-submit" style="width:100%;">Create Cashier / Staff / Supplier Profile</button>
+        </form>
+
+        <div class="section-title">Active Staff, Cashier & Supplier Accounts</div>
+        <div class="pos-table-container">
+            <table class="ledger-table">
+                <thead>
+                    <tr>
+                        <th>Account Name</th>
+                        <th>Role</th>
+                        <th>Created On</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="staffProfileTable">
+                    <tr><td colspan="4" style="color: var(--text-muted); padding: 20px;">Loading profiles...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 6: AUDIT LOGS -->
+    <div id="tab6" class="tab-content">
+        <div class="section-title">System Audit Trail & Activity Logs</div>
+        <div class="pos-table-container">
+            <table class="ledger-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Action Executed</th>
+                    </tr>
+                </thead>
+                <tbody id="auditTableBody">
+                    <tr><td colspan="3" style="color: var(--text-muted); padding: 20px;">Loading audit logs...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 7: RETURNS & RESTOCK -->
+    <div id="tab7" class="tab-content">
+        <div class="section-title">Customer Order Returns & Inventory Restock</div>
+        <form id="returnForm" onsubmit="handleReturnSubmit(event)" style="margin-bottom: 24px;">
+            <div class="form-group">
+                <label>Select Order / Transaction</label>
+                <select id="returnOrderSelect" class="form-control" required>
+                    <option value="">-- Choose Dispatched Order --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Return Quantity</label>
+                <input type="number" id="returnQty" class="form-control" value="1" min="1" required>
+            </div>
+            <div class="form-group">
+                <label>Reason for Return</label>
+                <select id="returnReason" class="form-control" required>
+                    <option value="Customer Change of Mind">Customer Change of Mind</option>
+                    <option value="Defective / Damaged Item">Defective / Damaged Item</option>
+                    <option value="Incorrect Item Dispatched">Incorrect Item Dispatched</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Restock Action</label>
+                <select id="restockAction" class="form-control" required>
+                    <option value="YES_RESTOCK">YES - Restock item back into active inventory</option>
+                    <option value="NO_RESTOCK">NO - Do not restock (Write-off / Damaged)</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, rgba(255, 69, 58, 0.95) 0%, rgba(197, 40, 32, 0.95) 100%); color:#fff; width:100%;">Process Order Return</button>
+        </form>
+
+        <div class="section-title">Processed Returns History</div>
+        <div class="pos-table-container">
+            <table class="ledger-table">
+                <thead>
+                    <tr>
+                        <th>Return Date</th>
+                        <th>Order Ref / Item</th>
+                        <th>Qty</th>
+                        <th>Reason</th>
+                        <th>Restocked?</th>
+                        <th>Processed By</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="returnsLogTable">
+                    <tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">Loading return history...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 8: ACCOUNTING & SALES DASHBOARD -->
+    <div id="tab8" class="tab-content">
+        <div class="section-title">
+            <span>Accounting & Sales Analytics</span>
+            <div style="display: flex; gap: 8px;">
+                <input type="date" id="accFilterStart" class="form-control" style="width: 130px; padding: 4px 8px;" onchange="renderAccountingDashboard()">
+                <input type="date" id="accFilterEnd" class="form-control" style="width: 130px; padding: 4px 8px;" onchange="renderAccountingDashboard()">
+                <button class="btn-sec" onclick="exportAccountingCSV()">Export CSV</button>
+            </div>
+        </div>
+
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-label">Gross Store Sales</div>
+                <div class="summary-val" id="accGrossSales" style="color: var(--cyan-bright);">R 0.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Platform Fees (Fixed)</div>
+                <div class="summary-val" style="color: var(--gold-primary);">R 230.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Net Store Revenue</div>
+                <div class="summary-val" id="accNetRevenue" style="color: var(--green-active);">R 0.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Total Units Sold</div>
+                <div class="summary-val" id="accUnitsSold" style="color: #fff;">0 Items</div>
+            </div>
+        </div>
+
+        <div class="section-title">Itemized Transaction Sales Ledger</div>
+        <div class="pos-table-container">
+            <table class="ledger-table">
+                <thead>
+                    <tr>
+                        <th>Order ID / Ref</th>
+                        <th>Timestamp</th>
+                        <th>Product SKU / Name</th>
+                        <th>Qty Sold</th>
+                        <th>Unit Price</th>
+                        <th>Gross Total</th>
+                        <th>Fulfillment Channel</th>
+                    </tr>
+                </thead>
+                <tbody id="accountingTableBody">
+                    <tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">Loading accounting records...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MODAL OVERLAYS -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal-card">
+            <h3 style="color: var(--gold-primary); font-size: 14px; margin-bottom: 6px;">CASHIER / STAFF AUTHENTICATION</h3>
+            <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 18px;">Enter PIN code to open terminal session.</p>
+            <div class="form-group">
+                <input type="password" id="userPinInput" class="form-control" style="text-align: center; font-size: 22px; letter-spacing: 6px;" maxlength="6" placeholder="••••" oninput="checkAutoLoginPin()" autofocus>
+            </div>
+            <button class="btn-submit" style="width: 100%;" onclick="authenticateUserPin()">LOGIN SESSION</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="receiptModal" style="display: none;">
+        <div class="modal-card" style="background: #fff; color: #000; text-align: left; font-family: monospace;">
+            <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;">
+                <h3 style="margin:0; font-size: 15px;">NGUNI HOMEWARE</h3>
+                <p style="margin: 2px 0 0 0; font-size: 10px;">Consignment & Retail POS Hub</p>
+            </div>
+            <div id="receiptContent" style="font-size: 11px; line-height: 1.5;"></div>
+            <div style="text-align: center; border-top: 1px dashed #000; padding-top: 10px; margin-top: 10px;">
+                <p style="margin: 0; font-size: 10px;">Thank you for shopping local!</p>
+            </div>
+            <div class="no-print" style="margin-top: 16px; display: flex; gap: 8px;">
+                <button class="btn-submit" onclick="window.print()" style="flex:2;">Print Slip</button>
+                <button class="btn-sec" onclick="closeModal('receiptModal')" style="flex:1; color:#000; border-color:#000;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APPLICATION LOGIC -->
     <script>
-        // --- 1. CHART OF ACCOUNTS INITIALIZATION ---
-        const initialChartOfAccounts = [
-            { code: "1010", name: "Bank Account", category: "Asset", sub: "Current Asset", balance: 10000.00 },
-            { code: "1020", name: "Cash Account", category: "Asset", sub: "Current Asset", balance: 2500.00 },
-            { code: "1030", name: "POS Card Clearing Account", category: "Asset", sub: "Current Asset", balance: 0.00 },
-            { code: "1200", name: "Inventory Valuation Asset", category: "Asset", sub: "Inventory Asset", balance: 0.00 },
-            { code: "2010", name: "Consignor Payout Escrow", category: "Liability", sub: "Current Liability", balance: 0.00 },
-            { code: "2020", name: "SARS VAT Payable Account", category: "Liability", sub: "Tax Liability", balance: 0.00 },
-            { code: "3010", name: "Retained Earnings", category: "Equity", sub: "Owner Equity", balance: 12500.00 },
-            { code: "4010", name: "Retail Sales Revenue", category: "Revenue", sub: "Operating Revenue", balance: 0.00 },
-            { code: "4020", name: "Fixed Platform Fee Revenue", category: "Revenue", sub: "Operating Revenue", balance: 0.00 },
-            { code: "5010", name: "Consignor COGS Expense", category: "Expense", sub: "Cost of Sales", balance: 0.00 },
-            { code: "5020", name: "Merchant Processing Gateway Fees", category: "Expense", sub: "Operating Expense", balance: 0.00 },
-            { code: "5030", name: "Rent Expense", category: "Expense", sub: "Operating Expense", balance: 0.00 },
-            { code: "5040", name: "Utilities & Internet Expense", category: "Expense", sub: "Operating Expense", balance: 0.00 }
-        ];
+        const SUPABASE_URL = 'https://aivsmcdhxfdccsbqmejt.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_NDE9uLsqMD2QiIa6LMw-Lw_IBOmeebV';
+        
+        let supabaseClient;
+        try {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        } catch (e) {
+            console.error("Supabase load error", e);
+        }
 
-        // --- GLOBAL STATE STORAGE ---
-        let accounts = JSON.parse(localStorage.getItem('app_coa')) || initialChartOfAccounts;
-        let journals = JSON.parse(localStorage.getItem('app_journals')) || [];
-        let sales = JSON.parse(localStorage.getItem('app_sales')) || [];
-        let expenses = JSON.parse(localStorage.getItem('app_expenses')) || [];
+        const PLATFORM_FEE = 230;
+        let currentUser = null;
+        let cachedOrders = [];
+        let cachedInventory = [];
+        let activePosMatch = null;
+        let posCart = [];
+        let intakeBatch = [];
+        let selectedTender = 'CASH';
+        let currentGrandTotal = 0;
+        let html5QrCodeScanner = null;
+        let salesChartInstance = null;
 
-        // CONSTANTS
-        const FIXED_PLATFORM_FEE = 230.00;[cite: 1]
+        window.addEventListener('DOMContentLoaded', () => {
+            openLoginModal();
+            fetchAdminOrders();
 
-        // --- NAVIGATION CONTROLLER ---
+            if (supabaseClient) {
+                supabaseClient.channel('enterprise_realtime').on('postgres_changes', { event: '*', schema: 'public' }, () => {
+                    fetchAdminOrders();
+                }).subscribe();
+            }
+        });
+
+        /* TAB MANAGEMENT */
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-            
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
+            const targetBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick')?.includes(tabId));
+            if (targetBtn) targetBtn.classList.add('active');
 
-            // Refresh UI tables & statements on view switch
-            renderAll();
+            if (tabId === 'tab9') {
+                setTimeout(() => renderVelocityChart(cachedOrders), 100);
+            }
         }
 
-        // --- 2. CALCULATOR & POS REALTIME FEEDBACK ---
-        function calculateSaleBreakdown() {
-            const gross = parseFloat(document.getElementById('sale-gross-price').value) || 0;
-            const floor = parseFloat(document.getElementById('sale-floor-price').value) || 0;
-            const vatRate = parseFloat(document.getElementById('sale-vat-rate').value) || 0;
-            const paymentMethod = document.getElementById('sale-payment-method').value;
-
-            const vatAmount = gross - (gross / (1 + (vatRate / 100)));
-            const grossExclVat = gross - vatAmount;
-            const merchantFee = (paymentMethod === 'Card') ? (gross * 0.025) : 0; // 2.5% merchant rate
-            const netMargin = grossExclVat - floor - merchantFee;
-
-            document.getElementById('calc-gross').innerText = `R ${gross.toFixed(2)}`;
-            document.getElementById('calc-vat').innerText = `R ${vatAmount.toFixed(2)}`;
-            document.getElementById('calc-excl-vat').innerText = `R ${grossExclVat.toFixed(2)}`;
-            document.getElementById('calc-floor').innerText = `R ${floor.toFixed(2)}`;
-            document.getElementById('calc-merchant-fee').innerText = `R ${merchantFee.toFixed(2)}`;
-            document.getElementById('calc-net-margin').innerText = `R ${netMargin.toFixed(2)}`;
-        }
-
-        // --- 3. DOUBLE-ENTRY JOURNALING SYSTEM ---
-        function postJournalEntry(date, description, debitAccCode, creditAccCode, amount) {
-            const txnId = "JRN-" + (journals.length + 1001);
+        /* TENDER METHOD SELECTION */
+        function setTender(method) {
+            selectedTender = method;
+            document.getElementById('tenderCash').classList.toggle('active', method === 'CASH');
+            document.getElementById('tenderCard').classList.toggle('active', method === 'CARD');
             
-            const entry = {
-                txnId,
-                date,
-                description,
-                lines: [
-                    { accountCode: debitAccCode, debit: amount, credit: 0 },
-                    { accountCode: creditAccCode, debit: 0, credit: amount }
-                ]
-            };
+            const cashGroup = document.getElementById('cashTenderGroup');
+            const changeGroup = document.getElementById('changeDueGroup');
+            if (method === 'CARD') {
+                cashGroup.style.display = 'none';
+                changeGroup.style.display = 'none';
+            } else {
+                cashGroup.style.display = 'block';
+                changeGroup.style.display = 'block';
+            }
+        }
 
-            journals.push(entry);
+        function calculateChange() {
+            const tendered = parseFloat(document.getElementById('cashReceived').value) || 0;
+            const change = Math.max(0, tendered - currentGrandTotal);
+            document.getElementById('changeDue').value = `R ${change.toFixed(2)}`;
+        }
 
-            // Update COA Balances
-            const debitAcc = accounts.find(a => a.code === debitAccCode);
-            const creditAcc = accounts.find(a => a.code === creditAccCode);
+        /* LOGIN & SESSION HANDLERS */
+        function openLoginModal() {
+            currentUser = null;
+            document.getElementById('roleLabel').innerText = 'ACTIVE USER: NOT LOGGED IN';
+            const pinInput = document.getElementById('userPinInput');
+            if (pinInput) {
+                pinInput.value = '';
+                setTimeout(() => pinInput.focus(), 100);
+            }
+            document.getElementById('loginModal').style.display = 'flex';
+        }
 
-            if (debitAcc) {
-                if (debitAcc.category === "Asset" || debitAcc.category === "Expense") debitAcc.balance += amount;
-                else debitAcc.balance -= amount;
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        async function checkAutoLoginPin() {
+            const pin = document.getElementById('userPinInput').value.trim();
+            if (pin === '1234') { 
+                currentUser = { full_name: 'Default Manager', role: 'manager' }; 
+                applyUserSession(); 
+            } 
+            else if (pin === '1111') {
+                currentUser = { full_name: 'Restricted POS User', role: 'pos_restricted' };
+                applyUserSession();
+            }
+            else if (pin === '9999') { 
+                currentUser = { full_name: 'Supplier Partner', role: 'supplier' }; 
+                applyUserSession(); 
+            }
+            else if (pin === '0000') { 
+                currentUser = { full_name: 'Cashier Floor', role: 'cashier' }; 
+                applyUserSession(); 
+            } 
+            else if (pin.length >= 4 && supabaseClient) {
+                const { data } = await supabaseClient.from('staff_profiles').select('*').eq('pin_code', pin);
+                if (data && data.length > 0) { currentUser = data[0]; applyUserSession(); }
+            }
+        }
+
+        async function authenticateUserPin() {
+            const pin = document.getElementById('userPinInput').value.trim();
+            if (pin === '1234') { currentUser = { full_name: 'Default Manager', role: 'manager' }; applyUserSession(); return; } 
+            if (pin === '1111') { currentUser = { full_name: 'Restricted POS User', role: 'pos_restricted' }; applyUserSession(); return; }
+            if (pin === '9999') { currentUser = { full_name: 'Supplier Partner', role: 'supplier' }; applyUserSession(); return; }
+            if (pin === '0000') { currentUser = { full_name: 'Cashier Floor', role: 'cashier' }; applyUserSession(); return; }
+
+            const { data } = await supabaseClient.from('staff_profiles').select('*').eq('pin_code', pin);
+            if (data && data.length > 0) { currentUser = data[0]; applyUserSession(); } 
+            else alert('Invalid PIN code.');
+        }
+
+        function applyUserSession() {
+            document.getElementById('roleLabel').innerText = `USER: ${currentUser.full_name.toUpperCase()} (${currentUser.role.toUpperCase()})`;
+            document.getElementById('cashierBadgeDisplay').innerText = `CASHIER: ${currentUser.full_name.toUpperCase()}`;
+            
+            if (currentUser.role === 'supplier') {
+                ['btnTab1', 'btnTab2', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8'].forEach(id => {
+                    if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
+                });
+                if (document.getElementById('btnTab9')) document.getElementById('btnTab9').style.display = 'block';
+                switchTab('tab9');
+
+                // Auto-select matching supplier name in dropdown if available
+                const supplierSelect = document.getElementById('supplierSelect');
+                if (supplierSelect) {
+                    const matchingOpt = Array.from(supplierSelect.options).find(opt => 
+                        opt.value.toLowerCase() === currentUser.full_name.toLowerCase()
+                    );
+                    if (matchingOpt) {
+                        supplierSelect.value = matchingOpt.value;
+                        filterSupplierLedger();
+                    }
+                }
+            } 
+            else if (currentUser.role === 'pos_restricted') {
+                ['btnTab1', 'btnTab2', 'btnTab4', 'btnTab7'].forEach(id => {
+                    if (document.getElementById(id)) document.getElementById(id).style.display = 'block';
+                });
+                ['btnTab3', 'btnTab5', 'btnTab6', 'btnTab8', 'btnTab9'].forEach(id => {
+                    if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
+                });
+                switchTab('tab1');
+            }
+            else if (currentUser.role === 'manager') {
+                ['btnTab1', 'btnTab2', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8', 'btnTab9'].forEach(id => {
+                    if (document.getElementById(id)) document.getElementById(id).style.display = 'block';
+                });
+                switchTab('tab1');
+            } 
+            else {
+                // DEFAULT CASHIER ACCESS
+                if (document.getElementById('btnTab1')) document.getElementById('btnTab1').style.display = 'block';
+                
+                ['btnTab2', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8', 'btnTab9'].forEach(id => {
+                    if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
+                });
+                switchTab('tab1');
             }
 
-            if (creditAcc) {
-                if (creditAcc.category === "Liability" || creditAcc.category === "Revenue" || creditAcc.category === "Equity") creditAcc.balance += amount;
-                else creditAcc.balance -= amount;
-            }
-
-            saveState();
+            closeModal('loginModal');
+            logAuditAction(`Logged in (${currentUser.full_name} - ${currentUser.role})`);
+            fetchAdminOrders();
+            fetchStaffProfiles();
         }
 
-        // --- 4. TRANSACTION HANDLERS ---
-        function handleSaleSubmit(e) {
-            e.preventDefault();
-
-            const item = document.getElementById('sale-item-name').value;
-            const supplier = document.getElementById('sale-supplier').value;
-            const gross = parseFloat(document.getElementById('sale-gross-price').value);
-            const floor = parseFloat(document.getElementById('sale-floor-price').value);
-            const paymentMethod = document.getElementById('sale-payment-method').value;
-            const vatRate = parseFloat(document.getElementById('sale-vat-rate').value);
-            const date = new Date().toISOString().split('T')[0];
-
-            const vatAmount = gross - (gross / (1 + (vatRate / 100)));
-            const grossExclVat = gross - vatAmount;
-            const assetAccount = (paymentMethod === 'Card') ? "1030" : "1020";
-
-            // Sale Record Object
-            const saleRecord = {
-                id: "SL-" + (sales.length + 101),
-                date,
-                item,
-                supplier,
-                gross,
-                floor,
-                vatAmount,
-                status: "Pending Settlement"
-            };
-            sales.push(saleRecord);
-
-            // AUTOMATED COMPLIANT DOUBLE-ENTRY TRANSACTIONS
-            // 1. Debit Cash/Card Account, Credit Retail Sales Revenue
-            postJournalEntry(date, `POS Sale: ${item}`, assetAccount, "4010", grossExclVat);
+        /* DATA FETCHING & REALTIME REFRESH */
+        async function fetchAdminOrders() {
+            if (!supabaseClient) return;
+            const { data: orders } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
+            cachedOrders = orders || [];
             
-            // 2. Tax Handling: Debit Cash/Card, Credit SARS VAT Payable
-            if (vatAmount > 0) {
-                postJournalEntry(date, `VAT Collector: ${item}`, assetAccount, "2020", vatAmount);
-            }
+            const { data: inventory } = await supabaseClient.from('inventory').select('*').order('created_at', { ascending: false });
+            cachedInventory = inventory || [];
 
-            // 3. Escrow Allocation: Debit Consignor COGS, Credit Consignor Escrow Payable
-            postJournalEntry(date, `Consignor Payout Escrow: ${supplier}`, "5010", "2010", floor);
-
-            // 4. Fixed Platform Fee Accounting allocation
-            postJournalEntry(date, `Platform Fee Internal Recognition: ${item}`, "4010", "4020", FIXED_PLATFORM_FEE);[cite: 1]
-
-            alert("Sale successfully posted with complete double-entry journals!");
-            document.getElementById('sales-form').reset();
-            calculateSaleBreakdown();
-            renderAll();
+            renderAdminOrders(cachedOrders);
+            renderStockTable(cachedInventory);
+            renderAccountingDashboard();
+            populateSupplierTradeDropdown();
+            renderSupplierPortal('ALL');
+            fetchReturnsLog();
         }
 
-        function handleExpenseSubmit(e) {
-            e.preventDefault();
-            const date = document.getElementById('expense-date').value;
-            const accCode = document.getElementById('expense-account').value;
-            const desc = document.getElementById('expense-desc').value;
-            const amount = parseFloat(document.getElementById('expense-amount').value);
-            const sourceAccCode = document.getElementById('expense-source').value;
+        /* POS SCAN & CART LOGIC */
+        function handleBarcodeScanInput() {
+            const query = document.getElementById('posBarcodeScan').value.trim().toLowerCase();
+            if (!query) return clearPosSlots();
 
-            expenses.push({ date, category: accCode, desc, amount });
-            
-            // Double Entry: Debit Expense Account, Credit Bank/Cash
-            postJournalEntry(date, `OpEx: ${desc}`, accCode, sourceAccCode, amount);
+            const stockMap = {};
+            cachedInventory.forEach(item => {
+                const name = (item.item_name || item.item_description || item.sku || 'Unknown').trim();
+                const sku = item.sku || '';
+                stockMap[name] = stockMap[name] || { 
+                    name: name, 
+                    sku: sku, 
+                    intake: 0, 
+                    dispatched: 0, 
+                    supplier: item.supplier || 'General Wholesaler', 
+                    price: item.wholesale_floor_zar || item.unit_price || item.cost_price || 0,
+                    sellingPrice: item.selling_price || item.retail_price || (item.wholesale_floor_zar ? item.wholesale_floor_zar * 1.3 : 0)
+                };
+                stockMap[name].intake += (parseInt(item.quantity_allocated || item.quantity) || 0);
+            });
 
-            alert("Operating Expense logged!");
-            document.getElementById('expense-form').reset();
-            renderAll();
-        }
-
-        function handleManualJournalSubmit(e) {
-            e.preventDefault();
-            const date = document.getElementById('manual-journal-date').value;
-            const desc = document.getElementById('manual-journal-desc').value;
-            const debitAcc = document.getElementById('manual-debit-acc').value;
-            const creditAcc = document.getElementById('manual-credit-acc').value;
-            const amount = parseFloat(document.getElementById('manual-journal-amount').value);
-
-            postJournalEntry(date, desc, debitAcc, creditAcc, amount);
-            
-            alert("Manual Journal Entry Posted!");
-            document.getElementById('journal-form').reset();
-            renderAll();
-        }
-
-        // --- 5. BATCH SETTLEMENT SYSTEM ---
-        function batchSettlePayouts() {
-            const checkboxes = document.querySelectorAll('.settlement-check:checked');
-            if (checkboxes.length === 0) {
-                alert("Please select at least one pending payout to settle.");
-                return;
-            }
-
-            const today = new Date().toISOString().split('T')[0];
-            let totalSettled = 0;
-
-            checkboxes.forEach(cb => {
-                const saleId = cb.dataset.id;
-                const sale = sales.find(s => s.id === saleId);
-                if (sale && sale.status === "Pending Settlement") {
-                    sale.status = "Settled";
-                    totalSettled += sale.floor;
-
-                    // Journal Entry: Debit Consignor Escrow Payable (2010), Credit Bank (1010)
-                    postJournalEntry(today, `Settlement Disbursement: ${sale.supplier} (${sale.item})`, "2010", "1010", sale.floor);
+            cachedOrders.forEach(order => {
+                if (order.payout_status !== 'RETURNED / CANCELLED') {
+                    const name = (order.item_name || '').trim();
+                    if (stockMap[name]) stockMap[name].dispatched += (parseInt(order.quantity_dispatched) || 1);
                 }
             });
 
-            alert(`Successfully batch settled R ${totalSettled.toFixed(2)} in supplier payouts!`);
-            renderAll();
-        }
-
-        function toggleSelectAllSettlements(master) {
-            document.querySelectorAll('.settlement-check').forEach(cb => cb.checked = master.checked);
-        }
-
-        // --- 6. RENDER ENGINE & UI SYNCHRONIZATION ---
-        function renderAll() {
-            saveState();
-            renderCOATable();
-            renderJournalTable();
-            renderSettlementTable();
-            renderExpenseTable();
-            renderStatements();
-            renderDashboard();
-            populateDropdowns();
-        }
-
-        function saveState() {
-            localStorage.setItem('app_coa', JSON.stringify(accounts));
-            localStorage.setItem('app_journals', JSON.stringify(journals));
-            localStorage.setItem('app_sales', JSON.stringify(sales));
-            localStorage.setItem('app_expenses', JSON.stringify(expenses));
-        }
-
-        function renderCOATable() {
-            const tbody = document.getElementById('coa-table-body');
-            tbody.innerHTML = accounts.map(a => `
-                <tr>
-                    <td><strong>${a.code}</strong></td>
-                    <td>${a.name}</td>
-                    <td><span class="badge ${a.category === 'Asset' ? 'badge-success' : 'badge-warning'}">${a.category}</span></td>
-                    <td>${a.sub}</td>
-                    <td class="text-right">R ${a.balance.toFixed(2)}</td>
-                </tr>
-            `).join('');
-        }
-
-        function renderJournalTable() {
-            const tbody = document.getElementById('journal-table-body');
-            let html = '';
-            journals.slice().reverse().forEach(j => {
-                j.lines.forEach(line => {
-                    const acc = accounts.find(a => a.code === line.accountCode);
-                    html += `
-                        <tr>
-                            <td>${j.txnId}</td>
-                            <td>${j.date}</td>
-                            <td>${j.description}</td>
-                            <td>${acc ? acc.code + ' - ' + acc.name : line.accountCode}</td>
-                            <td class="text-right">${line.debit > 0 ? 'R ' + line.debit.toFixed(2) : '-'}</td>
-                            <td class="text-right">${line.credit > 0 ? 'R ' + line.credit.toFixed(2) : '-'}</td>
-                        </tr>
-                    `;
-                });
+            let match = null;
+            Object.keys(stockMap).forEach(key => {
+                const item = stockMap[key];
+                if (item.sku.toLowerCase() === query || item.name.toLowerCase().includes(query)) match = item;
             });
-            tbody.innerHTML = html;
-        }
 
-        function renderSettlementTable() {
-            const tbody = document.getElementById('settlement-table-body');
-            tbody.innerHTML = sales.map(s => `
-                <tr>
-                    <td><input type="checkbox" class="settlement-check" data-id="${s.id}" ${s.status === 'Settled' ? 'disabled' : ''}></td>
-                    <td>${s.id}</td>
-                    <td>${s.supplier}</td>
-                    <td>${s.item}</td>
-                    <td>R ${s.gross.toFixed(2)}</td>
-                    <td><strong>R ${s.floor.toFixed(2)}</strong></td>
-                    <td><span class="badge ${s.status === 'Settled' ? 'badge-success' : 'badge-warning'}">${s.status}</span></td>
-                </tr>
-            `).join('');
-        }
-
-        function renderExpenseTable() {
-            const tbody = document.getElementById('expense-table-body');
-            tbody.innerHTML = expenses.map(e => {
-                const acc = accounts.find(a => a.code === e.category);
-                return `
-                    <tr>
-                        <td>${e.date}</td>
-                        <td>${acc ? acc.name : e.category}</td>
-                        <td>${e.desc}</td>
-                        <td class="text-right">R ${e.amount.toFixed(2)}</td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        function renderStatements() {
-            // Income Statement Variables
-            const revAcc = accounts.find(a => a.code === "4010");
-            const platAcc = accounts.find(a => a.code === "4020");
-            const cogsAcc = accounts.find(a => a.code === "5010");
-            const merchAcc = accounts.find(a => a.code === "5020");
-
-            const salesRev = revAcc ? revAcc.balance : 0;
-            const platformRev = platAcc ? platAcc.balance : 0;
-            const cogs = cogsAcc ? cogsAcc.balance : 0;
-            const grossProfit = (salesRev + platformRev) - cogs;
-
-            document.getElementById('stmt-sales-rev').innerText = `R ${salesRev.toFixed(2)}`;
-            document.getElementById('stmt-platform-rev').innerText = `R ${platformRev.toFixed(2)}`;
-            document.getElementById('stmt-cogs').innerText = `R ${cogs.toFixed(2)}`;
-            document.getElementById('stmt-gross-profit').innerText = `R ${grossProfit.toFixed(2)}`;
-
-            // Dynamic OpEx list render
-            const opexAccounts = accounts.filter(a => a.category === "Expense" && a.code !== "5010" && a.code !== "5020");
-            let totalOpex = merchAcc ? merchAcc.balance : 0;
-            
-            const opexHtml = opexAccounts.map(a => {
-                totalOpex += a.balance;
-                return `<div class="statement-line indent"><span>${a.name}</span><span>R ${a.balance.toFixed(2)}</span></div>`;
-            }).join('');
-
-            document.getElementById('stmt-opex-list').innerHTML = opexHtml;
-            document.getElementById('stmt-merchant-fees').innerText = `R ${(merchAcc ? merchAcc.balance : 0).toFixed(2)}`;
-
-            const netProfit = grossProfit - totalOpex;
-            document.getElementById('stmt-net-profit').innerText = `R ${netProfit.toFixed(2)}`;
-
-            // Balance Sheet Render
-            const getBal = (code) => (accounts.find(a => a.code === code) || {}).balance || 0;
-
-            const bank = getBal("1010");
-            const cash = getBal("1020");
-            const cardClearing = getBal("1030");
-            const invVal = getBal("1200");
-            const totalAssets = bank + cash + cardClearing + invVal;
-
-            const escrow = getBal("2010");
-            const vatPayable = getBal("2020");
-            const totalLiabilities = escrow + vatPayable;
-
-            const retainedEarnings = getBal("3010") + netProfit;
-            const totalEquityLiab = totalLiabilities + retainedEarnings;
-
-            document.getElementById('bs-bank').innerText = `R ${bank.toFixed(2)}`;
-            document.getElementById('bs-cash').innerText = `R ${cash.toFixed(2)}`;
-            document.getElementById('bs-card-clearing').innerText = `R ${cardClearing.toFixed(2)}`;
-            document.getElementById('bs-inventory').innerText = `R ${invVal.toFixed(2)}`;
-            document.getElementById('bs-total-assets').innerText = `R ${totalAssets.toFixed(2)}`;
-
-            document.getElementById('bs-escrow').innerText = `R ${escrow.toFixed(2)}`;
-            document.getElementById('bs-vat').innerText = `R ${vatPayable.toFixed(2)}`;
-            document.getElementById('bs-total-liabilities').innerText = `R ${totalLiabilities.toFixed(2)}`;
-
-            document.getElementById('bs-retained-earnings').innerText = `R ${retainedEarnings.toFixed(2)}`;
-            document.getElementById('bs-total-equity-liab').innerText = `R ${totalEquityLiab.toFixed(2)}`;
-
-            // Cash Flow Statement
-            const totalGrossSalesCollected = sales.reduce((sum, s) => sum + s.gross, 0);
-            const totalPayoutsDisbursed = sales.filter(s => s.status === 'Settled').reduce((sum, s) => sum + s.floor, 0);
-            const netCashFlow = totalGrossSalesCollected - totalPayoutsDisbursed - totalOpex;
-
-            document.getElementById('cf-sales-inflow').innerText = `R ${totalGrossSalesCollected.toFixed(2)}`;
-            document.getElementById('cf-consignor-payouts').innerText = `R (${totalPayoutsDisbursed.toFixed(2)})`;
-            document.getElementById('cf-opex-outflow').innerText = `R (${totalOpex.toFixed(2)})`;
-            document.getElementById('cf-net-cash').innerText = `R ${netCashFlow.toFixed(2)}`;
-        }
-
-        function renderDashboard() {
-            const totalGross = sales.reduce((sum, s) => sum + s.gross, 0);
-            const escrowOwed = (accounts.find(a => a.code === "2010") || {}).balance || 0;
-            const vatPayable = (accounts.find(a => a.code === "2020") || {}).balance || 0;
-            const revAcc = (accounts.find(a => a.code === "4010") || {}).balance || 0;
-            const cogsAcc = (accounts.find(a => a.code === "5010") || {}).balance || 0;
-
-            document.getElementById('dash-gross-sales').innerText = `R ${totalGross.toFixed(2)}`;
-            document.getElementById('dash-escrow-owed').innerText = `R ${escrowOwed.toFixed(2)}`;
-            document.getElementById('dash-vat-payable').innerText = `R ${vatPayable.toFixed(2)}`;
-            document.getElementById('dash-net-margin').innerText = `R ${(revAcc - cogsAcc).toFixed(2)}`;
-        }
-
-        function populateDropdowns() {
-            const debitSel = document.getElementById('manual-debit-acc');
-            const creditSel = document.getElementById('manual-credit-acc');
-            const expSel = document.getElementById('expense-account');
-
-            const options = accounts.map(a => `<option value="${a.code}">${a.code} - ${a.name}</option>`).join('');
-            
-            if (debitSel) debitSel.innerHTML = options;
-            if (creditSel) creditSel.innerHTML = options;
-            
-            if (expSel) {
-                const expOptions = accounts.filter(a => a.category === 'Expense')
-                    .map(a => `<option value="${a.code}">${a.code} - ${a.name}</option>`).join('');
-                expSel.innerHTML = expOptions;
+            if (match) {
+                activePosMatch = match;
+                const onHand = match.intake - match.dispatched;
+                document.getElementById('slotProductName').value = match.name;
+                document.getElementById('slotBarcode').value = match.sku || 'N/A';
+                document.getElementById('slotStockOnHand').value = onHand;
+                document.getElementById('slotUnitPrice').value = `R ${parseFloat(match.price).toFixed(2)}`;
+                document.getElementById('slotSellingPrice').value = `R ${parseFloat(match.sellingPrice).toFixed(2)}`;
+                document.getElementById('slotSupplier').value = match.supplier;
+                calculateSlotLineTotal();
+            } else {
+                clearPosSlots();
             }
         }
 
-        // Initialize App
-        document.addEventListener('DOMContentLoaded', () => {
-            renderAll();
-        });
+        function calculateSlotLineTotal() {
+            if (!activePosMatch) return;
+            const qty = parseInt(document.getElementById('posQty').value) || 1;
+            const sellingPrice = parseFloat(activePosMatch.sellingPrice) || 0;
+            document.getElementById('slotLineTotal').value = `R ${(qty * sellingPrice).toFixed(2)}`;
+        }
+
+        function clearPosSlots() {
+            activePosMatch = null;
+            document.getElementById('slotProductName').value = '';
+            document.getElementById('slotBarcode').value = '';
+            document.getElementById('slotStockOnHand').value = '0';
+            document.getElementById('slotUnitPrice').value = 'R 0.00';
+            document.getElementById('slotSellingPrice').value = 'R 0.00';
+            document.getElementById('slotSupplier').value = '';
+            document.getElementById('slotLineTotal').value = 'R 0.00';
+        }
+
+        function addItemToCart() {
+            if (!activePosMatch) return alert('Scan or select an item first.');
+
+            const qty = parseInt(document.getElementById('posQty').value) || 1;
+            const onHand = parseInt(document.getElementById('slotStockOnHand').value) || 0;
+
+            if (qty > onHand) return alert(`Insufficient stock available (${onHand} remaining).`);
+
+            const sellingPrice = parseFloat(activePosMatch.sellingPrice) || 0;
+
+            posCart.push({
+                sku: activePosMatch.sku,
+                name: activePosMatch.name,
+                supplier: activePosMatch.supplier,
+                qty: qty,
+                sellingPrice: sellingPrice,
+                subtotal: qty * sellingPrice
+            });
+
+            renderCartTable();
+            document.getElementById('posBarcodeScan').value = '';
+            clearPosSlots();
+            document.getElementById('posBarcodeScan').focus();
+        }
+
+        function renderCartTable() {
+            const tbody = document.getElementById('cartTableBody');
+            tbody.innerHTML = '';
+
+            if (posCart.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No items in checkout batch.</td></tr>';
+                document.getElementById('cartGrandTotal').innerText = 'R 0.00';
+                currentGrandTotal = 0;
+                calculateChange();
+                return;
+            }
+
+            let grandTotal = 0;
+
+            posCart.forEach((item, idx) => {
+                grandTotal += item.subtotal;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${item.name}</td>
+                    <td>${item.qty}</td>
+                    <td>R ${item.sellingPrice.toFixed(2)}</td>
+                    <td style="color: var(--gold-light); font-weight: 600;">R ${item.subtotal.toFixed(2)}</td>
+                    <td><button class="btn-action btn-delete" onclick="removeCartItem(${idx})">×</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            currentGrandTotal = grandTotal;
+            document.getElementById('cartGrandTotal').innerText = `R ${grandTotal.toFixed(2)}`;
+            calculateChange();
+        }
+
+        function removeCartItem(idx) {
+            posCart.splice(idx, 1);
+            renderCartTable();
+        }
+
+        async function checkoutBatchOrder() {
+            if (!currentUser) return openLoginModal();
+            if (posCart.length === 0) return alert('Add items to cart before checking out.');
+
+            let orderRef = document.getElementById('posOrderRef').value.trim();
+            if (!orderRef) orderRef = `POS-${Math.floor(100000 + Math.random() * 900000)}`;
+
+            const inserts = posCart.map(item => ({
+                item_name: item.name,
+                order_number: orderRef,
+                quantity_dispatched: item.qty,
+                wholesale_floor_zar: item.subtotal,
+                supplier: item.supplier,
+                marketplace: `POS / ${selectedTender}`,
+                payout_status: 'ESCROW PENDING',
+                processed_by: currentUser.full_name
+            }));
+
+            const { error } = await supabaseClient.from('orders').insert(inserts);
+
+            if (error) alert('Checkout error: ' + error.message);
+            else {
+                logAuditAction(`Dispatched Batch Order #${orderRef} (${posCart.length} lines) via ${selectedTender}`);
+                showBatchReceipt(orderRef, posCart, currentUser.full_name);
+                posCart = [];
+                renderCartTable();
+                document.getElementById('posOrderRef').value = '';
+                document.getElementById('cashReceived').value = '';
+                document.getElementById('changeDue').value = 'R 0.00';
+                fetchAdminOrders();
+            }
+        }
+
+        function showBatchReceipt(ref, cart, cashier) {
+            const content = document.getElementById('receiptContent');
+            let itemsHtml = '';
+            let grandTotal = 0;
+
+            cart.forEach(item => {
+                grandTotal += item.subtotal;
+                itemsHtml += `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span>${item.qty}x ${item.name.slice(0, 20)}</span>
+                        <span>R${item.subtotal.toFixed(2)}</span>
+                    </div>
+                `;
+            });
+
+            content.innerHTML = `
+                <p style="margin: 0;"><strong>DATE:</strong> ${new Date().toLocaleString()}</p>
+                <p style="margin: 0;"><strong>REF #:</strong> ${ref}</p>
+                <p style="margin: 0;"><strong>CASHIER:</strong> ${cashier}</p>
+                <p style="margin: 0 0 8px 0;"><strong>TENDER:</strong> ${selectedTender}</p>
+                <hr style="border: 0; border-top: 1px dashed #000; margin: 8px 0;">
+                ${itemsHtml}
+                <hr style="border: 0; border-top: 1px dashed #000; margin: 8px 0;">
+                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px;">
+                    <span>GRAND TOTAL:</span>
+                    <span>R${grandTotal.toFixed(2)}</span>
+                </div>
+            `;
+            document.getElementById('receiptModal').style.display = 'flex';
+        }
+
+        /* INVENTORY INTAKE */
+        function addStockItemToBatch(e) {
+            e.preventDefault();
+            const customSku = document.getElementById('stockSku').value.trim();
+            const stockName = document.getElementById('stockName').value.trim();
+            const qty = parseInt(document.getElementById('stockQty').value) || 0;
+            const unitPrice = parseFloat(document.getElementById('stockUnitPrice').value) || 0;
+            const sellingPrice = parseFloat(document.getElementById('stockSellingPrice').value) || 0;
+            const supplier = document.getElementById('stockSupplier').value.trim();
+
+            const generatedSku = customSku ? customSku.toUpperCase() : (stockName.toUpperCase().replace(/[^A-Z0-9]/g, '-').slice(0, 12) + '-' + Math.floor(100 + Math.random() * 900));
+
+            intakeBatch.push({
+                sku: generatedSku,
+                item_name: stockName,
+                item_description: stockName,
+                quantity_allocated: qty,
+                quantity: qty,
+                unit_price: unitPrice,
+                cost_price: unitPrice,
+                wholesale_floor_zar: unitPrice,
+                selling_price: sellingPrice,
+                supplier: supplier,
+                added_by: currentUser ? currentUser.full_name : 'Staff'
+            });
+
+            renderIntakeBatchTable();
+            document.getElementById('stockForm').reset();
+            document.getElementById('stockSku').focus();
+        }
+
+        function renderIntakeBatchTable() {
+            const tbody = document.getElementById('intakeBatchTableBody');
+            tbody.innerHTML = '';
+
+            if (intakeBatch.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No inventory lines staged.</td></tr>';
+                document.getElementById('intakeBatchCount').innerText = '0';
+                return;
+            }
+
+            intakeBatch.forEach((item, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="color: var(--gold-light); font-weight: 600;">${item.sku}</td>
+                    <td>${item.item_name}</td>
+                    <td>${item.supplier}</td>
+                    <td>${item.quantity}</td>
+                    <td>R ${item.unit_price.toFixed(2)}</td>
+                    <td style="color: var(--cyan-bright);">R ${(item.selling_price || 0).toFixed(2)}</td>
+                    <td><button class="btn-action btn-delete" onclick="removeIntakeBatchItem(${idx})">Remove</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('intakeBatchCount').innerText = intakeBatch.length;
+        }
+
+        function removeIntakeBatchItem(idx) {
+            intakeBatch.splice(idx, 1);
+            renderIntakeBatchTable();
+        }
+
+        async function commitIntakeBatch() {
+            if (!currentUser) return openLoginModal();
+            if (intakeBatch.length === 0) return alert('No staged inventory lines to commit.');
+
+            const { error } = await supabaseClient.from('inventory').insert(intakeBatch);
+
+            if (error) alert('Intake Error: ' + error.message);
+            else {
+                logAuditAction(`Committed intake batch of ${intakeBatch.length} items`);
+                alert(`Successfully committed ${intakeBatch.length} inventory lines!`);
+                intakeBatch = [];
+                renderIntakeBatchTable();
+                fetchAdminOrders();
+            }
+        }
+
+        /* SUPPLIER TRADE PORTAL LOGIC & GRAPH */
+        function populateSupplierTradeDropdown() {
+            const select = document.getElementById('supplierSelect');
+            if (!select) return;
+            const suppliers = [...new Set(cachedOrders.map(o => o.supplier).filter(Boolean))];
+            select.innerHTML = '<option value="ALL">-- All Suppliers / Master View --</option>';
+            suppliers.forEach(supp => {
+                const opt = document.createElement('option');
+                opt.value = supp;
+                opt.innerText = supp;
+                select.appendChild(opt);
+            });
+        }
+
+        function filterSupplierLedger() {
+            const selectedSupplier = document.getElementById('supplierSelect').value;
+            document.getElementById('activeSupplierName').innerText = selectedSupplier === 'ALL' ? 'All Consignment Partners' : selectedSupplier;
+            renderSupplierPortal(selectedSupplier);
+        }
+
+        function renderSupplierPortal(supplierFilter) {
+            const filteredOrders = supplierFilter === 'ALL' ? cachedOrders : cachedOrders.filter(o => o.supplier === supplierFilter);
+            const filteredInventory = supplierFilter === 'ALL' ? cachedInventory : cachedInventory.filter(i => i.supplier === supplierFilter);
+
+            let totalUnits = 0;
+            let totalOwed = 0;
+
+            filteredOrders.forEach(order => {
+                if (order.payout_status !== 'RETURNED / CANCELLED') {
+                    totalUnits += (parseInt(order.quantity_dispatched) || 1);
+                    if (order.payout_status === 'ESCROW PENDING' || !order.payout_status) {
+                        totalOwed += (parseFloat(order.wholesale_floor_zar) || 0);
+                    }
+                }
+            });
+
+            document.getElementById('tradeUnits').innerText = `${totalUnits} Units`;
+            document.getElementById('tradeOwed').innerText = `R ${totalOwed.toFixed(2)}`;
+            document.getElementById('tradeSkus').innerText = `${filteredInventory.length} Lines`;
+
+            const manifestList = document.getElementById('manifestList');
+            manifestList.innerHTML = '';
+
+            if (filteredOrders.length === 0) {
+                manifestList.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 40px;">No transaction records found for this partner.</div>';
+            } else {
+                filteredOrders.forEach(order => {
+                    const amount = parseFloat(order.wholesale_floor_zar) || 0;
+                    const status = order.payout_status || 'ESCROW PENDING';
+                    const badgeClass = status === 'SETTLED' ? 'status-settled' : 'status-pending';
+                    const dateStr = order.created_at ? new Date(order.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent';
+
+                    const div = document.createElement('div');
+                    div.className = 'manifest-item';
+                    div.innerHTML = `
+                        <div>
+                            <div style="font-size: 12px; font-weight: 600; color: #fff;">${order.item_name || 'Consigned Item'}</div>
+                            <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">Order Ref: #${order.order_number || order.id.slice(0, 8)} • ${dateStr}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 13px; font-weight: 700; color: var(--gold-light);">R ${amount.toFixed(2)}</div>
+                            <span class="status-badge ${badgeClass}" style="margin-top: 2px;">${status}</span>
+                        </div>
+                    `;
+                    manifestList.appendChild(div);
+                });
+            }
+
+            renderVelocityChart(filteredOrders);
+        }
+
+        function renderVelocityChart(orders) {
+            const ctx = document.getElementById('salesVelocityChart')?.getContext('2d');
+            if (!ctx) return;
+
+            const dateMap = {};
+            orders.forEach(o => {
+                if (o.payout_status !== 'RETURNED / CANCELLED' && o.created_at) {
+                    const d = new Date(o.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                    dateMap[d] = (dateMap[d] || 0) + (parseInt(o.quantity_dispatched) || 1);
+                }
+            });
+
+            let labels = Object.keys(dateMap).reverse();
+            let dataPoints = Object.values(dateMap).reverse();
+
+            if (labels.length === 0) {
+                labels = ['03 Sept 2026', '04 Sept 2026', '05 Sept 2026'];
+                dataPoints = [12, 4, 8];
+            }
+
+            if (salesChartInstance) salesChartInstance.destroy();
+
+            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(212, 175, 55, 0.25)');
+            gradient.addColorStop(1, 'rgba(212, 175, 55, 0.0)');
+
+            salesChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Sales Velocity (Units)',
+                        data: dataPoints,
+                        borderColor: '#f3c649',
+                        borderWidth: 2.5,
+                        backgroundColor: gradient,
+                        fill: true,
+                        tension: 0.35,
+                        pointBackgroundColor: '#f3c649',
+                        pointBorderColor: '#141418',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: 'rgba(235, 235, 245, 0.4)', font: { size: 10 } } },
+                        y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: 'rgba(235, 235, 245, 0.4)', font: { size: 10 }, precision: 0 }, beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        /* ADMIN & SETTLEMENT LEDGER */
+        function renderAdminOrders(orders) {
+            const startVal = document.getElementById('filterStartDate')?.value;
+            const endVal = document.getElementById('filterEndDate')?.value;
+
+            let filtered = [...orders];
+
+            if (startVal) filtered = filtered.filter(o => new Date(o.created_at) >= new Date(startVal));
+            if (endVal) {
+                const endDate = new Date(endVal);
+                endDate.setHours(23, 59, 59, 999);
+                filtered = filtered.filter(o => new Date(o.created_at) <= endDate);
+            }
+
+            let totalOwed = 0;
+            let totalSettled = 0;
+
+            const tbody = document.getElementById('adminOrderTable');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            if (filtered.length === 0) tbody.innerHTML = '<tr><td colspan="8" style="color: var(--text-muted); padding: 20px;">No ledger transactions found.</td></tr>';
+
+            filtered.forEach(o => {
+                const amount = parseFloat(o.wholesale_floor_zar) || 0;
+                const status = o.payout_status || 'ESCROW PENDING';
+
+                if (status === 'ESCROW PENDING') totalOwed += amount;
+                if (status === 'SETTLED') totalSettled += amount;
+
+                let badgeClass = 'status-pending';
+                if (status === 'SETTLED') badgeClass = 'status-settled';
+                if (status === 'RETURNED / CANCELLED') badgeClass = 'status-returned';
+
+                const dateStr = o.created_at ? new Date(o.created_at).toLocaleDateString('en-GB') : 'Recent';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>#${o.order_number || o.id.slice(0,6)}</strong><br><small style="color: var(--text-muted);">${o.item_name}</small></td>
+                    <td>${o.supplier || 'N/A'}</td>
+                    <td>${dateStr}</td>
+                    <td>${o.processed_by || 'System'}</td>
+                    <td>${o.quantity_dispatched || 1}</td>
+                    <td style="color: var(--gold-light); font-weight: 600;">R ${amount.toFixed(2)}</td>
+                    <td><span class="status-badge ${badgeClass}">${status}</span></td>
+                    <td>
+                        <button class="btn-action btn-settled" onclick="updateOrderStatus('${o.id}', 'SETTLED')">Settle</button>
+                        <button class="btn-action btn-pending" onclick="updateOrderStatus('${o.id}', 'ESCROW PENDING')">Hold</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const netPayable = Math.max(0, totalOwed - PLATFORM_FEE);
+            if (document.getElementById('adminOwed')) document.getElementById('adminOwed').innerText = `R ${totalOwed.toFixed(2)}`;
+            if (document.getElementById('adminSettled')) document.getElementById('adminSettled').innerText = `R ${totalSettled.toFixed(2)}`;
+            if (document.getElementById('adminNet')) document.getElementById('adminNet').innerText = `R ${netPayable.toFixed(2)}`;
+
+            populateReturnOrderSelect(filtered);
+        }
+
+        async function updateOrderStatus(id, newStatus) {
+            const { error } = await supabaseClient.from('orders').update({ payout_status: newStatus }).eq('id', id);
+            if (!error) {
+                logAuditAction(`Updated order status to ${newStatus} (ID: ${id})`);
+                fetchAdminOrders();
+            }
+        }
+
+        function renderStockTable(inventory) {
+            const tbody = document.getElementById('stockTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            if (inventory.length === 0) return tbody.innerHTML = '<tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">No inventory records found.</td></tr>';
+
+            inventory.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="color: var(--gold-light); font-weight: 600;">${item.sku || 'N/A'}</td>
+                    <td>${item.item_name || item.item_description}</td>
+                    <td>${item.supplier || 'N/A'}</td>
+                    <td>${item.quantity_allocated || item.quantity || 0}</td>
+                    <td>R ${parseFloat(item.wholesale_floor_zar || item.unit_price || 0).toFixed(2)}</td>
+                    <td style="color: var(--cyan-bright); font-weight: 600;">R ${parseFloat(item.selling_price || 0).toFixed(2)}</td>
+                    <td><button class="btn-action btn-delete" onclick="deleteStockItem('${item.id}')">Delete</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function deleteStockItem(id) {
+            if (!confirm("Are you sure you want to delete this inventory item?")) return;
+            const { error } = await supabaseClient.from('inventory').delete().eq('id', id);
+            if (!error) {
+                logAuditAction(`Deleted inventory record (ID: ${id})`);
+                fetchAdminOrders();
+            }
+        }
+
+        function renderAccountingDashboard() {
+            const startVal = document.getElementById('accFilterStart')?.value;
+            const endVal = document.getElementById('accFilterEnd')?.value;
+
+            let filtered = [...cachedOrders];
+
+            if (startVal) filtered = filtered.filter(o => new Date(o.created_at) >= new Date(startVal));
+            if (endVal) {
+                const endDate = new Date(endVal);
+                endDate.setHours(23, 59, 59, 999);
+                filtered = filtered.filter(o => new Date(o.created_at) <= endDate);
+            }
+
+            let grossSales = 0;
+            let totalUnits = 0;
+
+            const tbody = document.getElementById('accountingTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            filtered.forEach(o => {
+                if (o.payout_status !== 'RETURNED / CANCELLED') {
+                    const lineAmount = parseFloat(o.wholesale_floor_zar) || 0;
+                    const qty = parseInt(o.quantity_dispatched) || 1;
+                    const unitPrice = qty > 0 ? lineAmount / qty : lineAmount;
+
+                    grossSales += lineAmount;
+                    totalUnits += qty;
+
+                    const dateStr = o.created_at ? new Date(o.created_at).toLocaleString() : 'Recent';
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>#${o.order_number || o.id.slice(0,6)}</strong></td>
+                        <td>${dateStr}</td>
+                        <td>${o.item_name}</td>
+                        <td>${qty}</td>
+                        <td>R ${unitPrice.toFixed(2)}</td>
+                        <td style="color: var(--cyan-bright); font-weight: 600;">R ${lineAmount.toFixed(2)}</td>
+                        <td>${o.marketplace || 'POS / In-Store'}</td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            });
+
+            const netRev = Math.max(0, grossSales - PLATFORM_FEE);
+            if (document.getElementById('accGrossSales')) document.getElementById('accGrossSales').innerText = `R ${grossSales.toFixed(2)}`;
+            if (document.getElementById('accNetRevenue')) document.getElementById('accNetRevenue').innerText = `R ${netRev.toFixed(2)}`;
+            if (document.getElementById('accUnitsSold')) document.getElementById('accUnitsSold').innerText = `${totalUnits} Items`;
+        }
+
+        /* RETURNS & STAFF MANAGEMENT */
+        function populateReturnOrderSelect(orders) {
+            const select = document.getElementById('returnOrderSelect');
+            if (!select) return;
+            select.innerHTML = '<option value="">-- Choose Order to Return --</option>';
+            orders.forEach(o => {
+                if (o.payout_status !== 'RETURNED / CANCELLED') {
+                    const opt = document.createElement('option');
+                    opt.value = o.id;
+                    opt.innerText = `#${o.order_number || o.id.slice(0,6)} - ${o.item_name} (${o.quantity_dispatched || 1} units)`;
+                    select.appendChild(opt);
+                }
+            });
+        }
+
+        async function handleReturnSubmit(e) {
+            e.preventDefault();
+            const orderId = document.getElementById('returnOrderSelect').value;
+            const qty = parseInt(document.getElementById('returnQty').value) || 1;
+            const reason = document.getElementById('returnReason').value;
+            const restock = document.getElementById('restockAction').value;
+
+            if (!orderId) return alert('Select an order to return.');
+
+            const targetOrder = cachedOrders.find(o => o.id === orderId);
+            if (!targetOrder) return;
+
+            await supabaseClient.from('orders').update({ payout_status: 'RETURNED / CANCELLED' }).eq('id', orderId);
+
+            await supabaseClient.from('returns_log').insert([{
+                order_id: orderId,
+                order_ref: targetOrder.order_number,
+                item_name: targetOrder.item_name,
+                quantity: qty,
+                reason: reason,
+                restocked: restock === 'YES_RESTOCK',
+                processed_by: currentUser ? currentUser.full_name : 'Staff'
+            }]);
+
+            if (restock === 'YES_RESTOCK') {
+                const matchedStockItem = cachedInventory.find(inv => (inv.item_name || '').toLowerCase() === (targetOrder.item_name || '').toLowerCase());
+                if (matchedStockItem) {
+                    const currentQty = parseInt(matchedStockItem.quantity_allocated || matchedStockItem.quantity || 0);
+                    await supabaseClient.from('inventory').update({
+                        quantity_allocated: currentQty + qty,
+                        quantity: currentQty + qty
+                    }).eq('id', matchedStockItem.id);
+                }
+            }
+
+            logAuditAction(`Processed return for Order #${targetOrder.order_number} (${reason})`);
+            alert('Return processed successfully.');
+            document.getElementById('returnForm').reset();
+            fetchAdminOrders();
+        }
+
+        async function fetchReturnsLog() {
+            if (!supabaseClient) return;
+            const { data } = await supabaseClient.from('returns_log').select('*').order('created_at', { ascending: false });
+            const tbody = document.getElementById('returnsLogTable');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            if (!data || data.length === 0) return tbody.innerHTML = '<tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">No return history recorded.</td></tr>';
+
+            data.forEach(r => {
+                const dateStr = r.created_at ? new Date(r.created_at).toLocaleDateString('en-GB') : 'Recent';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${dateStr}</td>
+                    <td><strong>#${r.order_ref || (r.order_id ? r.order_id.slice(0,6) : 'N/A')}</strong><br><small style="color: var(--text-muted);">${r.item_name}</small></td>
+                    <td>${r.quantity || 1}</td>
+                    <td>${r.reason || 'N/A'}</td>
+                    <td>${r.restocked ? '<span style="color: var(--green-active);">YES</span>' : '<span style="color: var(--red-alert);">NO</span>'}</td>
+                    <td>${r.processed_by || 'Staff'}</td>
+                    <td><span class="status-badge status-returned">RETURNED</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function handleCreateStaff(e) {
+            e.preventDefault();
+            const name = document.getElementById('staffNameInput').value.trim();
+            const pin = document.getElementById('staffPinInput').value.trim();
+            const role = document.getElementById('staffRoleSelect').value;
+
+            const { error } = await supabaseClient.from('staff_profiles').insert([{ full_name: name, pin_code: pin, role: role }]);
+
+            if (error) alert('Staff Error: ' + error.message);
+            else {
+                logAuditAction(`Created profile for ${name} (${role})`);
+                alert(`Account created for ${name}!`);
+                document.getElementById('createStaffForm').reset();
+                fetchStaffProfiles();
+            }
+        }
+
+        async function fetchStaffProfiles() {
+            if (!supabaseClient) return;
+            const { data } = await supabaseClient.from('staff_profiles').select('*').order('created_at', { ascending: false });
+            const tbody = document.getElementById('staffProfileTable');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            if (!data || data.length === 0) return tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted); padding: 20px;">No custom profiles found. Default PINs active (1234 / 1111 / 9999 / 0000).</td></tr>';
+
+            data.forEach(s => {
+                const dateStr = s.created_at ? new Date(s.created_at).toLocaleDateString('en-GB') : 'Recent';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${s.full_name}</strong></td>
+                    <td><span style="text-transform: uppercase; font-size: 11px; font-weight: 600; color: var(--gold-light);">${s.role}</span></td>
+                    <td>${dateStr}</td>
+                    <td><button class="btn-action btn-delete" onclick="deleteStaffProfile('${s.id}')">Remove</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function deleteStaffProfile(id) {
+            if (!confirm("Are you sure you want to remove this profile?")) return;
+            const { error } = await supabaseClient.from('staff_profiles').delete().eq('id', id);
+            if (!error) {
+                logAuditAction(`Deleted profile (ID: ${id})`);
+                fetchStaffProfiles();
+            }
+        }
+
+        async function logAuditAction(actionText) {
+            if (!supabaseClient) return;
+            await supabaseClient.from('audit_logs').insert([{
+                user_name: currentUser ? currentUser.full_name : 'System',
+                action: actionText
+            }]);
+            fetchAuditLogs();
+        }
+
+        async function fetchAuditLogs() {
+            if (!supabaseClient) return;
+            const { data } = await supabaseClient.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(50);
+            const tbody = document.getElementById('auditTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            if (!data || data.length === 0) return tbody.innerHTML = '<tr><td colspan="3" style="color: var(--text-muted); padding: 20px;">No audit events recorded.</td></tr>';
+
+            data.forEach(log => {
+                const dateStr = log.created_at ? new Date(log.created_at).toLocaleString() : 'Recent';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><small style="color: var(--text-muted);">${dateStr}</small></td>
+                    <td><strong>${log.user_name || 'System'}</strong></td>
+                    <td>${log.action}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        /* BARCODE CAMERA UTILITY */
+        function toggleCameraScanner() {
+            const modal = document.getElementById('cameraScannerModal');
+            if (modal.style.display === 'none' || modal.style.display === '') {
+                modal.style.display = 'block';
+                startCameraScanner();
+            } else stopCameraScanner();
+        }
+
+        function startCameraScanner() {
+            if (!html5QrCodeScanner) html5QrCodeScanner = new Html5Qrcode("interactive-camera");
+            html5QrCodeScanner.start(
+                { facingMode: "environment" }, 
+                { fps: 10, qrbox: { width: 250, height: 150 } }, 
+                (decodedText) => {
+                    document.getElementById('posBarcodeScan').value = decodedText;
+                    handleBarcodeScanInput();
+                    stopCameraScanner();
+                }
+            ).catch(err => {
+                alert("Camera error: " + err);
+                stopCameraScanner();
+            });
+        }
+
+        function stopCameraScanner() {
+            if (html5QrCodeScanner && html5QrCodeScanner.isScanning) {
+                html5QrCodeScanner.stop().then(() => document.getElementById('cameraScannerModal').style.display = 'none')
+                .catch(() => document.getElementById('cameraScannerModal').style.display = 'none');
+            } else document.getElementById('cameraScannerModal').style.display = 'none';
+        }
+
+        /* CSV EXPORTS */
+        function exportSupplierStatement() {
+            if (cachedOrders.length === 0) return alert('No data available for export.');
+            let csv = 'Order Ref,Item Name,Supplier,Quantity,Wholesale Amount,Payout Status,Date\n';
+            cachedOrders.forEach(o => {
+                csv += `"${o.order_number || o.id}","${o.item_name}","${o.supplier || ''}",${o.quantity_dispatched || 1},${o.wholesale_floor_zar || 0},"${o.payout_status || ''}","${o.created_at || ''}"\n`;
+            });
+            downloadCSV(csv, 'Nguni_Supplier_Ledger_Statement.csv');
+        }
+
+        function exportAccountingCSV() {
+            if (cachedOrders.length === 0) return alert('No sales data available for export.');
+            let csv = 'Transaction Ref,Timestamp,Product Name,Quantity,Gross Amount,Fulfillment Channel\n';
+            cachedOrders.forEach(o => {
+                if (o.payout_status !== 'RETURNED / CANCELLED') {
+                    csv += `"${o.order_number || o.id}","${o.created_at || ''}","${o.item_name}",${o.quantity_dispatched || 1},${o.wholesale_floor_zar || 0},"${o.marketplace || 'POS / In-Store'}"\n`;
+                }
+            });
+            downloadCSV(csv, 'Nguni_Accounting_POS_Sales.csv');
+        }
+
+        function downloadCSV(csvContent, fileName) {
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", fileName);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
     </script>
 </body>
 </html>
