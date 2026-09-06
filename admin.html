@@ -261,9 +261,9 @@
 
     <!-- MAIN MODULE TABS NAVIGATION -->
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('tab1')">1. POS DISPATCH</button>
-        <button class="tab-btn" onclick="switchTab('tab2')">2. STOCK INTAKE</button>
-        <button class="tab-btn" onclick="switchTab('tab9')">3. TRADE LEDGER</button>
+        <button class="tab-btn active" id="btnTab1" onclick="switchTab('tab1')">1. POS DISPATCH</button>
+        <button class="tab-btn" id="btnTab2" onclick="switchTab('tab2')">2. STOCK INTAKE</button>
+        <button class="tab-btn" id="btnTab9" onclick="switchTab('tab9')">3. TRADE LEDGER</button>
         <button class="tab-btn" id="btnTab3" style="display: none;" onclick="switchTab('tab3')">4. SETTLEMENT LEDGER</button>
         <button class="tab-btn" id="btnTab4" style="display: none;" onclick="switchTab('tab4')">5. STOCK ON-HAND</button>
         <button class="tab-btn" id="btnTab5" style="display: none;" onclick="switchTab('tab5')">6. STAFF PROFILES</button>
@@ -707,8 +707,8 @@
     <!-- MODAL OVERLAYS -->
     <div class="modal-overlay" id="loginModal">
         <div class="modal-card">
-            <h3 style="color: var(--gold-primary); margin-bottom: 8px;">USER / CASHIER AUTHENTICATION</h3>
-            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px;">Enter your PIN code to access terminal sessions.</p>
+            <h3 style="color: var(--gold-primary); margin-bottom: 8px;">USER / ACCESS AUTHENTICATION</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px;">Enter your PIN code to access terminal session.</p>
             <div class="form-group">
                 <input type="password" id="userPinInput" class="form-control" style="text-align: center; font-size: 24px; letter-spacing: 8px;" maxlength="6" placeholder="••••" oninput="checkAutoLoginPin()" autofocus>
             </div>
@@ -790,8 +790,18 @@
 
         async function checkAutoLoginPin() {
             const pin = document.getElementById('userPinInput').value.trim();
-            if (pin === '1234') { currentUser = { full_name: 'Default Manager', role: 'manager' }; applyUserSession(); } 
-            else if (pin === '0000') { currentUser = { full_name: 'Cashier Floor', role: 'cashier' }; applyUserSession(); } 
+            if (pin === '1234') { 
+                currentUser = { full_name: 'Default Manager', role: 'manager' }; 
+                applyUserSession(); 
+            } 
+            else if (pin === '9999') { 
+                currentUser = { full_name: 'Supplier Partner', role: 'supplier' }; 
+                applyUserSession(); 
+            }
+            else if (pin === '0000') { 
+                currentUser = { full_name: 'Cashier Floor', role: 'cashier' }; 
+                applyUserSession(); 
+            } 
             else if (pin.length >= 4 && supabaseClient) {
                 const { data } = await supabaseClient.from('staff_profiles').select('*').eq('pin_code', pin);
                 if (data && data.length > 0) { currentUser = data[0]; applyUserSession(); }
@@ -801,6 +811,7 @@
         async function authenticateUserPin() {
             const pin = document.getElementById('userPinInput').value.trim();
             if (pin === '1234') { currentUser = { full_name: 'Default Manager', role: 'manager' }; applyUserSession(); return; } 
+            if (pin === '9999') { currentUser = { full_name: 'Supplier Partner', role: 'supplier' }; applyUserSession(); return; }
             if (pin === '0000') { currentUser = { full_name: 'Cashier Floor', role: 'cashier' }; applyUserSession(); return; }
 
             const { data } = await supabaseClient.from('staff_profiles').select('*').eq('pin_code', pin);
@@ -810,16 +821,33 @@
 
         function applyUserSession() {
             document.getElementById('roleLabel').innerText = `USER: ${currentUser.full_name.toUpperCase()} (${currentUser.role.toUpperCase()})`;
-            if (currentUser.role === 'manager') {
-                ['btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab8'].forEach(id => {
+            
+            if (currentUser.role === 'supplier') {
+                // Hide all operational/admin tabs, leaving only Trade Ledger accessible
+                ['btnTab1', 'btnTab2', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8'].forEach(id => {
+                    if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
+                });
+                if (document.getElementById('btnTab9')) document.getElementById('btnTab9').style.display = 'block';
+                switchTab('tab9');
+            } 
+            else if (currentUser.role === 'manager') {
+                // Show all 9 tabs for Manager access
+                ['btnTab1', 'btnTab2', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8', 'btnTab9'].forEach(id => {
                     if (document.getElementById(id)) document.getElementById(id).style.display = 'block';
                 });
-            } else {
+                switchTab('tab1');
+            } 
+            else {
+                // Standard Cashier/Staff Access
+                ['btnTab1', 'btnTab2', 'btnTab7', 'btnTab9'].forEach(id => {
+                    if (document.getElementById(id)) document.getElementById(id).style.display = 'block';
+                });
                 ['btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab8'].forEach(id => {
                     if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
                 });
+                switchTab('tab1');
             }
-            switchTab('tab1');
+
             closeModal('loginModal');
             logAuditAction(`Logged in (${currentUser.full_name} - ${currentUser.role})`);
             fetchAdminOrders();
@@ -1415,7 +1443,7 @@
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            if (!data || data.length === 0) return tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted); padding: 20px;">No custom staff profiles found. Default PINs active (1234 / 0000).</td></tr>';
+            if (!data || data.length === 0) return tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted); padding: 20px;">No custom staff profiles found. Default PINs active (1234 / 9999 / 0000).</td></tr>';
 
             data.forEach(s => {
                 const dateStr = s.created_at ? new Date(s.created_at).toLocaleDateString('en-GB') : 'Recent';
