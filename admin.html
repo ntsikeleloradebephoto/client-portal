@@ -10,87 +10,97 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root {
-            --bg-dark: #000000;
-            --bg-surface: rgba(28, 28, 30, 0.75);
-            --panel-glass: rgba(24, 24, 28, 0.85);
+            --bg-dark: #08080a;
+            --bg-surface: rgba(28, 28, 30, 0.55);
+            --panel-glass: rgba(20, 20, 24, 0.65);
             --gold-primary: #d4af37;
             --gold-light: #f3c649;
             --text-light: #f5f5f7;
-            --text-muted: rgba(235, 235, 245, 0.6);
-            --border-glass: rgba(212, 175, 55, 0.25);
-            --border-subtle: rgba(255, 255, 255, 0.12);
+            --text-muted: rgba(235, 235, 245, 0.55);
+            --border-glass: rgba(212, 175, 55, 0.22);
+            --border-subtle: rgba(255, 255, 255, 0.08);
             --green-active: #30d158;
             --red-alert: #ff453a;
             --cyan-bright: #64d2ff;
-            --glass-blur: blur(25px) saturate(180%);
-            --glass-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            --glass-blur: blur(40px) saturate(190%);
+            --glass-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
             -webkit-font-smoothing: antialiased;
         }
 
         body {
-            background: #000000;
-            background-image: radial-gradient(circle at 50% -20%, #2c220c 0%, #000000 70%);
+            background: #050507;
+            background-image: radial-gradient(circle at 50% -20%, #1c1608 0%, #050507 80%);
             background-attachment: fixed;
             color: var(--text-light);
-            padding: 20px;
+            padding: 24px;
             min-height: 100vh;
         }
 
-        /* FLASH LAUNCH ANIMATION SCREEN */
-        #flashLaunchScreen {
+        /* APPLE TV-INSPIRED CINEMATIC LAUNCHER SCREEN */
+        #appleLauncherSplash {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: #000;
+            background: #000000;
+            z-index: 99999;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 99999;
-            animation: flashFadeOut 0.6s cubic-bezier(0.16, 1, 0.3, 1) 1.2s forwards;
+            transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), visibility 1.2s;
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #appleLauncherSplash.fade-out {
+            opacity: 0;
+            visibility: hidden;
             pointer-events: none;
         }
 
-        .flash-logo-container {
+        .launcher-centerpiece {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 16px;
-            animation: flashScaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            animation: launcherZoomIn 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        .flash-logo-container img {
-            width: 80px;
-            height: 80px;
+        .launcher-logo-img {
+            width: 140px;
+            height: 140px;
             object-fit: contain;
-            filter: drop-shadow(0 0 25px rgba(212, 175, 55, 0.6));
+            margin-bottom: 24px;
+            filter: drop-shadow(0 20px 40px rgba(212, 175, 55, 0.3));
         }
 
-        .flash-title {
+        .launcher-title {
             font-size: 16px;
             font-weight: 700;
             letter-spacing: 3px;
+            text-transform: uppercase;
             color: var(--gold-primary);
+            margin-bottom: 8px;
+        }
+
+        .launcher-subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
             text-transform: uppercase;
         }
 
-        @keyframes flashScaleIn {
-            from { transform: scale(0.85); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-
-        @keyframes flashFadeOut {
-            from { opacity: 1; visibility: visible; }
-            to { opacity: 0; visibility: hidden; }
+        @keyframes launcherZoomIn {
+            0% { transform: scale(0.85); opacity: 0; filter: blur(10px); }
+            100% { transform: scale(1); opacity: 1; filter: blur(0px); }
         }
 
         /* ON-SCREEN TOAST NOTIFICATION CONTAINER */
@@ -108,9 +118,8 @@
 
         .toast-notification {
             pointer-events: auto;
-            background: rgba(30, 30, 35, 0.85);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
+            background: rgba(25, 25, 32, 0.9);
+            backdrop-filter: blur(20px);
             border: 1px solid var(--border-subtle);
             padding: 14px 18px;
             border-radius: 14px;
@@ -137,26 +146,26 @@
             to { opacity: 0; transform: translateX(30px) scale(0.95); }
         }
 
-        /* HEADER & BAR (iOS / OSTV Glassmorphism) */
+        /* HEADER & BAR */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 14px 22px;
-            margin-bottom: 16px;
+            padding: 16px 24px;
+            margin-bottom: 20px;
             background: var(--panel-glass);
             backdrop-filter: var(--glass-blur);
             -webkit-backdrop-filter: var(--glass-blur);
-            border: 1px solid var(--border-glass);
-            border-radius: 20px;
+            border: 1px solid var(--border-subtle);
+            border-radius: 18px;
             box-shadow: var(--glass-shadow);
         }
 
-        .header-title { display: flex; align-items: center; gap: 12px; }
-        .header h1 { font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold-primary); }
+        .header-title { display: flex; align-items: center; gap: 14px; }
+        .header h1 { font-size: 14px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; color: var(--gold-primary); }
 
         .role-badge { 
-            background: rgba(255, 255, 255, 0.08); 
+            background: rgba(255, 255, 255, 0.05); 
             border: 1px solid var(--border-glass); 
             color: var(--gold-light); 
             padding: 6px 14px; 
@@ -165,60 +174,57 @@
             font-weight: 600; 
             display: flex; 
             align-items: center; 
-            gap: 10px;
-            backdrop-filter: blur(10px);
+            gap: 12px;
         }
 
-        /* TABS NAVIGATION (iOS segmented control style) */
+        /* TABS NAVIGATION */
         .tabs { 
             display: grid; 
-            grid-template-columns: repeat(11, 1fr); 
-            gap: 4px; 
-            margin-bottom: 16px; 
-            background: rgba(20, 20, 24, 0.7);
-            padding: 5px;
+            grid-template-columns: repeat(10, 1fr); 
+            gap: 6px; 
+            margin-bottom: 20px; 
+            background: rgba(255, 255, 255, 0.02);
+            padding: 6px;
             border-radius: 16px;
             border: 1px solid var(--border-subtle);
             backdrop-filter: var(--glass-blur);
-            -webkit-backdrop-filter: var(--glass-blur);
         }
 
         .tab-btn { 
             background: transparent; 
             border: 1px solid transparent; 
             color: var(--text-muted); 
-            padding: 9px 2px; 
+            padding: 10px 2px; 
             font-weight: 600; 
-            font-size: 8.5px; 
+            font-size: 9px; 
             letter-spacing: 0.2px; 
             cursor: pointer; 
-            border-radius: 12px; 
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); 
+            border-radius: 10px; 
+            transition: all 0.25s ease; 
             text-align: center; 
         }
 
         .tab-btn:hover { color: var(--text-light); background: rgba(255,255,255,0.06); }
         .tab-btn.active { 
-            background: linear-gradient(135deg, rgba(247, 220, 111, 0.95) 0%, rgba(212, 175, 55, 0.95) 100%); 
+            background: linear-gradient(135deg, rgba(247, 220, 111, 0.9) 0%, rgba(212, 175, 55, 0.9) 100%); 
             color: #000; 
             font-weight: 700;
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.35);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3);
         }
 
         .tab-content { 
             display: none; 
             background: var(--panel-glass); 
-            border: 1px solid var(--border-glass); 
-            padding: 22px; 
-            border-radius: 24px; 
+            border: 1px solid var(--border-subtle); 
+            padding: 24px; 
+            border-radius: 22px; 
             backdrop-filter: var(--glass-blur);
-            -webkit-backdrop-filter: var(--glass-blur);
             box-shadow: var(--glass-shadow);
         }
-        .tab-content.active { display: block; animation: glassFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .tab-content.active { display: block; animation: glassFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
 
         @keyframes glassFadeIn {
-            from { opacity: 0; transform: translateY(6px) scale(0.995); }
+            from { opacity: 0; transform: translateY(8px) scale(0.995); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
@@ -226,33 +232,33 @@
             font-size: 11px; 
             font-weight: 700;
             text-transform: uppercase; 
-            letter-spacing: 1.4px; 
+            letter-spacing: 1.5px; 
             color: var(--gold-primary); 
-            margin-bottom: 16px; 
+            margin-bottom: 18px; 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
         }
 
-        /* FORMS & INPUTS (iOS rounded field style) */
-        .form-group { margin-bottom: 14px; }
-        .form-group label { display: block; font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; letter-spacing: 0.5px; }
+        /* FORMS & INPUTS */
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; letter-spacing: 0.5px; }
         
         .form-control { 
             width: 100%; 
             padding: 10px 14px; 
-            background: rgba(0, 0, 0, 0.45); 
+            background: rgba(0, 0, 0, 0.5); 
             border: 1px solid var(--border-subtle); 
             color: #fff; 
-            border-radius: 12px; 
+            border-radius: 10px; 
             font-size: 12px;
             transition: all 0.2s ease;
         }
         .form-control:focus {
             outline: none;
             border-color: var(--gold-primary);
-            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
-            background: rgba(0, 0, 0, 0.65);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+            background: rgba(0, 0, 0, 0.7);
         }
 
         /* TRADE LEDGER SPECIFIC LAYOUT */
@@ -262,9 +268,9 @@
             align-items: center;
             background: rgba(15, 15, 18, 0.7);
             border: 1px solid var(--border-subtle);
-            padding: 14px 18px;
+            padding: 16px 20px;
             border-radius: 16px;
-            margin-bottom: 16px;
+            margin-bottom: 18px;
         }
 
         .sync-pill {
@@ -281,22 +287,22 @@
         }
         .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green-active); }
 
-        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
-        .summary-card { background: rgba(15, 15, 18, 0.65); border: 1px solid var(--border-subtle); padding: 16px 18px; border-radius: 16px; backdrop-filter: blur(10px); }
-        .summary-label { font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1.1px; }
-        .summary-val { font-size: 21px; font-weight: 700; margin-top: 6px; color: #fff; }
+        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+        .summary-card { background: rgba(15, 15, 18, 0.6); border: 1px solid var(--border-subtle); padding: 18px 20px; border-radius: 16px; }
+        .summary-label { font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1.2px; }
+        .summary-val { font-size: 22px; font-weight: 700; margin-top: 8px; color: #fff; }
 
         .trade-grid-container {
             display: grid;
             grid-template-columns: 1.2fr 1fr;
-            gap: 16px;
+            gap: 18px;
         }
 
         .chart-panel {
-            background: rgba(15, 15, 18, 0.65);
+            background: rgba(15, 15, 18, 0.6);
             border: 1px solid var(--border-subtle);
             border-radius: 18px;
-            padding: 18px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
         }
@@ -304,23 +310,23 @@
         .chart-wrapper {
             position: relative;
             width: 100%;
-            height: 300px;
+            height: 320px;
             margin-top: 10px;
         }
 
         .manifest-panel {
-            background: rgba(15, 15, 18, 0.65);
+            background: rgba(15, 15, 18, 0.6);
             border: 1px solid var(--border-subtle);
             border-radius: 18px;
-            padding: 18px;
+            padding: 20px;
         }
 
-        .manifest-list { display: flex; flex-direction: column; gap: 8px; max-height: 310px; overflow-y: auto; padding-right: 4px; }
+        .manifest-list { display: flex; flex-direction: column; gap: 10px; max-height: 330px; overflow-y: auto; padding-right: 4px; }
         .manifest-item { 
-            background: rgba(25, 25, 32, 0.55); 
+            background: rgba(25, 25, 30, 0.5); 
             border: 1px solid var(--border-subtle); 
             border-radius: 12px; 
-            padding: 10px 14px; 
+            padding: 12px 16px; 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
@@ -330,58 +336,58 @@
         .pos-grid-layout {
             display: grid;
             grid-template-columns: 1.8fr 1.2fr;
-            gap: 18px;
+            gap: 20px;
         }
 
         .item-slots-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            background: rgba(0, 0, 0, 0.35);
-            padding: 14px;
+            gap: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 16px;
             border-radius: 16px;
             border: 1px solid var(--border-subtle);
-            margin-bottom: 16px;
+            margin-bottom: 18px;
         }
 
-        .slot-box { display: flex; flex-direction: column; gap: 3px; }
+        .slot-box { display: flex; flex-direction: column; gap: 4px; }
         .slot-label { font-size: 9px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
-        .slot-input { background: rgba(0,0,0,0.5); border: 1px solid var(--border-subtle); color: #fff; padding: 8px 10px; font-size: 12px; border-radius: 10px; width: 100%; }
+        .slot-input { background: rgba(0,0,0,0.5); border: 1px solid var(--border-subtle); color: #fff; padding: 8px 10px; font-size: 12px; border-radius: 8px; width: 100%; }
 
         .transaction-slots-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 18px;
+            gap: 12px;
+            margin-bottom: 20px;
         }
 
-        .pos-table-container { background: rgba(0,0,0,0.35); border: 1px solid var(--border-subtle); border-radius: 16px; overflow: hidden; margin-bottom: 16px; }
-        .pos-table, .ledger-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
-        .pos-table th, .ledger-table th { background: rgba(255,255,255,0.05); color: var(--gold-primary); text-align: left; padding: 10px 12px; font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.9px; border-bottom: 1px solid var(--border-subtle); }
-        .pos-table td, .ledger-table td { padding: 9px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+        .pos-table-container { background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); border-radius: 16px; overflow: hidden; margin-bottom: 20px; }
+        .pos-table, .ledger-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .pos-table th, .ledger-table th { background: rgba(255,255,255,0.04); color: var(--gold-primary); text-align: left; padding: 10px 14px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border-subtle); }
+        .pos-table td, .ledger-table td { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
 
         .pos-summary-bar {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            background: rgba(0, 0, 0, 0.45);
+            gap: 14px;
+            background: rgba(0, 0, 0, 0.4);
             border: 1px solid var(--border-subtle);
-            padding: 16px;
+            padding: 18px;
             border-radius: 16px;
         }
 
         .tender-options {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 10px;
+            gap: 10px;
+            margin-bottom: 12px;
         }
 
         .tender-btn {
             background: rgba(0, 0, 0, 0.4);
             border: 1px solid var(--border-subtle);
             color: var(--text-light);
-            padding: 9px;
+            padding: 10px;
             border-radius: 10px;
             cursor: pointer;
             font-weight: 600;
@@ -392,28 +398,28 @@
 
         .tender-btn.active {
             border-color: var(--gold-primary);
-            background: rgba(212, 175, 55, 0.2);
+            background: rgba(212, 175, 55, 0.15);
             color: var(--gold-light);
         }
 
-        /* BUTTONS & BADGES (iOS Pill / Button styling) */
+        /* BUTTONS & BADGES */
         .btn-submit { 
             background: linear-gradient(135deg, rgba(247, 220, 111, 0.95) 0%, rgba(212, 175, 55, 0.95) 100%); 
             color: #000; 
             font-weight: 700; 
-            padding: 11px 16px; 
+            padding: 12px 18px; 
             border: 1px solid rgba(255,255,255,0.4); 
             border-radius: 12px; 
             cursor: pointer; 
             text-transform: uppercase; 
             font-size: 10px;
-            box-shadow: 0 4px 18px rgba(212, 175, 55, 0.3);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.25);
             transition: all 0.2s ease;
         }
-        .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(212, 175, 55, 0.4); }
+        .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(212, 175, 55, 0.35); }
 
-        .btn-sec { background: rgba(255,255,255,0.08); border: 1px solid var(--border-subtle); color: var(--gold-light); cursor: pointer; padding: 6px 12px; border-radius: 10px; font-size: 10px; font-weight: 600; backdrop-filter: blur(10px); }
-        .btn-sec:hover { background: rgba(255,255,255,0.16); color: #fff; }
+        .btn-sec { background: rgba(255,255,255,0.06); border: 1px solid var(--border-subtle); color: var(--gold-light); cursor: pointer; padding: 6px 12px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+        .btn-sec:hover { background: rgba(255,255,255,0.14); color: #fff; }
 
         .btn-action { padding: 5px 10px; font-size: 9px; font-weight: 700; text-transform: uppercase; border: none; border-radius: 6px; cursor: pointer; margin-right: 4px; }
         .btn-pending { background: rgba(212, 175, 55, 0.2); color: var(--gold-light); border: 1px solid rgba(212, 175, 55, 0.4); }
@@ -426,8 +432,8 @@
         .status-returned { color: var(--red-alert); background: rgba(255, 69, 58, 0.15); border: 1px solid rgba(255, 69, 58, 0.3); }
 
         /* MODALS */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); display: flex; justify-content: center; align-items: center; z-index: 999; }
-        .modal-card { background: rgba(25, 25, 32, 0.9); border: 1px solid var(--border-glass); padding: 26px; border-radius: 22px; width: 360px; text-align: center; box-shadow: var(--glass-shadow); }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); display: flex; justify-content: center; align-items: center; z-index: 999; }
+        .modal-card { background: rgba(25, 25, 30, 0.9); border: 1px solid var(--border-glass); padding: 28px; border-radius: 20px; width: 360px; text-align: center; box-shadow: var(--glass-shadow); }
 
         @media print {
             body * { visibility: hidden; }
@@ -439,11 +445,12 @@
 </head>
 <body>
 
-    <!-- FLASH LAUNCH SCREEN -->
-    <div id="flashLaunchScreen">
-        <div class="flash-logo-container">
-            <img src="logo.png" alt="Nguni Logo" onerror="this.style.display='none'">
-            <div class="flash-title">NGUNI HOMEWARE</div>
+    <!-- APPLE TV-INSPIRED CINEMATIC LAUNCHER SPLASH -->
+    <div id="appleLauncherSplash">
+        <div class="launcher-centerpiece">
+            <img src="logo.png" alt="Nguni Logo" class="launcher-logo-img" onerror="this.style.display='none'">
+            <div class="launcher-title">Nguni Homeware</div>
+            <div class="launcher-subtitle">Enterprise POS & Ledger Hub</div>
         </div>
     </div>
 
@@ -453,28 +460,27 @@
     <!-- APPLICATION HEADER -->
     <div class="header">
         <div class="header-title">
-            <img src="logo.png" alt="Nguni Logo" style="height: 26px;" onerror="this.style.display='none'">
+            <img src="logo.png" alt="Nguni Logo" style="height: 28px;" onerror="this.style.display='none'">
             <h1>NGUNI HOMEWARE | ENTERPRISE POS & LEDGER HUB</h1>
         </div>
         <div class="role-badge">
             <span id="roleLabel">ACTIVE USER: NOT LOGGED IN</span>
-            <button class="btn-sec" onclick="openLoginModal()" style="padding: 3px 8px; font-size: 9px;">SWITCH USER</button>
+            <button class="btn-sec" onclick="openLoginModal()" style="padding: 4px 10px; font-size: 9px;">SWITCH USER</button>
         </div>
     </div>
 
     <!-- MAIN MODULE TABS NAVIGATION -->
     <div class="tabs">
-        <button class="tab-btn active" id="btnTab1" onclick="switchTab('tab1')">1. POS SELL</button>
+        <button class="tab-btn active" id="btnTab1" onclick="switchTab('tab1')">1. CASHIER POS SELL</button>
         <button class="tab-btn" id="btnTabCashup" onclick="switchTab('tabCashup')">2. CASHUP</button>
-        <button class="tab-btn" id="btnTabManager" onclick="switchTab('tabManager')">3. MANAGER DASH</button>
-        <button class="tab-btn" id="btnTab2" onclick="switchTab('tab2')">4. INTAKE</button>
-        <button class="tab-btn" id="btnTab9" onclick="switchTab('tab9')">5. TRADE LEDGER</button>
-        <button class="tab-btn" id="btnTab3" style="display: none;" onclick="switchTab('tab3')">6. SETTLEMENT</button>
-        <button class="tab-btn" id="btnTab4" style="display: none;" onclick="switchTab('tab4')">7. ON-HAND</button>
-        <button class="tab-btn" id="btnTab5" style="display: none;" onclick="switchTab('tab5')">8. PROFILES</button>
-        <button class="tab-btn" id="btnTab6" style="display: none;" onclick="switchTab('tab6')">9. AUDIT LOGS</button>
-        <button class="tab-btn" id="btnTab7" onclick="switchTab('tab7')">10. RETURNS</button>
-        <button class="tab-btn" id="btnTab8" style="display: none;" onclick="switchTab('tab8')">11. ACCOUNTING</button>
+        <button class="tab-btn" id="btnTab2" onclick="switchTab('tab2')">3. STOCK INTAKE</button>
+        <button class="tab-btn" id="btnTab9" onclick="switchTab('tab9')">4. TRADE LEDGER</button>
+        <button class="tab-btn" id="btnTab3" style="display: none;" onclick="switchTab('tab3')">5. SETTLEMENT LEDGER</button>
+        <button class="tab-btn" id="btnTab4" style="display: none;" onclick="switchTab('tab4')">6. STOCK ON-HAND</button>
+        <button class="tab-btn" id="btnTab5" style="display: none;" onclick="switchTab('tab5')">7. STAFF PROFILES</button>
+        <button class="tab-btn" id="btnTab6" style="display: none;" onclick="switchTab('tab6')">8. AUDIT LOGS</button>
+        <button class="tab-btn" id="btnTab7" onclick="switchTab('tab7')">9. RETURNS</button>
+        <button class="tab-btn" id="btnTab8" style="display: none;" onclick="switchTab('tab8')">10. ACCOUNTING</button>
     </div>
 
     <!-- TAB 1: CASHIER POS SELL -->
@@ -488,15 +494,15 @@
             <div>
                 <div class="form-group">
                     <label>Scan Barcode / Type Item SKU (Auto-Adds on Enter)</label>
-                    <div style="display: flex; gap: 8px;">
+                    <div style="display: flex; gap: 10px;">
                         <input type="text" id="posBarcodeScan" class="form-control" placeholder="Scan barcode or type item number..." oninput="handleBarcodeScanInput()" onkeydown="handleBarcodeKeydown(event)" autofocus>
                         <button type="button" class="btn-sec" onclick="toggleCameraScanner()" style="white-space: nowrap;">📷 Scan Camera</button>
                     </div>
                 </div>
 
-                <div id="cameraScannerModal" style="display: none; background: rgba(0,0,0,0.5); border: 1px solid var(--border-glass); padding: 14px; border-radius: 16px; margin-bottom: 16px; text-align: center;">
-                    <div id="interactive-camera" style="width: 100%; max-width: 380px; margin: 0 auto; border-radius: 10px; overflow: hidden;"></div>
-                    <button type="button" class="btn-sec" onclick="stopCameraScanner()" style="margin-top: 10px; color: var(--red-alert);">Close Camera</button>
+                <div id="cameraScannerModal" style="display: none; background: rgba(0,0,0,0.5); border: 1px solid var(--border-glass); padding: 16px; border-radius: 18px; margin-bottom: 20px; text-align: center;">
+                    <div id="interactive-camera" style="width: 100%; max-width: 400px; margin: 0 auto; border-radius: 12px; overflow: hidden;"></div>
+                    <button type="button" class="btn-sec" onclick="stopCameraScanner()" style="margin-top: 12px; color: var(--red-alert);">Close Camera</button>
                 </div>
 
                 <div class="item-slots-grid">
@@ -547,7 +553,7 @@
 
             <div>
                 <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--gold-primary); margin-bottom: 8px;">Staged Cart Items</div>
-                <div class="pos-table-container" style="max-height: 200px; overflow-y: auto;">
+                <div class="pos-table-container" style="max-height: 220px; overflow-y: auto;">
                     <table class="pos-table">
                         <thead>
                             <tr>
@@ -559,7 +565,7 @@
                             </tr>
                         </thead>
                         <tbody id="cartTableBody">
-                            <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 18px;">No items in checkout batch.</td></tr>
+                            <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No items in checkout batch.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -567,22 +573,22 @@
                 <div class="pos-summary-bar">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span class="slot-label">GRAND TOTAL</span>
-                        <h2 id="cartGrandTotal" style="font-size: 20px; font-weight: 700; color: var(--gold-light); margin: 0;">R 0.00</h2>
+                        <h2 id="cartGrandTotal" style="font-size: 22px; font-weight: 700; color: var(--gold-light); margin: 0;">R 0.00</h2>
                     </div>
 
                     <div>
-                        <label style="font-size: 9px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 5px;">Payment Tender Method</label>
+                        <label style="font-size: 9px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Payment Tender Method</label>
                         <div class="tender-options">
                             <button type="button" class="tender-btn active" id="tenderCash" onclick="setTender('CASH')">Cash</button>
                             <button type="button" class="tender-btn" id="tenderCard" onclick="setTender('CARD')">Card / POS</button>
                         </div>
 
-                        <div class="form-group" id="cashTenderGroup" style="margin-bottom: 6px;">
+                        <div class="form-group" id="cashTenderGroup" style="margin-bottom: 8px;">
                             <label>Cash Tendered (ZAR) <small style="color:var(--text-muted);">(Leave blank for exact cash)</small></label>
                             <input type="number" id="cashReceived" class="form-control" placeholder="0.00" oninput="calculateChange()">
                         </div>
 
-                        <div class="form-group" id="changeDueGroup" style="margin-bottom: 10px;">
+                        <div class="form-group" id="changeDueGroup" style="margin-bottom: 12px;">
                             <label>Change Due</label>
                             <input type="text" id="changeDue" class="form-control" readonly value="R 0.00" style="color: var(--green-active); font-weight: bold;">
                         </div>
@@ -594,14 +600,14 @@
         </div>
     </div>
 
-    <!-- TAB 2: CASHUP -->
+    <!-- TAB: CASHUP -->
     <div id="tabCashup" class="tab-content">
         <div class="section-title">
             <span>Daily Cashup Reconciliation Terminal</span>
             <span id="cashupUserBadge" style="color: var(--cyan-bright); font-size: 10px;">USER: UNASSIGNED</span>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <div>
                 <form id="cashupForm" onsubmit="submitCashup(event)">
                     <div class="form-group">
@@ -613,12 +619,16 @@
                         <input type="number" id="cashupActualCash" class="form-control" placeholder="0.00" step="0.01" required oninput="calculateCashupVariance()">
                     </div>
                     <div class="form-group">
-                        <label>Total Card / POS Sales Declared (ZAR)</label>
-                        <input type="number" id="cashupActualCard" class="form-control" placeholder="0.00" step="0.01" required oninput="calculateCashupVariance()">
-                    </div>
-                    <div class="form-group">
                         <label>Cash Variance / Difference</label>
                         <input type="text" id="cashupVariance" class="form-control" readonly value="R 0.00" style="font-weight: bold;">
+                    </div>
+                    <div class="form-group">
+                        <label>Total Card / POS Sales Declared (ZAR)</label>
+                        <input type="number" id="cashupActualCard" class="form-control" placeholder="0.00" step="0.01" required oninput="calculateCardVariance()">
+                    </div>
+                    <div class="form-group">
+                        <label>Card Variance / Difference</label>
+                        <input type="text" id="cardVariance" class="form-control" readonly value="R 0.00" style="font-weight: bold;">
                     </div>
                     <div class="form-group">
                         <label>Notes / Explanations for Discrepancies</label>
@@ -630,31 +640,31 @@
 
             <div>
                 <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--gold-primary); margin-bottom: 8px;">System Expected Totals (Today)</div>
-                <div class="summary-grid" style="grid-template-columns: 1fr; gap: 8px; margin-bottom: 12px;">
-                    <div class="summary-card" style="padding: 10px 14px;">
+                <div class="summary-grid" style="grid-template-columns: 1fr; gap: 10px; margin-bottom: 14px;">
+                    <div class="summary-card" style="padding: 12px 16px;">
                         <div class="summary-label">Expected Cash Sales</div>
-                        <div class="summary-val" id="expectedCashSales" style="font-size: 17px; color: var(--cyan-bright);">R 0.00</div>
+                        <div class="summary-val" id="expectedCashSales" style="font-size: 18px; color: var(--cyan-bright);">R 0.00</div>
                     </div>
-                    <div class="summary-card" style="padding: 10px 14px;">
+                    <div class="summary-card" style="padding: 12px 16px;">
                         <div class="summary-label">Expected Card Sales</div>
-                        <div class="summary-val" id="expectedCardSales" style="font-size: 17px; color: var(--gold-light);">R 0.00</div>
+                        <div class="summary-val" id="expectedCardSales" style="font-size: 18px; color: var(--gold-light);">R 0.00</div>
                     </div>
                 </div>
 
-                <div class="section-title" style="margin-top: 12px;">Cashup History</div>
-                <div class="pos-table-container" style="max-height: 210px; overflow-y: auto;">
+                <div class="section-title" style="margin-top: 14px;">Manager Tracking / Cashup History</div>
+                <div class="pos-table-container" style="max-height: 240px; overflow-y: auto;">
                     <table class="ledger-table">
                         <thead>
                             <tr>
                                 <th>Date/Time</th>
                                 <th>Cashier</th>
-                                <th>Declared Cash</th>
-                                <th>Variance</th>
+                                <th>Declared Cash / Card</th>
+                                <th>Variances</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
                         <tbody id="cashupHistoryTable">
-                            <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 18px;">No cashups recorded.</td></tr>
+                            <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No cashups recorded.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -662,58 +672,10 @@
         </div>
     </div>
 
-    <!-- TAB 3: MANAGER DASHBOARD (WITH CASHUP TRACKING & CARD SALES REPORTING) -->
-    <div id="tabManager" class="tab-content">
-        <div class="section-title">
-            <span>Manager Terminal - Professional Cashup & Sales Tracking</span>
-            <span style="color: var(--cyan-bright); font-size: 10px;">MANAGER VIEW</span>
-        </div>
-
-        <div class="summary-grid">
-            <div class="summary-card">
-                <div class="summary-label">Total Cash Declared</div>
-                <div class="summary-val" id="mgrTotalCash" style="color: var(--cyan-bright);">R 0.00</div>
-            </div>
-            <div class="summary-card">
-                <div class="summary-label">Total Card Sales Reported</div>
-                <div class="summary-val" id="mgrTotalCard" style="color: var(--gold-light);">R 0.00</div>
-            </div>
-            <div class="summary-card">
-                <div class="summary-label">Total Cashup Discrepancies</div>
-                <div class="summary-val" id="mgrTotalDiscrepancies" style="color: var(--red-alert);">R 0.00</div>
-            </div>
-            <div class="summary-card">
-                <div class="summary-label">Cashup Reports Filed</div>
-                <div class="summary-val" id="mgrReportsCount" style="color: #fff;">0</div>
-            </div>
-        </div>
-
-        <div class="section-title" style="margin-top: 16px;">Comprehensive Cashup Tracking & Card Sales Audit Ledger</div>
-        <div class="pos-table-container">
-            <table class="ledger-table">
-                <thead>
-                    <tr>
-                        <th>Timestamp</th>
-                        <th>Cashier / User</th>
-                        <th>Float</th>
-                        <th>Declared Cash</th>
-                        <th>Card Sales Reported</th>
-                        <th>Variance / Discrepancy</th>
-                        <th>Notes</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="managerCashupTable">
-                    <tr><td colspan="8" style="color: var(--text-muted); text-align: center; padding: 20px;">Loading cashup tracking records...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- TAB 4: CONSIGNMENT STOCK INTAKE -->
+    <!-- TAB 2: CONSIGNMENT STOCK INTAKE -->
     <div id="tab2" class="tab-content">
         <div class="section-title">Consignment Stock Intake & Batch Staging</div>
-        <form id="stockForm" onsubmit="addStockItemToBatch(event)" style="margin-bottom: 20px;">
+        <form id="stockForm" onsubmit="addStockItemToBatch(event)" style="margin-bottom: 24px;">
             <div class="form-group">
                 <label>Item Barcode / SKU (Auto-generated if blank)</label>
                 <input type="text" id="stockSku" class="form-control" placeholder="e.g. 600123456789 or ITEM-101">
@@ -756,7 +718,7 @@
                     </tr>
                 </thead>
                 <tbody id="intakeBatchTableBody">
-                    <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 18px;">No inventory staged for intake.</td></tr>
+                    <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No inventory staged for intake.</td></tr>
                 </tbody>
             </table>
         </div>
@@ -767,12 +729,12 @@
         </div>
     </div>
 
-    <!-- TAB 5: SUPPLIER TRADE LEDGER -->
+    <!-- TAB 9: SUPPLIER TRADE LEDGER -->
     <div id="tab9" class="tab-content">
         <div class="trade-header-bar">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 15px; font-weight: 700; font-style: italic; color: #fff;">⚡</span>
-                <span style="font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--gold-light);">NGUNI HOMEWARE | SUPPLIER TRADE LEDGER (WHOLESALE COST VIEW)</span>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 16px; font-weight: 700; font-style: italic; color: #fff;">⚡</span>
+                <span style="font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--gold-light);">NGUNI HOMEWARE | SUPPLIER TRADE LEDGER (WHOLESALE COST VIEW)</span>
             </div>
             <div class="sync-pill">
                 <span class="sync-dot"></span>
@@ -780,14 +742,14 @@
             </div>
         </div>
 
-        <div style="background: rgba(15,15,18,0.65); border: 1px solid var(--border-subtle); padding: 12px 18px; border-radius: 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="background: rgba(15,15,18,0.6); border: 1px solid var(--border-subtle); padding: 14px 20px; border-radius: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <span style="font-size: 9px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 1px;">VIEWING PARTNER LEDGER</span>
-                <div id="activeSupplierName" style="font-size: 14px; font-weight: 700; color: #fff; margin-top: 2px;">All Consignment Partners</div>
+                <div id="activeSupplierName" style="font-size: 15px; font-weight: 700; color: #fff; margin-top: 2px;">All Consignment Partners</div>
             </div>
-            <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
                 <label style="font-size: 9px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 1px;">SELECT PARTNER:</label>
-                <select id="supplierSelect" class="form-control" style="width: 220px; background: rgba(0,0,0,0.6);" onchange="filterSupplierLedger()">
+                <select id="supplierSelect" class="form-control" style="width: 240px; background: rgba(0,0,0,0.6);" onchange="filterSupplierLedger()">
                     <option value="ALL">-- All Suppliers / Master View --</option>
                 </select>
             </div>
@@ -808,7 +770,7 @@
             </div>
             <div class="summary-card">
                 <div class="summary-label">SETTLEMENT CYCLE</div>
-                <div class="summary-val" style="font-size: 19px;">15–30 Days</div>
+                <div class="summary-val" style="font-size: 20px;">15–30 Days</div>
             </div>
         </div>
 
@@ -823,19 +785,19 @@
             <div class="manifest-panel">
                 <div class="section-title">CONSIGNMENT SALES MANIFEST (WHOLESALE COST)</div>
                 <div class="manifest-list" id="manifestList">
-                    <div style="color: var(--text-muted); text-align: center; padding: 35px;">Loading live manifest records...</div>
+                    <div style="color: var(--text-muted); text-align: center; padding: 40px;">Loading live manifest records...</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- TAB 6: SETTLEMENT LEDGER -->
+    <!-- TAB 3: SETTLEMENT LEDGER -->
     <div id="tab3" class="tab-content">
         <div class="section-title">
             <span>Settlement Ledger & Supplier Split Breakdown</span>
             <div style="display: flex; gap: 8px;">
-                <input type="date" id="filterStartDate" class="form-control" style="width: 120px; padding: 4px 8px;" onchange="renderAdminOrders(cachedOrders)">
-                <input type="date" id="filterEndDate" class="form-control" style="width: 120px; padding: 4px 8px;" onchange="renderAdminOrders(cachedOrders)">
+                <input type="date" id="filterStartDate" class="form-control" style="width: 130px; padding: 4px 8px;" onchange="renderAdminOrders(cachedOrders)">
+                <input type="date" id="filterEndDate" class="form-control" style="width: 130px; padding: 4px 8px;" onchange="renderAdminOrders(cachedOrders)">
                 <button class="btn-sec" onclick="exportSupplierStatement()">Export CSV</button>
             </div>
         </div>
@@ -851,7 +813,7 @@
             </div>
             <div class="summary-card">
                 <div class="summary-label">Platform Fees (Store Retention)</div>
-                <div class="summary-val" style="color: var(--gold-primary);">R 230.00</div>
+                <div class="summary-val" style="color: var(--gold-primary);">R 230.00[cite: 10]</div>
             </div>
             <div class="summary-card">
                 <div class="summary-label">Net Payable Balance</div>
@@ -874,13 +836,13 @@
                     </tr>
                 </thead>
                 <tbody id="adminOrderTable">
-                    <tr><td colspan="8" style="color: var(--text-muted); padding: 18px;">Loading ledger...</td></tr>
+                    <tr><td colspan="8" style="color: var(--text-muted); padding: 20px;">Loading ledger...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- TAB 7: STOCK ON-HAND -->
+    <!-- TAB 4: STOCK ON-HAND -->
     <div id="tab4" class="tab-content">
         <div class="section-title">Active Stock Inventory Management</div>
         <div class="pos-table-container">
@@ -897,16 +859,16 @@
                     </tr>
                 </thead>
                 <tbody id="stockTableBody">
-                    <tr><td colspan="7" style="color: var(--text-muted); padding: 18px;">Loading active inventory...</td></tr>
+                    <tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">Loading active inventory...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- TAB 8: STAFF PROFILES -->
+    <!-- TAB 5: STAFF PROFILES -->
     <div id="tab5" class="tab-content">
         <div class="section-title">Cashier, Staff & Supplier Profile Management</div>
-        <form id="createStaffForm" onsubmit="handleCreateStaff(event)" style="margin-bottom: 20px;">
+        <form id="createStaffForm" onsubmit="handleCreateStaff(event)" style="margin-bottom: 24px;">
             <div class="form-group">
                 <label>Full Name / Supplier Name</label>
                 <input type="text" id="staffNameInput" class="form-control" required placeholder="e.g. Sipho Ndlovu or Craft Master Wholesalers">
@@ -921,7 +883,7 @@
                     <option value="cashier" style="background:#1c1c1e;">Cashier (POS Dispatch Only)</option>
                     <option value="staff" style="background:#1c1c1e;">Staff (POS & Intake Only)</option>
                     <option value="supplier" style="background:#1c1c1e;">Supplier Partner (Trade Ledger Portal Only)</option>
-                    <option value="manager" style="background:#1c1c1e;">Manager (Full Access, Cashup Tracking & Ledger)</option>
+                    <option value="manager" style="background:#1c1c1e;">Manager (Full Access & Ledger)</option>
                 </select>
             </div>
             <button type="submit" class="btn-submit" style="width:100%;">Create Cashier / Staff / Supplier Profile</button>
@@ -939,13 +901,13 @@
                     </tr>
                 </thead>
                 <tbody id="staffProfileTable">
-                    <tr><td colspan="4" style="color: var(--text-muted); padding: 18px;">Loading profiles...</td></tr>
+                    <tr><td colspan="4" style="color: var(--text-muted); padding: 20px;">Loading profiles...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- TAB 9: AUDIT LOGS -->
+    <!-- TAB 6: AUDIT LOGS -->
     <div id="tab6" class="tab-content">
         <div class="section-title">System Audit Trail & Activity Logs</div>
         <div class="pos-table-container">
@@ -958,16 +920,16 @@
                     </tr>
                 </thead>
                 <tbody id="auditTableBody">
-                    <tr><td colspan="3" style="color: var(--text-muted); padding: 18px;">Loading audit logs...</td></tr>
+                    <tr><td colspan="3" style="color: var(--text-muted); padding: 20px;">Loading audit logs...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- TAB 10: RETURNS & RESTOCK -->
+    <!-- TAB 7: RETURNS & RESTOCK -->
     <div id="tab7" class="tab-content">
         <div class="section-title">Customer Order Returns & Inventory Restock</div>
-        <form id="returnForm" onsubmit="handleReturnSubmit(event)" style="margin-bottom: 20px;">
+        <form id="returnForm" onsubmit="handleReturnSubmit(event)" style="margin-bottom: 24px;">
             <div class="form-group">
                 <label>Select Order / Transaction</label>
                 <select id="returnOrderSelect" class="form-control" required>
@@ -1011,19 +973,19 @@
                     </tr>
                 </thead>
                 <tbody id="returnsLogTable">
-                    <tr><td colspan="7" style="color: var(--text-muted); padding: 18px;">Loading return history...</td></tr>
+                    <tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">Loading return history...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- TAB 11: FULL FINANCIAL ACCOUNTING & P&L DASHBOARD -->
+    <!-- TAB 8: FULL FINANCIAL ACCOUNTING & P&L DASHBOARD -->
     <div id="tab8" class="tab-content">
         <div class="section-title">
             <span>Enterprise Accounting & Financial Profit & Loss (P&L)</span>
             <div style="display: flex; gap: 8px;">
-                <input type="date" id="accFilterStart" class="form-control" style="width: 120px; padding: 4px 8px;" onchange="renderAccountingDashboard()">
-                <input type="date" id="accFilterEnd" class="form-control" style="width: 120px; padding: 4px 8px;" onchange="renderAccountingDashboard()">
+                <input type="date" id="accFilterStart" class="form-control" style="width: 130px; padding: 4px 8px;" onchange="renderAccountingDashboard()">
+                <input type="date" id="accFilterEnd" class="form-control" style="width: 130px; padding: 4px 8px;" onchange="renderAccountingDashboard()">
                 <button class="btn-sec" onclick="exportAccountingCSV()">Export CSV</button>
             </div>
         </div>
@@ -1052,29 +1014,29 @@
         <div class="summary-grid" style="grid-template-columns: repeat(5, 1fr);">
             <div class="summary-card">
                 <div class="summary-label">Platform Fees (Fixed)</div>
-                <div class="summary-val" style="font-size: 17px; color: var(--gold-primary);">R 230.00</div>
+                <div class="summary-val" style="font-size: 18px; color: var(--gold-primary);">R 230.00[cite: 10]</div>
             </div>
             <div class="summary-card">
                 <div class="summary-label">Operating Expenses (OpEx)</div>
-                <div class="summary-val" id="accOpEx" style="font-size: 17px; color: var(--red-alert);">R 0.00</div>
+                <div class="summary-val" id="accOpEx" style="font-size: 18px; color: var(--red-alert);">R 0.00</div>
             </div>
             <div class="summary-card">
                 <div class="summary-label">Cash Collected</div>
-                <div class="summary-val" id="accCashTendered" style="font-size: 17px; color: #fff;">R 0.00</div>
+                <div class="summary-val" id="accCashTendered" style="font-size: 18px; color: #fff;">R 0.00</div>
             </div>
             <div class="summary-card">
                 <div class="summary-label">Card / Digital Sales</div>
-                <div class="summary-val" id="accCardTendered" style="font-size: 17px; color: #fff;">R 0.00</div>
+                <div class="summary-val" id="accCardTendered" style="font-size: 18px; color: #fff;">R 0.00</div>
             </div>
             <div class="summary-card">
                 <div class="summary-label">Units Sold</div>
-                <div class="summary-val" id="accUnitsSold" style="font-size: 17px; color: #fff;">0 Items</div>
+                <div class="summary-val" id="accUnitsSold" style="font-size: 18px; color: #fff;">0 Items</div>
             </div>
         </div>
 
         <!-- OPERATIONAL EXPENSE INPUT MODULE -->
         <div class="section-title">Log Operating Expense (OpEx)</div>
-        <form id="expenseForm" onsubmit="handleLogExpense(event)" style="margin-bottom: 20px; display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; align-items: end;">
+        <form id="expenseForm" onsubmit="handleLogExpense(event)" style="margin-bottom: 24px; display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; align-items: end;">
             <div class="form-group" style="margin:0;">
                 <label>Expense Description</label>
                 <input type="text" id="expDesc" class="form-control" placeholder="e.g. Monthly Internet / Packaging Bags" required>
@@ -1111,7 +1073,7 @@
                     </tr>
                 </thead>
                 <tbody id="accountingTableBody">
-                    <tr><td colspan="7" style="color: var(--text-muted); padding: 18px;">Loading accounting records...</td></tr>
+                    <tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">Loading accounting records...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -1121,7 +1083,7 @@
     <div class="modal-overlay" id="loginModal">
         <div class="modal-card">
             <h3 style="color: var(--gold-primary); font-size: 14px; margin-bottom: 6px;">CASHIER / STAFF AUTHENTICATION</h3>
-            <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 16px;">Enter PIN code to open terminal session.</p>
+            <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 18px;">Enter PIN code to open terminal session.</p>
             <div class="form-group">
                 <input type="password" id="userPinInput" class="form-control" style="text-align: center; font-size: 22px; letter-spacing: 6px;" maxlength="6" placeholder="••••" oninput="checkAutoLoginPin()" autofocus>
             </div>
@@ -1158,7 +1120,7 @@
             console.error("Supabase load error", e);
         }
 
-        const PLATFORM_FEE = 230; //
+        const PLATFORM_FEE = 230;[cite: 10]
         let currentUser = null;
         let cachedOrders = [];
         let cachedInventory = [];
@@ -1171,6 +1133,17 @@
         let currentGrandTotal = 0;
         let html5QrCodeScanner = null;
         let salesChartInstance = null;
+
+        /* APPLE TV-INSPIRED LAUNCHER SPLASH CONTROLLER */
+        window.addEventListener('load', () => {
+            // Delay for 1.8 seconds to allow user appreciation of the centerpiece logo splash animation
+            setTimeout(() => {
+                const splash = document.getElementById('appleLauncherSplash');
+                if (splash) {
+                    splash.classList.add('fade-out');
+                }
+            }, 1800);
+        });
 
         /* ON-SCREEN TOAST NOTIFICATION HUB */
         function showNotification(message, type = 'info') {
@@ -1221,9 +1194,6 @@
             }
             if (tabId === 'tabCashup') {
                 prepareCashupView();
-            }
-            if (tabId === 'tabManager') {
-                renderManagerDashboard();
             }
         }
 
@@ -1311,7 +1281,7 @@
             document.getElementById('cashierBadgeDisplay').innerText = `CASHIER: ${currentUser.full_name.toUpperCase()}`;
             
             if (currentUser.role === 'supplier') {
-                ['btnTab1', 'btnTabCashup', 'btnTabManager', 'btnTab2', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8'].forEach(id => {
+                ['btnTab1', 'btnTabCashup', 'btnTab2', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8'].forEach(id => {
                     if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
                 });
                 if (document.getElementById('btnTab9')) document.getElementById('btnTab9').style.display = 'block';
@@ -1332,13 +1302,13 @@
                 ['btnTab1', 'btnTabCashup', 'btnTab2', 'btnTab4', 'btnTab7'].forEach(id => {
                     if (document.getElementById(id)) document.getElementById(id).style.display = 'block';
                 });
-                ['btnTabManager', 'btnTab3', 'btnTab5', 'btnTab6', 'btnTab8', 'btnTab9'].forEach(id => {
+                ['btnTab3', 'btnTab5', 'btnTab6', 'btnTab8', 'btnTab9'].forEach(id => {
                     if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
                 });
                 switchTab('tab1');
             }
             else if (currentUser.role === 'manager') {
-                ['btnTab1', 'btnTabCashup', 'btnTabManager', 'btnTab2', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8', 'btnTab9'].forEach(id => {
+                ['btnTab1', 'btnTabCashup', 'btnTab2', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8', 'btnTab9'].forEach(id => {
                     if (document.getElementById(id)) document.getElementById(id).style.display = 'block';
                 });
                 switchTab('tab1');
@@ -1346,7 +1316,6 @@
             else {
                 if (document.getElementById('btnTab1')) document.getElementById('btnTab1').style.display = 'block';
                 if (document.getElementById('btnTabCashup')) document.getElementById('btnTabCashup').style.display = 'block';
-                if (document.getElementById('btnTabManager')) document.getElementById('btnTabManager').style.display = 'block';
                 
                 ['btnTab2', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8', 'btnTab9'].forEach(id => {
                     if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
@@ -1383,7 +1352,6 @@
             renderSupplierPortal('ALL');
             fetchReturnsLog();
             renderCashupHistory();
-            renderManagerDashboard();
         }
 
         /* CAMERA BARCODE SCANNER INTEGRATION */
@@ -1413,7 +1381,9 @@
                         stopCameraScanner();
                         showNotification(`Scanned barcode: ${decodedText}`, 'success');
                     },
-                    (errorMessage) => {}
+                    (errorMessage) => {
+                        // Scanning frame feedback (silent)
+                    }
                 ).catch(err => {
                     console.error("Camera start error:", err);
                     showNotification('Unable to access camera. Check permissions.', 'error');
@@ -1555,7 +1525,7 @@
             tbody.innerHTML = '';
 
             if (posCart.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 18px;">No items in checkout batch.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No items in checkout batch.</td></tr>';
                 document.getElementById('cartGrandTotal').innerText = 'R 0.00';
                 currentGrandTotal = 0;
                 calculateChange();
@@ -1659,7 +1629,7 @@
             document.getElementById('receiptModal').style.display = 'flex';
         }
 
-        /* CASHUP MODULE LOGIC */
+        /* CASHUP MODULE LOGIC WITH CARD DISCREPANCY TRACKING */
         function prepareCashupView() {
             if (currentUser) {
                 document.getElementById('cashupUserBadge').innerText = `USER: ${currentUser.full_name.toUpperCase()}`;
@@ -1685,6 +1655,7 @@
             document.getElementById('expectedCashSales').innerText = `R ${expCash.toFixed(2)}`;
             document.getElementById('expectedCardSales').innerText = `R ${expCard.toFixed(2)}`;
             calculateCashupVariance();
+            calculateCardVariance();
         }
 
         function calculateCashupVariance() {
@@ -1708,6 +1679,26 @@
             }
         }
 
+        function calculateCardVariance() {
+            const actualCard = parseFloat(document.getElementById('cashupActualCard').value) || 0;
+            const expectedCardStr = document.getElementById('expectedCardSales').innerText.replace('R', '').trim();
+            const expectedCard = parseFloat(expectedCardStr) || 0;
+
+            const cardVariance = actualCard - expectedCard;
+
+            const cardVarianceField = document.getElementById('cardVariance');
+            if (cardVarianceField) {
+                cardVarianceField.value = `R ${cardVariance.toFixed(2)}`;
+                if (cardVariance < 0) {
+                    cardVarianceField.style.color = 'var(--red-alert)';
+                } else if (cardVariance > 0) {
+                    cardVarianceField.style.color = 'var(--gold-light)';
+                } else {
+                    cardVarianceField.style.color = 'var(--green-active)';
+                }
+            }
+        }
+
         async function submitCashup(e) {
             e.preventDefault();
             if (!currentUser) return openLoginModal();
@@ -1715,15 +1706,18 @@
             const floatVal = parseFloat(document.getElementById('cashupFloat').value) || 0;
             const actualCash = parseFloat(document.getElementById('cashupActualCash').value) || 0;
             const actualCard = parseFloat(document.getElementById('cashupActualCard').value) || 0;
-            const varianceStr = document.getElementById('cashupVariance').value;
+            const cashVarianceStr = document.getElementById('cashupVariance').value;
+            const cardVarianceStr = document.getElementById('cardVariance').value;
             const notes = document.getElementById('cashupNotes').value.trim();
+
+            const combinedVariances = `Cash: ${cashVarianceStr} | Card: ${cardVarianceStr}`;
 
             const cashupPayload = {
                 user_name: currentUser.full_name,
                 float_amount: floatVal,
                 actual_cash: actualCash,
                 actual_card: actualCard,
-                variance: varianceStr,
+                variance: combinedVariances,
                 notes: notes,
                 status: 'SUBMITTED'
             };
@@ -1736,8 +1730,8 @@
                 }
             }
 
-            showNotification('Cashup report submitted successfully to manager profile!', 'success');
-            logAuditAction(`Submitted Cashup reconciliation (${currentUser.full_name}) - Variance: ${varianceStr}`);
+            showNotification('Cashup report with cash and card discrepancies submitted successfully!', 'success');
+            logAuditAction(`Submitted Cashup reconciliation (${currentUser.full_name}) - ${combinedVariances}`);
             document.getElementById('cashupForm').reset();
             document.getElementById('cashupFloat').value = '0.00';
             fetchAdminOrders();
@@ -1749,71 +1743,23 @@
             tbody.innerHTML = '';
 
             if (!cachedCashups || cachedCashups.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 18px;">No cashups recorded.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No cashups recorded.</td></tr>';
                 return;
             }
 
             cachedCashups.forEach(c => {
                 const dateStr = c.created_at ? new Date(c.created_at).toLocaleString() : 'Recent';
+                const declaredDisplay = `Cash: R ${parseFloat(c.actual_cash || 0).toFixed(2)} / Card: R ${parseFloat(c.actual_card || 0).toFixed(2)}`;
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><small style="color: var(--text-muted);">${dateStr}</small></td>
                     <td><strong>${c.user_name || 'Staff'}</strong></td>
-                    <td>R ${parseFloat(c.actual_cash || 0).toFixed(2)}</td>
-                    <td style="color: var(--gold-light);">${c.variance || 'R 0.00'}</td>
+                    <td><small>${declaredDisplay}</small></td>
+                    <td style="color: var(--gold-light);"><small>${c.variance || 'R 0.00'}</small></td>
                     <td><span class="status-badge status-settled">${c.status || 'SUBMITTED'}</span></td>
                 `;
                 tbody.appendChild(tr);
             });
-        }
-
-        /* MANAGER DASHBOARD RENDERER (TRACKING CASHUPS & CARD SALES) */
-        function renderManagerDashboard() {
-            const tbody = document.getElementById('managerCashupTable');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-
-            let totalCashSum = 0;
-            let totalCardSum = 0;
-            let totalDiscrepancies = 0;
-
-            if (!cachedCashups || cachedCashups.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 20px;">No cashup records found for tracking.</td></tr>';
-                document.getElementById('mgrTotalCash').innerText = 'R 0.00';
-                document.getElementById('mgrTotalCard').innerText = 'R 0.00';
-                document.getElementById('mgrTotalDiscrepancies').innerText = 'R 0.00';
-                document.getElementById('mgrReportsCount').innerText = '0';
-                return;
-            }
-
-            cachedCashups.forEach(c => {
-                const cash = parseFloat(c.actual_cash || 0);
-                const card = parseFloat(c.actual_card || 0);
-                totalCashSum += cash;
-                totalCardSum += card;
-
-                const varVal = parseFloat((c.variance || '0').replace('R', '').trim()) || 0;
-                totalDiscrepancies += Math.abs(varVal);
-
-                const dateStr = c.created_at ? new Date(c.created_at).toLocaleString() : 'Recent';
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><small style="color: var(--text-muted);">${dateStr}</small></td>
-                    <td><strong>${c.user_name || 'Staff'}</strong></td>
-                    <td>R ${parseFloat(c.float_amount || 0).toFixed(2)}</td>
-                    <td>R ${cash.toFixed(2)}</td>
-                    <td style="color: var(--cyan-bright); font-weight: 600;">R ${card.toFixed(2)}</td>
-                    <td style="color: ${varVal < 0 ? 'var(--red-alert)' : (varVal > 0 ? 'var(--gold-light)' : 'var(--green-active)')}; font-weight: 600;">${c.variance || 'R 0.00'}</td>
-                    <td><small style="color: var(--text-muted);">${c.notes || 'None'}</small></td>
-                    <td><span class="status-badge status-settled">${c.status || 'SUBMITTED'}</span></td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            document.getElementById('mgrTotalCash').innerText = `R ${totalCashSum.toFixed(2)}`;
-            document.getElementById('mgrTotalCard').innerText = `R ${totalCardSum.toFixed(2)}`;
-            document.getElementById('mgrTotalDiscrepancies').innerText = `R ${totalDiscrepancies.toFixed(2)}`;
-            document.getElementById('mgrReportsCount').innerText = cachedCashups.length;
         }
 
         /* INVENTORY INTAKE */
@@ -1853,7 +1799,7 @@
             tbody.innerHTML = '';
 
             if (intakeBatch.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 18px;">No inventory lines staged.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No inventory lines staged.</td></tr>';
                 document.getElementById('intakeBatchCount').innerText = '0';
                 return;
             }
@@ -1945,7 +1891,7 @@
             manifestList.innerHTML = '';
 
             if (filteredOrders.length === 0) {
-                manifestList.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 35px;">No transaction records found for this partner.</div>';
+                manifestList.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 40px;">No transaction records found for this partner.</div>';
             } else {
                 filteredOrders.forEach(order => {
                     const wholesaleCostAmount = parseFloat(order.wholesale_floor_zar) || 0;
@@ -1957,11 +1903,11 @@
                     div.className = 'manifest-item';
                     div.innerHTML = `
                         <div>
-                            <div style="font-size: 11.5px; font-weight: 600; color: #fff;">${order.item_name || 'Consigned Item'}</div>
-                            <div style="font-size: 9.5px; color: var(--text-muted); margin-top: 2px;">Order Ref: #${order.order_number || order.id.slice(0, 8)} • ${dateStr}</div>
+                            <div style="font-size: 12px; font-weight: 600; color: #fff;">${order.item_name || 'Consigned Item'}</div>
+                            <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">Order Ref: #${order.order_number || order.id.slice(0, 8)} • ${dateStr}</div>
                         </div>
                         <div style="text-align: right;">
-                            <div style="font-size: 12.5px; font-weight: 700; color: var(--gold-light);">R ${wholesaleCostAmount.toFixed(2)}</div>
+                            <div style="font-size: 13px; font-weight: 700; color: var(--gold-light);">R ${wholesaleCostAmount.toFixed(2)}</div>
                             <span class="status-badge ${badgeClass}" style="margin-top: 2px;">${status}</span>
                         </div>
                     `;
@@ -1988,13 +1934,13 @@
             let dataPoints = Object.values(dateMap).reverse();
 
             if (labels.length === 0) {
-                labels = ['03 Sep 2026', '04 Sep 2026', '05 Sep 2026', '06 Sep 2026'];
-                dataPoints = [10, 5, 8, 14];
+                labels = ['03 Sept 2026', '04 Sept 2026', '05 Sept 2026'];
+                dataPoints = [12, 4, 8];
             }
 
             if (salesChartInstance) salesChartInstance.destroy();
 
-            const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
             gradient.addColorStop(0, 'rgba(212, 175, 55, 0.25)');
             gradient.addColorStop(1, 'rgba(212, 175, 55, 0.0)');
 
@@ -2087,12 +2033,12 @@
             });
 
             if (countDisplayed === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="color: var(--text-muted); text-align: center; padding: 18px;">No settlement ledger records found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="color: var(--text-muted); text-align: center; padding: 20px;">No settlement ledger records found.</td></tr>';
             }
 
             document.getElementById('adminOwed').innerText = `R ${totalOwed.toFixed(2)}`;
             document.getElementById('adminSettled').innerText = `R ${totalSettled.toFixed(2)}`;
-            document.getElementById('adminNet').innerText = `R ${Math.max(0, totalOwed - PLATFORM_FEE).toFixed(2)}`; //
+            document.getElementById('adminNet').innerText = `R ${Math.max(0, totalOwed - PLATFORM_FEE).toFixed(2)}`;
         }
 
         async function updateOrderStatus(id, newStatus) {
@@ -2133,7 +2079,7 @@
             tbody.innerHTML = '';
 
             if (!inventory || inventory.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="color: var(--text-muted); text-align: center; padding: 18px;">No active inventory records found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="color: var(--text-muted); text-align: center; padding: 20px;">No active inventory records found.</td></tr>';
                 return;
             }
 
@@ -2179,7 +2125,7 @@
             tbody.innerHTML = '';
 
             if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted); text-align: center; padding: 18px;">No custom profiles created yet.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted); text-align: center; padding: 20px;">No custom profiles created yet.</td></tr>';
                 return;
             }
 
@@ -2245,7 +2191,7 @@
             tbody.innerHTML = '';
 
             if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="color: var(--text-muted); text-align: center; padding: 18px;">No audit records found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" style="color: var(--text-muted); text-align: center; padding: 20px;">No audit records found.</td></tr>';
                 return;
             }
 
@@ -2318,7 +2264,7 @@
             tbody.innerHTML = '';
 
             if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="color: var(--text-muted); text-align: center; padding: 18px;">No return history found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="color: var(--text-muted); text-align: center; padding: 20px;">No return history found.</td></tr>';
                 return;
             }
 
@@ -2427,14 +2373,9 @@
         function exportSupplierStatement() {
             let csv = 'Order Ref,Item Name,Supplier,Date,Qty,Wholesale Cost,Status\n';
             cachedOrders.forEach(o => {
-                csv += `"#${o.order_number || o.id.slice(0,6)}","${o.item_name || ''}","${o.supplier || ''}","${o.created_at || ''}","${o.quantity_dispatched || 1}","${o.wholesale_floor_zar || 0}","${o.payout_status || 'ESCROW PENDING'}"\n`;
+                csv += `"#${o.order_number || o.id.slice(0,6)}","${o.item_name || ''}","${o.supplier || ''}","${o.created_at || ''}",${o.quantity_dispatched || 1},${o.wholesale_floor_zar || 0},"${o.payout_status || 'ESCROW PENDING'}"\n`;
             });
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `nguni_settlement_ledger_${new Date().toISOString().slice(0,10)}.csv`;
-            link.click();
-            showNotification('Settlement statement exported successfully.', 'success');
+            downloadCSV(csv, 'Nguni_Supplier_Settlement_Statement.csv');
         }
 
         function exportAccountingCSV() {
@@ -2442,16 +2383,22 @@
             cachedOrders.forEach(o => {
                 if (o.payout_status !== 'RETURNED / CANCELLED') {
                     const qty = parseInt(o.quantity_dispatched) || 1;
-                    const price = o.selling_price ? parseFloat(o.selling_price) : ((parseFloat(o.wholesale_floor_zar) || 0) / qty) * 1.3;
-                    csv += `"#${o.order_number || o.id.slice(0,6)}","${o.created_at || ''}","${o.item_name || ''}","${qty}","${price.toFixed(2)}","${(price*qty).toFixed(2)}","${o.marketplace || 'POS'}"\n`;
+                    const unitPrice = o.selling_price ? parseFloat(o.selling_price) : ((parseFloat(o.wholesale_floor_zar) || 0) / qty) * 1.3;
+                    csv += `"#${o.order_number || o.id.slice(0,6)}","${o.created_at || ''}","${o.item_name || ''}",${qty},${unitPrice.toFixed(2)},${(unitPrice * qty).toFixed(2)},"${o.marketplace || 'POS'}"\n`;
                 }
             });
+            downloadCSV(csv, 'Nguni_Financial_P_L_Statement.csv');
+        }
+
+        function downloadCSV(csv, filename) {
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = `nguni_accounting_pnl_${new Date().toISOString().slice(0,10)}.csv`;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
             link.click();
-            showNotification('Accounting records exported successfully.', 'success');
+            document.body.removeChild(link);
+            showNotification(`Exported ${filename} successfully.`, 'success');
         }
     </script>
 </body>
