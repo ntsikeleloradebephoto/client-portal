@@ -1159,7 +1159,7 @@
                 <label>Access Level Role</label>
                 <select id="staffRoleSelect" class="form-control">
                     <option value="cashier" style="background:#1c1c1e;">Cashier (POS Dispatch Only)</option>
-                    <option value="staff" style="background:#1c1c1e;">Staff (POS Dispatch, Intake & Cashup Only)</option>
+                    <option value="staff" style="background:#1c1c1e;">Staff (POS & Intake Only)</option>
                     <option value="supplier" style="background:#1c1c1e;">Supplier Partner (Trade Ledger Portal Only)</option>
                     <option value="manager" style="background:#1c1c1e;">Manager (Full Access & Ledger)</option>
                 </select>
@@ -1636,7 +1636,6 @@
             document.getElementById('cashierBadgeDisplay').innerText = `CASHIER: ${currentUser.full_name.toUpperCase()}`;
             
             const isManager = (currentUser.role === 'manager' || currentUser.full_name.toLowerCase().includes('manager') || currentUser.full_name === 'Default Manager');
-            const isStaff = (currentUser.role === 'staff');
 
             // Show/hide manager tabs based on role
             ['btnTabManagerCashup', 'btnTabPricing', 'btnTab3', 'btnTab5', 'btnTab6', 'btnTab8'].forEach(id => {
@@ -1668,22 +1667,12 @@
                 });
                 switchTab('tab1');
             }
-            else if (isStaff) {
-                // Staff role granted exact 3 tabs: POS dispatch (tab1), Intake (tab2), Cashup (tabCashup)
+            else {
                 if (document.getElementById('btnTab1')) document.getElementById('btnTab1').style.display = 'block';
                 if (document.getElementById('btnTab2')) document.getElementById('btnTab2').style.display = 'block';
                 if (document.getElementById('btnTabCashup')) document.getElementById('btnTabCashup').style.display = 'block';
-
-                ['btnTabManagerCashup', 'btnTabPricing', 'btnTab9', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8'].forEach(id => {
-                    if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
-                });
-                switchTab('tab1');
-            }
-            else {
-                if (document.getElementById('btnTab1')) document.getElementById('btnTab1').style.display = 'block';
-                if (document.getElementById('btnTabCashup')) document.getElementById('btnTabCashup').style.display = 'block';
                 
-                ['btnTabManagerCashup', 'btnTabPricing', 'btnTab2', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8', 'btnTab9'].forEach(id => {
+                ['btnTabManagerCashup', 'btnTabPricing', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8', 'btnTab9'].forEach(id => {
                     if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
                 });
                 switchTab('tab1');
@@ -2108,34 +2097,3 @@
             });
 
             const paidCash = selectedTender === 'CASH' ? tenderedAmount : total;
-            const change = selectedTender === 'CASH' ? changeAmount : 0;
-
-            container.innerHTML = `
-                <div style="margin-bottom:8px;">
-                    <div>Date: ${new Date().toLocaleString()}</div>
-                    <div>Order Ref: <strong>${orderRef}</strong></div>
-                    <div>Cashier: ${cashier}</div>
-                    <div>Payment Method: ${selectedTender}</div>
-                </div>
-                <div style="border-top:1px dashed #000; border-bottom:1px dashed #000; padding:8px 0; margin-bottom:8px;">
-                    ${itemsHtml}
-                </div>
-                <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:12px; margin-bottom:4px;">
-                    <span>TOTAL:</span>
-                    <span>R ${total.toFixed(2)}</span>
-                </div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
-                    <span>Tendered (${selectedTender}):</span>
-                    <span>R ${paidCash.toFixed(2)}</span>
-                </div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                    <span>Change:</span>
-                    <span>R ${change.toFixed(2)}</span>
-                </div>
-            `;
-
-            document.getElementById('receiptModal').style.display = 'flex';
-        }
-    </script>
-</body>
-</html>
