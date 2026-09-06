@@ -1,278 +1,2484 @@
-<!DOCTYPE html>
+[cite: 12]<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stream TV</title>
+    <title>Nguni Homeware | Enterprise POS & Ledger Hub</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root {
-            /* Dark Mode Variables (Default Apple TV Monochrome Style) */
-            --bg-main: #000000;
-            --bg-card: #121212;
-            --bg-card-hover: #262626;
-            --text-primary: #ffffff;
-            --text-secondary: #a1a1aa;
-            --border-color: #27272a;
-            --accent: #ffffff;
-            --accent-text: #000000;
-            --focus-glow: rgba(255, 255, 255, 0.25);
+            /* DARK MODE (DEFAULT CORE THEME - APPLE TV MONOCHROME) */
+            --bg-dark: #000000;
+            --bg-gradient: radial-gradient(circle at 50% -20%, #1c1c1e 0%, #000000 80%);
+            --bg-surface: rgba(28, 28, 30, 0.65);
+            --panel-glass: rgba(22, 22, 24, 0.72);
+            --gold-primary: #ffffff;
+            --gold-light: #f5f5f7;
+            --gold-dark: #8e8e93;
+            --gold-gradient: linear-gradient(135deg, #ffffff 0%, #d1d1d6 50%, #8e8e93 100%);
+            --gold-glow: 0 8px 32px rgba(255, 255, 255, 0.15);
+            --text-light: #F5F5F7;
+            --text-muted: rgba(245, 245, 247, 0.55);
+            --border-glass: rgba(255, 255, 255, 0.2);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --green-active: #30D158;
+            --red-alert: #FF453A;
+            --cyan-bright: #64D2FF;
+            --glass-blur: blur(40px) saturate(190%);
+            --glass-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+            --input-bg: rgba(0, 0, 0, 0.5);
+            --table-header-bg: rgba(255, 255, 255, 0.04);
+            --launcher-bg: radial-gradient(circle at center, #1c1c1e 0%, #000000 100%);
+
+            /* APPLE TYPOGRAPHY SYSTEM VARS */
+            --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro", "Helvetica Neue", sans-serif;
+            --font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", "Helvetica Neue", sans-serif;
+            --font-mono: "SF Mono", SFMono-Regular, ui-monospace, Menlo, Monaco, monospace;
         }
 
-        [data-theme="light"] {
-            /* Light Mode Variables (Clean White/Monochrome Style) */
-            --bg-main: #f4f4f5;
-            --bg-card: #ffffff;
-            --bg-card-hover: #e4e4e7;
-            --text-primary: #09090b;
-            --text-secondary: #71717a;
-            --border-color: #e4e4e7;
-            --accent: #09090b;
-            --accent-text: #ffffff;
-            --focus-glow: rgba(0, 0, 0, 0.15);
+        /* LIGHT MODE SKIN OVERRIDES (PURE MONOCHROME BLACK & WHITE APPLE TV STYLE) */
+        [data-skin="light"] {
+            --bg-dark: #f2f2f7;
+            --bg-gradient: radial-gradient(circle at 50% -20%, #ffffff 0%, #e5e5ea 100%);
+            --bg-surface: rgba(255, 255, 255, 0.85);
+            --panel-glass: rgba(255, 255, 255, 0.9);
+            --gold-primary: #000000;
+            --gold-light: #1c1c1e;
+            --gold-dark: #3a3a3c;
+            --gold-gradient: linear-gradient(135deg, #000000 0%, #1c1c1e 50%, #3a3a3c 100%);
+            --gold-glow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            --text-light: #000000;
+            --text-muted: rgba(60, 60, 67, 0.65);
+            --border-glass: rgba(0, 0, 0, 0.15);
+            --border-subtle: rgba(0, 0, 0, 0.08);
+            --green-active: #28CD41;
+            --red-alert: #FF3B30;
+            --cyan-bright: #007AFF;
+            --glass-blur: blur(40px) saturate(200%);
+            --glass-shadow: 0 20px 40px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            --input-bg: rgba(255, 255, 255, 0.9);
+            --table-header-bg: rgba(0, 0, 0, 0.04);
+            --launcher-bg: radial-gradient(circle at center, #ffffff 0%, #e5e5ea 100%);
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+            font-family: var(--font-text);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            font-feature-settings: "CV08", "CV05", "CV01";
         }
 
         body {
-            background-color: var(--bg-main);
-            color: var(--text-primary);
+            background: var(--bg-dark);
+            background-image: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-light);
+            padding: 24px;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            transition: background 0.4s ease, color 0.4s ease;
         }
 
-        header {
+        /* LAUNCHER OVERLAY */
+        #appleTvLauncher {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--launcher-bg);
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(50px) saturate(200%);
+            transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow: hidden;
+        }
+
+        #appleTvLauncher.fade-out {
+            opacity: 0;
+            transform: scale(1.08);
+            pointer-events: none;
+        }
+
+        .launcher-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            animation: launcherZoomIn 2.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes launcherZoomIn {
+            0% { opacity: 0; transform: scale(0.88) translateY(20px); filter: blur(10px); }
+            40% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0px); }
+            100% { opacity: 1; transform: scale(1.03); }
+        }
+
+        .launcher-logo-center {
+            width: 220px;
+            height: 220px;
+            object-fit: contain;
+            margin-bottom: 28px;
+            filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.2));
+            border-radius: 36px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-glass);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+            animation: logoGlowPulse 3s infinite alternate;
+        }
+
+        @keyframes logoGlowPulse {
+            0% { box-shadow: 0 20px 50px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.2); }
+            100% { box-shadow: 0 30px 90px rgba(255, 255, 255, 0.2), inset 0 1px 1px rgba(255,255,255,0.4); }
+        }
+
+        .launcher-title {
+            font-family: var(--font-display);
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            text-transform: none;
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 6px;
+        }
+
+        .launcher-subtitle {
+            font-family: var(--font-text);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+
+        /* ON-SCREEN TOAST NOTIFICATION CONTAINER */
+        #toastContainer {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 380px;
+            pointer-events: none;
+        }
+
+        .toast-notification {
+            pointer-events: auto;
+            background: var(--panel-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-subtle);
+            padding: 14px 18px;
+            border-radius: 14px;
+            box-shadow: var(--glass-shadow);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            font-size: 12px;
+            color: var(--text-light);
+            letter-spacing: -0.01em;
+        }
+
+        .toast-notification.success { border-left: 4px solid var(--green-active); }
+        .toast-notification.error { border-left: 4px solid var(--red-alert); }
+        .toast-notification.info { border-left: 4px solid var(--cyan-bright); }
+
+        @keyframes toastSlideIn {
+            from { opacity: 0; transform: translateX(50px) scale(0.95); }
+            to { opacity: 1; transform: translateX(0) scale(1); }
+        }
+
+        @keyframes toastFadeOut {
+            from { opacity: 1; transform: translateX(0) scale(1); }
+            to { opacity: 0; transform: translateX(30px) scale(0.95); }
+        }
+
+        /* HEADER & BAR */
+        .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1.5rem 3rem;
-            border-bottom: 1px solid var(--border-color);
+            padding: 16px 24px;
+            margin-bottom: 20px;
+            background: var(--panel-glass);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-subtle);
+            border-radius: 18px;
+            box-shadow: var(--glass-shadow);
         }
 
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            letter-spacing: -0.025em;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+        .header-title { display: flex; align-items: center; gap: 14px; }
+        .header h1 { 
+            font-family: var(--font-display);
+            font-size: 15px; 
+            font-weight: 600; 
+            letter-spacing: -0.01em; 
+            text-transform: none; 
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .logo span {
-            background: var(--text-primary);
-            color: var(--bg-main);
-            padding: 0.1rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.9rem;
+        .role-badge { 
+            background: rgba(125, 125, 125, 0.08); 
+            border: 1px solid var(--border-glass); 
+            color: var(--gold-light); 
+            padding: 6px 14px; 
+            border-radius: 980px; 
+            font-size: 11px; 
+            font-weight: 500; 
+            letter-spacing: 0.02em;
+            display: flex; 
+            align-items: center; 
+            gap: 12px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
 
-        nav ul {
-            display: flex;
-            list-style: none;
-            gap: 2rem;
-        }
-
-        nav a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 1rem;
+        .skin-selector {
+            background: var(--input-bg);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-light);
+            border-radius: 980px;
+            padding: 4px 10px;
+            font-size: 11px;
             font-weight: 500;
-        }
-
-        nav a.active, nav a:hover {
-            color: var(--text-primary);
-        }
-
-        .controls {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-
-        .theme-toggle {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
             cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 600;
+            outline: none;
         }
 
-        .theme-toggle:hover {
-            background-color: var(--bg-card-hover);
-        }
-
-        main {
-            padding: 3rem;
-            flex: 1;
-        }
-
-        .hero {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
+        /* TABS NAVIGATION */
+        .tabs { 
+            display: grid; 
+            grid-template-columns: repeat(10, 1fr); 
+            gap: 6px; 
+            margin-bottom: 20px; 
+            background: rgba(125, 125, 125, 0.05);
+            padding: 6px;
             border-radius: 16px;
-            padding: 3rem;
-            margin-bottom: 3rem;
+            border: 1px solid var(--border-subtle);
+            backdrop-filter: var(--glass-blur);
+        }
+
+        .tab-btn { 
+            background: transparent; 
+            border: 1px solid transparent; 
+            color: var(--text-muted); 
+            padding: 10px 2px; 
+            font-family: var(--font-text);
+            font-weight: 500; 
+            font-size: 10px; 
+            letter-spacing: -0.01em; 
+            cursor: pointer; 
+            border-radius: 10px; 
+            transition: all 0.25s ease; 
+            text-align: center; 
+        }
+
+        .tab-btn:hover { color: var(--text-light); background: rgba(125,125,125,0.1); }
+        .tab-btn.active { 
+            background: var(--gold-gradient); 
+            color: #000; 
+            font-weight: 600;
+            box-shadow: var(--gold-glow);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        [data-skin="light"] .tab-btn.active {
+            color: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+        }
+
+        .tab-content { 
+            display: none; 
+            background: var(--panel-glass); 
+            border: 1px solid var(--border-subtle); 
+            padding: 24px; 
+            border-radius: 22px; 
+            backdrop-filter: var(--glass-blur);
+            box-shadow: var(--glass-shadow);
+        }
+        .tab-content.active { display: block; animation: glassFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+
+        @keyframes glassFadeIn {
+            from { opacity: 0; transform: translateY(8px) scale(0.995); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .section-title { 
+            font-family: var(--font-display);
+            font-size: 13px; 
+            font-weight: 600;
+            letter-spacing: -0.015em; 
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 18px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+
+        /* FORMS & INPUTS */
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 11px; font-weight: 500; color: var(--text-muted); margin-bottom: 6px; letter-spacing: -0.01em; }
+        
+        .form-control { 
+            width: 100%; 
+            padding: 10px 14px; 
+            background: var(--input-bg); 
+            border: 1px solid var(--border-subtle); 
+            color: var(--text-light); 
+            border-radius: 10px; 
+            font-size: 13px;
+            font-family: var(--font-text);
+            letter-spacing: -0.01em;
+            transition: all 0.2s ease;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--gold-primary);
+            box-shadow: 0 0 0 3px rgba(125, 125, 125, 0.2);
+        }
+
+        /* TRADE LEDGER SPECIFIC LAYOUT */
+        .trade-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--input-bg);
+            border: 1px solid var(--border-subtle);
+            padding: 16px 20px;
+            border-radius: 16px;
+            margin-bottom: 18px;
+        }
+
+        .sync-pill {
+            background: rgba(48, 209, 88, 0.12);
+            border: 1px solid rgba(48, 209, 88, 0.3);
+            color: var(--green-active);
+            padding: 4px 12px;
+            border-radius: 980px;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: -0.01em;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green-active); }
+
+        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+        .summary-card { background: var(--input-bg); border: 1px solid var(--border-subtle); padding: 18px 20px; border-radius: 16px; }
+        .summary-label { font-size: 10px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; }
+        .summary-val { font-family: var(--font-display); font-size: 24px; font-weight: 600; letter-spacing: -0.025em; margin-top: 8px; color: var(--text-light); font-variant-numeric: tabular-nums; }
+
+        .trade-grid-container {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 18px;
+        }
+
+        .chart-panel {
+            background: var(--input-bg);
+            border: 1px solid var(--border-subtle);
+            border-radius: 18px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 1rem;
         }
 
-        .hero h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-        }
-
-        .hero p {
-            color: var(--text-secondary);
-            max-width: 600px;
-            line-height: 1.5;
-        }
-
-        .btn-primary {
-            align-self: flex-start;
-            background-color: var(--accent);
-            color: var(--accent-text);
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 1rem;
-        }
-
-        .btn-primary:hover {
-            opacity: 0.9;
-        }
-
-        .section-title {
-            font-size: 1.25rem;
-            margin-bottom: 1.5rem;
-            font-weight: 600;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            overflow: hidden;
-            cursor: pointer;
-        }
-
-        .card:hover, .card:focus {
-            transform: translateY(-4px);
-            border-color: var(--text-primary);
-            box-shadow: 0 8px 24px var(--focus-glow);
-        }
-
-        .card-thumbnail {
+        .chart-wrapper {
+            position: relative;
             width: 100%;
-            height: 120px;
-            background-color: var(--bg-card-hover);
+            height: 320px;
+            margin-top: 10px;
+        }
+
+        .manifest-panel {
+            background: var(--input-bg);
+            border: 1px solid var(--border-subtle);
+            border-radius: 18px;
+            padding: 20px;
+        }
+
+        .manifest-list { display: flex; flex-direction: column; gap: 10px; max-height: 330px; overflow-y: auto; padding-right: 4px; }
+        .manifest-item { 
+            background: rgba(125, 125, 125, 0.06); 
+            border: 1px solid var(--border-subtle); 
+            border-radius: 12px; 
+            padding: 12px 16px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            font-size: 13px;
+            letter-spacing: -0.01em;
+        }
+
+        /* TABLES & POS COMPONENTS */
+        .pos-grid-layout {
+            display: grid;
+            grid-template-columns: 1.8fr 1.2fr;
+            gap: 20px;
+        }
+
+        .item-slots-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            background: var(--input-bg);
+            padding: 16px;
+            border-radius: 16px;
+            border: 1px solid var(--border-subtle);
+            margin-bottom: 18px;
+        }
+
+        .slot-box { display: flex; flex-direction: column; gap: 4px; }
+        .slot-label { font-size: 10px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.04em; text-transform: uppercase; }
+        .slot-input { background: var(--input-bg); border: 1px solid var(--border-subtle); color: var(--text-light); padding: 8px 10px; font-size: 13px; font-family: var(--font-text); letter-spacing: -0.01em; border-radius: 8px; width: 100%; font-variant-numeric: tabular-nums; }
+
+        .transaction-slots-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .pos-table-container { background: var(--input-bg); border: 1px solid var(--border-subtle); border-radius: 16px; overflow: hidden; margin-bottom: 20px; }
+        .pos-table, .ledger-table { width: 100%; border-collapse: collapse; font-size: 13px; letter-spacing: -0.01em; }
+        .pos-table th, .ledger-table th { background: var(--table-header-bg); color: var(--gold-light); text-align: left; padding: 10px 14px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--border-subtle); }
+        .pos-table td, .ledger-table td { padding: 10px 14px; border-bottom: 1px solid var(--border-subtle); vertical-align: middle; font-variant-numeric: tabular-nums; }
+
+        .pos-summary-bar {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-secondary);
-            font-size: 0.85rem;
+            flex-direction: column;
+            gap: 14px;
+            background: var(--input-bg);
+            border: 1px solid var(--border-subtle);
+            padding: 18px;
+            border-radius: 16px;
         }
 
-        .card-body {
-            padding: 1rem;
+        .tender-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
         }
 
-        .card-title {
-            font-size: 0.95rem;
-            font-weight: 600;
-            margin-bottom: 0.25rem;
+        .tender-btn {
+            background: var(--input-bg);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-light);
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 11px;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            transition: all 0.2s;
         }
 
-        .card-subtitle {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
+        .tender-btn.active {
+            border-color: var(--gold-primary);
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--gold-light);
+            box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.2);
+        }
+
+        [data-skin="light"] .tender-btn.active {
+            background: rgba(0, 0, 0, 0.1);
+            box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* BUTTONS & BADGES */
+        .btn-submit { 
+            background: var(--gold-gradient); 
+            color: #000; 
+            font-family: var(--font-text);
+            font-weight: 600; 
+            padding: 12px 18px; 
+            border: 1px solid rgba(255,255,255,0.4); 
+            border-radius: 12px; 
+            cursor: pointer; 
+            letter-spacing: 0.04em;
+            text-transform: uppercase; 
+            font-size: 11px;
+            box-shadow: var(--gold-glow);
+            transition: all 0.2s ease;
+        }
+
+        [data-skin="light"] .btn-submit {
+            color: #fff;
+            border: 1px solid rgba(0,0,0,0.2);
+        }
+
+        .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 12px 30px rgba(125, 125, 125, 0.3); }
+
+        .btn-sec { background: rgba(125,125,125,0.1); border: 1px solid var(--border-glass); color: var(--gold-light); cursor: pointer; padding: 6px 12px; border-radius: 10px; font-size: 11px; font-weight: 500; transition: all 0.2s; }
+        .btn-sec:hover { background: rgba(125, 125, 125, 0.2); color: var(--text-light); border-color: var(--gold-primary); }
+
+        .btn-action { padding: 5px 10px; font-size: 10px; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; border: none; border-radius: 6px; cursor: pointer; margin-right: 4px; }
+        .btn-pending { background: rgba(125, 125, 125, 0.2); color: var(--gold-light); border: 1px solid rgba(125, 125, 125, 0.4); }
+        .btn-settled { background: rgba(48, 209, 88, 0.2); color: var(--green-active); border: 1px solid rgba(48, 209, 88, 0.4); }
+        .btn-delete { background: rgba(255, 69, 58, 0.2); color: var(--red-alert); border: 1px solid rgba(255, 69, 58, 0.4); }
+
+        .status-badge { font-size: 9px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 8px; border-radius: 980px; display: inline-block; }
+        .status-pending { color: var(--gold-light); background: rgba(125, 125, 125, 0.15); border: 1px solid rgba(125, 125, 125, 0.3); }
+        .status-settled { color: var(--green-active); background: rgba(48, 209, 88, 0.15); border: 1px solid rgba(48, 209, 88, 0.3); }
+        .status-returned { color: var(--red-alert); background: rgba(255, 69, 58, 0.15); border: 1px solid rgba(255, 69, 58, 0.3); }
+
+        /* MODALS */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.65); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); display: flex; justify-content: center; align-items: center; z-index: 999; }
+        .modal-card { background: var(--panel-glass); border: 1px solid var(--border-glass); padding: 28px; border-radius: 20px; width: 360px; text-align: center; box-shadow: var(--glass-shadow); }
+
+        @media print {
+            body * { visibility: hidden; }
+            #receiptModal, #receiptModal * { visibility: visible; }
+            #receiptModal { position: absolute; left: 0; top: 0; width: 100%; background: #fff; color: #000; padding: 0; }
+            .no-print { display: none !important; }
         }
     </style>
 </head>
-<body>
+<body data-skin="dark">
 
-    <header>
-        <div class="logo">
-            <span>STREAM</span> TV
+    <!-- LAUNCHER SPLASH OVERLAY -->
+    <div id="appleTvLauncher">
+        <div class="launcher-content">
+            <img src="logo.png" alt="Nguni Logo" class="launcher-logo-center" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'120\' height=\'120\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23ffffff\' stroke-width=\'1.5\'><path d=\'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5\'/></svg>'">
+            <div class="launcher-title">Nguni Homeware</div>
+            <div class="launcher-subtitle">Enterprise POS & Ledger Hub</div>
         </div>
-        <nav>
-            <ul>
-                <li><a href="#" class="active">Home</a></li>
-                <li><a href="#">Movies</a></li>
-                <li><a href="#">Series</a></li>
-                <li><a href="#">Live TV</a></li>
-            </ul>
-        </nav>
-        <div class="controls">
-            <button class="theme-toggle" onclick="toggleTheme()">Toggle Mode</button>
+    </div>
+
+    <!-- ON-SCREEN TOAST NOTIFICATION CONTAINER -->
+    <div id="toastContainer"></div>
+
+    <!-- APPLICATION HEADER -->
+    <div class="header">
+        <div class="header-title">
+            <img src="logo.png" alt="Nguni Logo" style="height: 28px;" onerror="this.style.display='none'">
+            <h1>Nguni Homeware | Enterprise POS & Ledger Hub</h1>
         </div>
-    </header>
+        <div class="role-badge">
+            <select class="skin-selector" id="themeSkinSelect" onchange="switchThemeSkin(this.value)">
+                <option value="dark">Dark Mode (Default)</option>
+                <option value="light">Light Mode</option>
+            </select>
+            <span id="roleLabel">ACTIVE USER: NOT LOGGED IN</span>
+            <button class="btn-sec" onclick="triggerLauncherAndLogin()" style="padding: 4px 10px; font-size: 10px;">SWITCH USER</button>
+        </div>
+    </div>
 
-    <main>
-        <section class="hero">
-            <h1>Featured Content</h1>
-            <p>Stream live channels, movies, and TV series in high definition with a simple, distraction-free interface.</p>
-            <button class="btn-primary">Watch Now</button>
-        </section>
+    <!-- MAIN MODULE TABS NAVIGATION -->
+    <div class="tabs">
+        <button class="tab-btn active" id="btnTab1" onclick="switchTab('tab1')">1. CASHIER POS SELL</button>
+        <button class="tab-btn" id="btnTabCashup" onclick="switchTab('tabCashup')">2. CASHUP</button>
+        <button class="tab-btn" id="btnTab2" onclick="switchTab('tab2')">3. STOCK INTAKE</button>
+        <button class="tab-btn" id="btnTab9" onclick="switchTab('tab9')">4. TRADE LEDGER</button>
+        <button class="tab-btn" id="btnTab3" style="display: none;" onclick="switchTab('tab3')">5. SETTLEMENT LEDGER</button>
+        <button class="tab-btn" id="btnTab4" style="display: none;" onclick="switchTab('tab4')">6. STOCK ON-HAND</button>
+        <button class="tab-btn" id="btnTab5" style="display: none;" onclick="switchTab('tab5')">7. STAFF PROFILES</button>
+        <button class="tab-btn" id="btnTab6" style="display: none;" onclick="switchTab('tab6')">8. AUDIT LOGS</button>
+        <button class="tab-btn" id="btnTab7" onclick="switchTab('tab7')">9. RETURNS</button>
+        <button class="tab-btn" id="btnTab8" style="display: none;" onclick="switchTab('tab8')">10. ACCOUNTING</button>
+    </div>
 
-        <h2 class="section-title">Recently Added</h2>
-        <div class="grid">
-            <div class="card" tabindex="0">
-                <div class="card-thumbnail">Media Thumbnail</div>
-                <div class="card-body">
-                    <div class="card-title">Channel Stream 01</div>
-                    <div class="card-subtitle">Live • 1080p</div>
+    <!-- TAB 1: CASHIER POS SELL -->
+    <div id="tab1" class="tab-content active">
+        <div class="section-title">
+            <span>Cashier Front Desk Terminal & Live POS Checkout</span>
+            <span id="cashierBadgeDisplay" style="color: var(--cyan-bright); font-size: 11px; font-weight: 500;">CASHIER: UNASSIGNED</span>
+        </div>
+        
+        <div class="pos-grid-layout">
+            <div>
+                <div class="form-group">
+                    <label>Scan Barcode / Type Item SKU (Auto-Adds on Enter)</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="posBarcodeScan" class="form-control" placeholder="Scan barcode or type item number..." oninput="handleBarcodeScanInput()" onkeydown="handleBarcodeKeydown(event)" autofocus>
+                        <button type="button" class="btn-sec" onclick="toggleCameraScanner()" style="white-space: nowrap;">📷 Scan Camera</button>
+                    </div>
+                </div>
+
+                <div id="cameraScannerModal" style="display: none; background: rgba(0,0,0,0.5); border: 1px solid var(--border-glass); padding: 16px; border-radius: 18px; margin-bottom: 20px; text-align: center;">
+                    <div id="interactive-camera" style="width: 100%; max-width: 400px; margin: 0 auto; border-radius: 12px; overflow: hidden;"></div>
+                    <button type="button" class="btn-sec" onclick="stopCameraScanner()" style="margin-top: 12px; color: var(--red-alert);">Close Camera</button>
+                </div>
+
+                <div class="item-slots-grid">
+                    <div class="slot-box" style="grid-column: span 2;">
+                        <span class="slot-label">Product Description / Name</span>
+                        <input type="text" id="slotProductName" class="slot-input" readonly placeholder="Waiting for scan...">
+                    </div>
+                    <div class="slot-box">
+                        <span class="slot-label">Barcode / SKU</span>
+                        <input type="text" id="slotBarcode" class="slot-input" readonly placeholder="--">
+                    </div>
+                    <div class="slot-box">
+                        <span class="slot-label">Stock Available</span>
+                        <input type="text" id="slotStockOnHand" class="slot-input" style="color: var(--cyan-bright);" readonly placeholder="0">
+                    </div>
+                    <div class="slot-box">
+                        <span class="slot-label">Wholesale Cost (ZAR)</span>
+                        <input type="text" id="slotUnitPrice" class="slot-input" style="color: var(--gold-light);" readonly placeholder="R 0.00">
+                    </div>
+                    <div class="slot-box">
+                        <span class="slot-label">Selling Price (ZAR)</span>
+                        <input type="text" id="slotSellingPrice" class="slot-input" style="color: var(--cyan-bright);" readonly placeholder="R 0.00">
+                    </div>
+                    <div class="slot-box" style="grid-column: span 2;">
+                        <span class="slot-label">Consignor / Supplier</span>
+                        <input type="text" id="slotSupplier" class="slot-input" readonly placeholder="--">
+                    </div>
+                </div>
+
+                <div class="transaction-slots-grid">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Order Reference / Transaction No.</label>
+                        <input type="text" id="posOrderRef" class="form-control" placeholder="e.g. #1043 or POS-8923">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Quantity per Scan</label>
+                        <input type="number" id="posQty" class="form-control" value="1" min="1" oninput="calculateSlotLineTotal()">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Subtotal (ZAR)</label>
+                        <input type="text" id="slotLineTotal" class="form-control" readonly placeholder="R 0.00" style="color: var(--gold-light); font-weight: 600;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <button type="button" class="btn-submit" style="width:100%; height: 38px;" onclick="addItemToCart()">+ Add Item to Cart</button>
+                    </div>
                 </div>
             </div>
-            <div class="card" tabindex="0">
-                <div class="card-thumbnail">Media Thumbnail</div>
-                <div class="card-body">
-                    <div class="card-title">Channel Stream 02</div>
-                    <div class="card-subtitle">Live • 4K</div>
+
+            <div>
+                <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gold-light); margin-bottom: 8px;">Staged Cart Items</div>
+                <div class="pos-table-container" style="max-height: 220px; overflow-y: auto;">
+                    <table class="pos-table">
+                        <thead>
+                            <tr>
+                                <th>PRODUCT</th>
+                                <th>QTY</th>
+                                <th>PRICE</th>
+                                <th>SUBTOTAL</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="cartTableBody">
+                            <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No items in checkout batch.</td></tr>
+                        </tbody>
+                    </table>
                 </div>
-            </div>
-            <div class="card" tabindex="0">
-                <div class="card-thumbnail">Media Thumbnail</div>
-                <div class="card-body">
-                    <div class="card-title">Channel Stream 03</div>
-                    <div class="card-subtitle">Video on Demand</div>
-                </div>
-            </div>
-            <div class="card" tabindex="0">
-                <div class="card-thumbnail">Media Thumbnail</div>
-                <div class="card-body">
-                    <div class="card-title">Channel Stream 04</div>
-                    <div class="card-subtitle">Live • 1080p</div>
+
+                <div class="pos-summary-bar">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="slot-label">GRAND TOTAL</span>
+                        <h2 id="cartGrandTotal" style="font-family: var(--font-display); font-size: 24px; font-weight: 700; color: var(--gold-light); margin: 0; font-variant-numeric: tabular-nums;">R 0.00</h2>
+                    </div>
+
+                    <div>
+                        <label style="font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); display: block; margin-bottom: 6px;">Payment Tender Method</label>
+                        <div class="tender-options">
+                            <button type="button" class="tender-btn active" id="tenderCash" onclick="setTender('CASH')">Cash</button>
+                            <button type="button" class="tender-btn" id="tenderCard" onclick="setTender('CARD')">Card / POS</button>
+                        </div>
+
+                        <div class="form-group" id="cashTenderGroup" style="margin-bottom: 8px;">
+                            <label>Cash Tendered (ZAR) <small style="color:var(--text-muted);">(Leave blank for exact cash)</small></label>
+                            <input type="number" id="cashReceived" class="form-control" placeholder="0.00" oninput="calculateChange()">
+                        </div>
+
+                        <div class="form-group" id="changeDueGroup" style="margin-bottom: 12px;">
+                            <label>Change Due</label>
+                            <input type="text" id="changeDue" class="form-control" readonly value="R 0.00" style="color: var(--green-active); font-weight: 600;">
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn-submit" style="width: 100%; text-align: center;" onclick="checkoutBatchOrder()">COMPLETE SALE & PRINT RECEIPT</button>
                 </div>
             </div>
         </div>
-    </main>
+    </div>
 
+    <!-- TAB: CASHUP -->
+    <div id="tabCashup" class="tab-content">
+        <div class="section-title">
+            <span>Daily Cashup Reconciliation Terminal</span>
+            <span id="cashupUserBadge" style="color: var(--cyan-bright); font-size: 11px; font-weight: 500;">USER: UNASSIGNED</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+                <form id="cashupForm" onsubmit="submitCashup(event)">
+                    <div class="form-group">
+                        <label>Float / Opening Cash (ZAR)</label>
+                        <input type="number" id="cashupFloat" class="form-control" value="0.00" step="0.01" required oninput="calculateCashupVariance()">
+                    </div>
+                    <div class="form-group">
+                        <label>Total Cash Sales Counted / Declared (ZAR)</label>
+                        <input type="number" id="cashupActualCash" class="form-control" placeholder="0.00" step="0.01" required oninput="calculateCashupVariance()">
+                    </div>
+                    <div class="form-group">
+                        <label>Total Card / POS Sales Declared (ZAR)</label>
+                        <input type="number" id="cashupActualCard" class="form-control" placeholder="0.00" step="0.01" required oninput="calculateCashupVariance()">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>Cash Discrepancy / Variance</label>
+                            <input type="text" id="cashupVariance" class="form-control" readonly value="R 0.00" style="font-weight: 600;">
+                        </div>
+                        <div class="form-group">
+                            <label>Card Discrepancy / Variance</label>
+                            <input type="text" id="cashupCardVariance" class="form-control" readonly value="R 0.00" style="font-weight: 600;">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Notes / Explanations for Discrepancies</label>
+                        <textarea id="cashupNotes" class="form-control" placeholder="Optional comments..." rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn-submit" style="width: 100%;">SUBMIT CASHUP REPORT</button>
+                </form>
+            </div>
+
+            <div>
+                <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gold-light); margin-bottom: 8px;">System Expected Totals (Today)</div>
+                <div class="summary-grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+                    <div class="summary-card" style="padding: 12px 16px;">
+                        <div class="summary-label">Expected Cash Sales</div>
+                        <div class="summary-val" id="expectedCashSales" style="font-size: 20px; color: var(--cyan-bright);">R 0.00</div>
+                    </div>
+                    <div class="summary-card" style="padding: 12px 16px;">
+                        <div class="summary-label">Expected Card Sales</div>
+                        <div class="summary-val" id="expectedCardSales" style="font-size: 20px; color: var(--gold-light);">R 0.00</div>
+                    </div>
+                </div>
+
+                <div class="section-title" style="margin-top: 14px;">Manager Tracking / Cashup History</div>
+                <div class="pos-table-container" style="max-height: 240px; overflow-y: auto;">
+                    <table class="ledger-table">
+                        <thead>
+                            <tr>
+                                <th>Date/Time</th>
+                                <th>Cashier</th>
+                                <th>Declared Cash</th>
+                                <th>Cash Var</th>
+                                <th>Card Var</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cashupHistoryTable">
+                            <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No cashups recorded.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: CONSIGNMENT STOCK INTAKE -->
+    <div id="tab2" class="tab-content">
+        <div class="section-title">Consignment Stock Intake & Batch Staging</div>
+        <form id="stockForm" onsubmit="addStockItemToBatch(event)" style="margin-bottom: 24px;">
+            <div class="form-group">
+                <label>Item Barcode / SKU (Auto-generated if blank)</label>
+                <input type="text" id="stockSku" class="form-control" placeholder="e.g. 600123456789 or ITEM-101">
+            </div>
+            <div class="form-group">
+                <label>SKU Description / Product Name</label>
+                <input type="text" id="stockName" class="form-control" required placeholder="e.g. Ceramic Teaset">
+            </div>
+            <div class="form-group">
+                <label>Quantity Intake</label>
+                <input type="number" id="stockQty" class="form-control" value="10" required>
+            </div>
+            <div class="form-group">
+                <label>Wholesale Floor Price per Unit (ZAR)</label>
+                <input type="number" id="stockUnitPrice" class="form-control" required placeholder="e.g. 260">
+            </div>
+            <div class="form-group">
+                <label>Retail Selling Price per Unit (ZAR)</label>
+                <input type="number" id="stockSellingPrice" class="form-control" required placeholder="e.g. 450">
+            </div>
+            <div class="form-group">
+                <label>Consignor / Wholesale Supplier Partner</label>
+                <input type="text" id="stockSupplier" class="form-control" required placeholder="e.g. Craft Master Wholesalers">
+            </div>
+            <button type="submit" class="btn-submit" style="width: 100%;">+ Stage Stock Line</button>
+        </form>
+
+        <div class="section-title">Batch Intake Staging Queue</div>
+        <div class="pos-table-container">
+            <table class="pos-table">
+                <thead>
+                    <tr>
+                        <th>BARCODE / SKU</th>
+                        <th>PRODUCT NAME</th>
+                        <th>SUPPLIER</th>
+                        <th>QTY</th>
+                        <th>FLOOR PRICE</th>
+                        <th>SELLING PRICE</th>
+                        <th>ACTION</th>
+                    </tr>
+                </thead>
+                <tbody id="intakeBatchTableBody">
+                    <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No inventory staged for intake.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pos-summary-bar">
+            <div><span class="slot-label">STAGED LINES: <span id="intakeBatchCount" style="color:var(--text-light);">0</span></span></div>
+            <button type="button" class="btn-submit" onclick="commitIntakeBatch()">COMMIT ALL STAGED INVENTORY</button>
+        </div>
+    </div>
+
+    <!-- TAB 9: SUPPLIER TRADE LEDGER -->
+    <div id="tab9" class="tab-content">
+        <div class="trade-header-bar">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 16px; font-weight: 700; font-style: italic; color: var(--text-light);">⚡</span>
+                <span style="font-size: 13px; font-weight: 600; letter-spacing: -0.01em; color: var(--gold-light);">Nguni Homeware | Supplier Trade Ledger (Wholesale Cost View)</span>
+            </div>
+            <div class="sync-pill">
+                <span class="sync-dot"></span>
+                <span>Realtime Sync Active</span>
+            </div>
+        </div>
+
+        <div style="background: var(--input-bg); border: 1px solid var(--border-subtle); padding: 14px 20px; border-radius: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <span style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: 500; letter-spacing: 0.06em;">VIEWING PARTNER LEDGER</span>
+                <div id="activeSupplierName" style="font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: var(--text-light); margin-top: 2px;">All Consignment Partners</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <label style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: 500; letter-spacing: 0.06em;">SELECT PARTNER:</label>
+                <select id="supplierSelect" class="form-control" style="width: 240px; background: var(--input-bg);" onchange="filterSupplierLedger()">
+                    <option value="ALL">-- All Suppliers / Master View --</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-label">TOTAL UNITS CONSIGNED & SOLD</div>
+                <div class="summary-val" id="tradeUnits">0 Units</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">LOCKED WHOLESALE COST OWED</div>
+                <div class="summary-val" id="tradeOwed" style="color: var(--gold-light);">R 0.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">ACTIVE PILOT SKUS</div>
+                <div class="summary-val" id="tradeSkus" style="color: var(--cyan-bright);">0 Lines</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">SETTLEMENT CYCLE</div>
+                <div class="summary-val" style="font-size: 20px;">15–30 Days</div>
+            </div>
+        </div>
+
+        <div class="trade-grid-container">
+            <div class="chart-panel">
+                <div class="section-title" style="margin-bottom: 0;">Weekly Unit Sales Velocity</div>
+                <div class="chart-wrapper">
+                    <canvas id="salesVelocityChart"></canvas>
+                </div>
+            </div>
+
+            <div class="manifest-panel">
+                <div class="section-title">Consignment Sales Manifest (Wholesale Cost)</div>
+                <div class="manifest-list" id="manifestList">
+                    <div style="color: var(--text-muted); text-align: center; padding: 40px;">Loading live manifest records...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: SETTLEMENT LEDGER -->
+    <div id="tab3" class="tab-content">
+        <div class="section-title">
+            <span>Settlement Ledger & Supplier Split Breakdown</span>
+            <div style="display: flex; gap: 8px;">
+                <input type="date" id="filterStartDate" class="form-control" style="width: 130px; padding: 4px 8px;" onchange="renderAdminOrders(cachedOrders)">
+                <input type="date" id="filterEndDate" class="form-control" style="width: 130px; padding: 4px 8px;" onchange="renderAdminOrders(cachedOrders)">
+                <button class="btn-sec" onclick="exportSupplierStatement()">Export CSV</button>
+            </div>
+        </div>
+
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-label">Wholesale Cost Escrow Pending</div>
+                <div class="summary-val" id="adminOwed" style="color: var(--gold-light);">R 0.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Total Settled Payouts</div>
+                <div class="summary-val" id="adminSettled" style="color: var(--green-active);">R 0.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Platform Fees (Store Retention)</div>
+                <div class="summary-val" style="color: var(--gold-light);">R 230.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Net Payable Balance</div>
+                <div class="summary-val" id="adminNet" style="color: var(--text-light);">R 0.00</div>
+            </div>
+        </div>
+
+        <div class="pos-table-container">
+            <table class="ledger-table">
+                <thead>
+                    <tr>
+                        <th>Order Ref / Item</th>
+                        <th>Supplier</th>
+                        <th>Date</th>
+                        <th>Processed By</th>
+                        <th>Qty</th>
+                        <th>Wholesale Cost Amount</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="adminOrderTable">
+                    <tr><td colspan="8" style="color: var(--text-muted); padding: 20px;">Loading ledger...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 4: STOCK ON-HAND -->
+    <div id="tab4" class="tab-content">
+        <div class="section-title">Active Stock Inventory Management</div>
+        <div class="pos-table-container">
+            <table class="ledger-table">
+                <thead>
+                    <tr>
+                        <th>SKU / Barcode</th>
+                        <th>Product / Description</th>
+                        <th>Supplier Partner</th>
+                        <th>Intake Qty</th>
+                        <th>Wholesale Cost</th>
+                        <th>Selling Price</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="stockTableBody">
+                    <tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">Loading active inventory...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 5: STAFF PROFILES -->
+    <div id="tab5" class="tab-content">
+        <div class="section-title">Cashier, Staff & Supplier Profile Management</div>
+        <form id="createStaffForm" onsubmit="handleCreateStaff(event)" style="margin-bottom: 24px;">
+            <div class="form-group">
+                <label>Full Name / Supplier Name</label>
+                <input type="text" id="staffNameInput" class="form-control" required placeholder="e.g. Sipho Ndlovu or Craft Master Wholesalers">
+            </div>
+            <div class="form-group">
+                <label>PIN Code (4-6 Digits)</label>
+                <input type="password" id="staffPinInput" class="form-control" maxlength="6" required placeholder="e.g. 5678">
+            </div>
+            <div class="form-group">
+                <label>Access Level Role</label>
+                <select id="staffRoleSelect" class="form-control">
+                    <option value="cashier" style="background:var(--input-bg);">Cashier (POS Dispatch Only)</option>
+                    <option value="staff" style="background:var(--input-bg);">Staff (POS & Intake Only)</option>
+                    <option value="supplier" style="background:var(--input-bg);">Supplier Partner (Trade Ledger Portal Only)</option>
+                    <option value="manager" style="background:var(--input-bg);">Manager (Full Access & Ledger)</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-submit" style="width:100%;">Create Cashier / Staff / Supplier Profile</button>
+        </form>
+
+        <div class="section-title">Active Staff, Cashier & Supplier Accounts</div>
+        <div class="pos-table-container">
+            <table class="ledger-table">
+                <thead>
+                    <tr>
+                        <th>Account Name</th>
+                        <th>Role</th>
+                        <th>Created On</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="staffProfileTable">
+                    <tr><td colspan="4" style="color: var(--text-muted); padding: 20px;">Loading profiles...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 6: AUDIT LOGS -->
+    <div id="tab6" class="tab-content">
+        <div class="section-title">System Audit Trail & Activity Logs</div>
+        <div class="pos-table-container">
+            <table class="ledger-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Action Executed</th>
+                    </tr>
+                </thead>
+                <tbody id="auditTableBody">
+                    <tr><td colspan="3" style="color: var(--text-muted); padding: 20px;">Loading audit logs...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 7: RETURNS & RESTOCK -->
+    <div id="tab7" class="tab-content">
+        <div class="section-title">Customer Order Returns & Inventory Restock</div>
+        <form id="returnForm" onsubmit="handleReturnSubmit(event)" style="margin-bottom: 24px;">
+            <div class="form-group">
+                <label>Select Order / Transaction</label>
+                <select id="returnOrderSelect" class="form-control" required>
+                    <option value="">-- Choose Dispatched Order --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Return Quantity</label>
+                <input type="number" id="returnQty" class="form-control" value="1" min="1" required>
+            </div>
+            <div class="form-group">
+                <label>Reason for Return</label>
+                <select id="returnReason" class="form-control" required>
+                    <option value="Customer Change of Mind">Customer Change of Mind</option>
+                    <option value="Defective / Damaged Item">Defective / Damaged Item</option>
+                    <option value="Incorrect Item Dispatched">Incorrect Item Dispatched</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Restock Action</label>
+                <select id="restockAction" class="form-control" required>
+                    <option value="YES_RESTOCK">YES - Restock item back into active inventory</option>
+                    <option value="NO_RESTOCK">NO - Do not restock (Write-off / Damaged)</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, rgba(255, 69, 58, 0.95) 0%, rgba(197, 40, 32, 0.95) 100%); color:#fff; width:100%;">Process Order Return</button>
+        </form>
+
+        <div class="section-title">Processed Returns History</div>
+        <div class="pos-table-container">
+            <table class="ledger-table">
+                <thead>
+                    <tr>
+                        <th>Return Date</th>
+                        <th>Order Ref / Item</th>
+                        <th>Qty</th>
+                        <th>Reason</th>
+                        <th>Restocked?</th>
+                        <th>Processed By</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="returnsLogTable">
+                    <tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">Loading return history...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 8: FULL FINANCIAL ACCOUNTING & P&L DASHBOARD -->
+    <div id="tab8" class="tab-content">
+        <div class="section-title">
+            <span>Enterprise Accounting & Financial Profit & Loss (P&L)</span>
+            <div style="display: flex; gap: 8px;">
+                <input type="date" id="accFilterStart" class="form-control" style="width: 130px; padding: 4px 8px;" onchange="renderAccountingDashboard()">
+                <input type="date" id="accFilterEnd" class="form-control" style="width: 130px; padding: 4px 8px;" onchange="renderAccountingDashboard()">
+                <button class="btn-sec" onclick="exportAccountingCSV()">Export CSV</button>
+            </div>
+        </div>
+
+        <!-- PRIMARY FINANCIAL METRICS GRID -->
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-label">Gross Sales Revenue</div>
+                <div class="summary-val" id="accGrossSales" style="color: var(--cyan-bright);">R 0.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Cost of Goods Sold (COGS)</div>
+                <div class="summary-val" id="accCogs" style="color: var(--red-alert);">R 0.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Gross Profit</div>
+                <div class="summary-val" id="accGrossProfit" style="color: var(--gold-light);">R 0.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Net Profit (EBITDA)</div>
+                <div class="summary-val" id="accNetProfit" style="color: var(--green-active);">R 0.00</div>
+            </div>
+        </div>
+
+        <!-- SECONDARY FINANCIAL BREAKDOWN GRID -->
+        <div class="summary-grid" style="grid-template-columns: repeat(5, 1fr);">
+            <div class="summary-card">
+                <div class="summary-label">Platform Fees (Fixed)</div>
+                <div class="summary-val" style="font-size: 18px; color: var(--gold-light);">R 230.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Operating Expenses (OpEx)</div>
+                <div class="summary-val" id="accOpEx" style="font-size: 18px; color: var(--red-alert);">R 0.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Cash Collected</div>
+                <div class="summary-val" id="accCashTendered" style="font-size: 18px; color: var(--text-light);">R 0.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Card / Digital Sales</div>
+                <div class="summary-val" id="accCardTendered" style="font-size: 18px; color: var(--text-light);">R 0.00</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Units Sold</div>
+                <div class="summary-val" id="accUnitsSold" style="font-size: 18px; color: var(--text-light);">0 Items</div>
+            </div>
+        </div>
+
+        <!-- OPERATIONAL EXPENSE INPUT MODULE -->
+        <div class="section-title">Log Operating Expense (OpEx)</div>
+        <form id="expenseForm" onsubmit="handleLogExpense(event)" style="margin-bottom: 24px; display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; align-items: end;">
+            <div class="form-group" style="margin:0;">
+                <label>Expense Description</label>
+                <input type="text" id="expDesc" class="form-control" placeholder="e.g. Monthly Internet / Packaging Bags" required>
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label>Category</label>
+                <select id="expCategory" class="form-control">
+                    <option value="Rent">Rent & Utilities</option>
+                    <option value="Packaging">Packaging & Supplies</option>
+                    <option value="Bank Fees">Card & Merchant Fees</option>
+                    <option value="Salaries">Staff Wages</option>
+                    <option value="Transport">Logistics / Freight</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label>Amount (ZAR)</label>
+                <input type="number" id="expAmount" class="form-control" placeholder="0.00" step="0.01" required>
+            </div>
+            <button type="submit" class="btn-submit" style="height: 38px;">+ Log Expense</button>
+        </form>
+
+        <div class="section-title">Itemized Financial Sales & Transaction Ledger</div>
+        <div class="pos-table-container">
+            <table class="ledger-table">
+                <thead>
+                    <tr>
+                        <th>Order ID / Ref</th>
+                        <th>Timestamp</th>
+                        <th>Product SKU / Name</th>
+                        <th>Qty Sold</th>
+                        <th>Unit Price</th>
+                        <th>Gross Total</th>
+                        <th>Fulfillment Channel</th>
+                    </tr>
+                </thead>
+                <tbody id="accountingTableBody">
+                    <tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">Loading accounting records...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MODAL OVERLAYS -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal-card">
+            <h3 style="font-family: var(--font-display); background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 15px; font-weight: 600; margin-bottom: 6px;">Cashier & Staff Authentication</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 18px; letter-spacing: -0.01em;">Enter PIN code to open terminal session.</p>
+            <div class="form-group">
+                <input type="password" id="userPinInput" class="form-control" style="text-align: center; font-size: 22px; letter-spacing: 6px; font-family: var(--font-mono);" maxlength="6" placeholder="••••" oninput="checkAutoLoginPin()" autofocus>
+            </div>
+            <button class="btn-submit" style="width: 100%;" onclick="authenticateUserPin()">LOGIN SESSION</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="receiptModal" style="display: none;">
+        <div class="modal-card" style="background: #fff; color: #000; text-align: left; font-family: var(--font-mono);">
+            <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px;">
+                <h3 style="margin:0; font-size: 15px; font-family: var(--font-display); font-weight: 700;">NGUNI HOMEWARE</h3>
+                <p style="margin: 2px 0 0 0; font-size: 10px;">Consignment & Retail POS Hub</p>
+            </div>
+            <div id="receiptContent" style="font-size: 11px; line-height: 1.5;"></div>
+            <div style="text-align: center; border-top: 1px dashed #000; padding-top: 10px; margin-top: 10px;">
+                <p style="margin: 0; font-size: 10px;">Thank you for shopping local!</p>
+            </div>
+            <div class="no-print" style="margin-top: 16px; display: flex; gap: 8px;">
+                <button class="btn-submit" onclick="window.print()" style="flex:2;">Print Slip</button>
+                <button class="btn-sec" onclick="closeModal('receiptModal')" style="flex:1; color:#000; border-color:#000;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APPLICATION LOGIC -->
     <script>
-        function toggleTheme() {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            if (currentTheme === 'light') {
-                document.documentElement.removeAttribute('data-theme');
-            } else {
-                document.documentElement.setAttribute('data-theme', 'light');
+        const SUPABASE_URL = 'https://aivsmcdhxfdccsbqmejt.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_NDE9uLsqMD2QiIa6LMw-Lw_IBOmeebV';
+        
+        let supabaseClient;
+        try {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        } catch (e) {
+            console.error("Supabase load error", e);
+        }
+
+        const PLATFORM_FEE = 230;
+        let currentUser = null;
+        let cachedOrders = [];
+        let cachedInventory = [];
+        let cachedExpenses = [];
+        let cachedCashups = [];
+        let activePosMatch = null;
+        let posCart = [];
+        let intakeBatch = [];
+        let selectedTender = 'CASH';
+        let currentGrandTotal = 0;
+        let html5QrCodeScanner = null;
+        let salesChartInstance = null;
+
+        /* THEME SKIN SWITCHER CONTROLLER */
+        function switchThemeSkin(skin) {
+            document.body.setAttribute('data-skin', skin);
+            if (cachedOrders && cachedOrders.length > 0) {
+                renderVelocityChart(cachedOrders);
             }
+        }
+
+        /* LAUNCHER CONTROLLER */
+        function triggerLauncherSequence(callback) {
+            const launcher = document.getElementById('appleTvLauncher');
+            if (!launcher) return callback && callback();
+            
+            launcher.style.display = 'flex';
+            launcher.classList.remove('fade-out');
+
+            setTimeout(() => {
+                launcher.classList.add('fade-out');
+                setTimeout(() => {
+                    launcher.style.display = 'none';
+                    if (callback) callback();
+                }, 1200);
+            }, 3500);
+        }
+
+        function triggerLauncherAndLogin() {
+            triggerLauncherSequence(() => {
+                openLoginModal();
+            });
+        }
+
+        /* ON-SCREEN TOAST NOTIFICATION HUB */
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = `toast-notification ${type}`;
+            
+            let icon = 'ℹ️';
+            if (type === 'success') icon = '✅';
+            if (type === 'error') icon = '⚠️';
+
+            toast.innerHTML = `
+                <span style="font-size: 14px;">${icon}</span>
+                <div style="flex: 1; word-break: break-word;">${message}</div>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'toastFadeOut 0.3s ease forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            triggerLauncherSequence(() => {
+                openLoginModal();
+            });
+            fetchAdminOrders();
+
+            if (supabaseClient) {
+                supabaseClient.channel('enterprise_realtime').on('postgres_changes', { event: '*', schema: 'public' }, () => {
+                    fetchAdminOrders();
+                }).subscribe();
+            }
+        });
+
+        /* TAB MANAGEMENT */
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            const targetBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick')?.includes(tabId));
+            if (targetBtn) targetBtn.classList.add('active');
+
+            if (tabId === 'tab9') {
+                setTimeout(() => renderVelocityChart(cachedOrders), 100);
+            }
+            if (tabId === 'tabCashup') {
+                prepareCashupView();
+            }
+        }
+
+        /* TENDER METHOD SELECTION */
+        function setTender(method) {
+            selectedTender = method;
+            document.getElementById('tenderCash').classList.toggle('active', method === 'CASH');
+            document.getElementById('tenderCard').classList.toggle('active', method === 'CARD');
+            
+            const cashGroup = document.getElementById('cashTenderGroup');
+            const changeGroup = document.getElementById('changeDueGroup');
+            if (method === 'CARD') {
+                cashGroup.style.display = 'none';
+                changeGroup.style.display = 'none';
+            } else {
+                cashGroup.style.display = 'block';
+                changeGroup.style.display = 'block';
+                calculateChange();
+            }
+        }
+
+        function calculateChange() {
+            const tenderedInput = document.getElementById('cashReceived').value;
+            const tendered = tenderedInput === '' ? currentGrandTotal : parseFloat(tenderedInput) || 0;
+            const change = Math.max(0, tendered - currentGrandTotal);
+            document.getElementById('changeDue').value = `R ${change.toFixed(2)}`;
+        }
+
+        /* LOGIN & SESSION HANDLERS */
+        function openLoginModal() {
+            currentUser = null;
+            document.getElementById('roleLabel').innerText = 'ACTIVE USER: NOT LOGGED IN';
+            const pinInput = document.getElementById('userPinInput');
+            if (pinInput) {
+                pinInput.value = '';
+                setTimeout(() => pinInput.focus(), 100);
+            }
+            document.getElementById('loginModal').style.display = 'flex';
+        }
+
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        async function checkAutoLoginPin() {
+            const pin = document.getElementById('userPinInput').value.trim();
+            if (pin === '1234') { 
+                currentUser = { full_name: 'Default Manager', role: 'manager' }; 
+                applyUserSession(); 
+            } 
+            else if (pin === '1111') {
+                currentUser = { full_name: 'Restricted POS User', role: 'pos_restricted' };
+                applyUserSession();
+            }
+            else if (pin === '9999') { 
+                currentUser = { full_name: 'Supplier Partner', role: 'supplier' }; 
+                applyUserSession(); 
+            }
+            else if (pin === '0000') { 
+                currentUser = { full_name: 'Cashier Floor', role: 'cashier' }; 
+                applyUserSession(); 
+            } 
+            else if (pin.length >= 4 && supabaseClient) {
+                const { data } = await supabaseClient.from('staff_profiles').select('*').eq('pin_code', pin);
+                if (data && data.length > 0) { currentUser = data[0]; applyUserSession(); }
+            }
+        }
+
+        async function authenticateUserPin() {
+            const pin = document.getElementById('userPinInput').value.trim();
+            if (pin === '1234') { currentUser = { full_name: 'Default Manager', role: 'manager' }; applyUserSession(); return; } 
+            if (pin === '1111') { currentUser = { full_name: 'Restricted POS User', role: 'pos_restricted' }; applyUserSession(); return; }
+            if (pin === '9999') { currentUser = { full_name: 'Supplier Partner', role: 'supplier' }; applyUserSession(); return; }
+            if (pin === '0000') { currentUser = { full_name: 'Cashier Floor', role: 'cashier' }; applyUserSession(); return; }
+
+            const { data } = await supabaseClient.from('staff_profiles').select('*').eq('pin_code', pin);
+            if (data && data.length > 0) { 
+                currentUser = data[0]; 
+                applyUserSession(); 
+            } else {
+                showNotification('Invalid PIN code entered.', 'error');
+            }
+        }
+
+        function applyUserSession() {
+            document.getElementById('roleLabel').innerText = `USER: ${currentUser.full_name.toUpperCase()} (${currentUser.role.toUpperCase()})`;
+            document.getElementById('cashierBadgeDisplay').innerText = `CASHIER: ${currentUser.full_name.toUpperCase()}`;
+            
+            if (currentUser.role === 'supplier') {
+                ['btnTab1', 'btnTabCashup', 'btnTab2', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8'].forEach(id => {
+                    if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
+                });
+                if (document.getElementById('btnTab9')) document.getElementById('btnTab9').style.display = 'block';
+                switchTab('tab9');
+
+                const supplierSelect = document.getElementById('supplierSelect');
+                if (supplierSelect) {
+                    const matchingOpt = Array.from(supplierSelect.options).find(opt => 
+                        opt.value.toLowerCase() === currentUser.full_name.toLowerCase()
+                    );
+                    if (matchingOpt) {
+                        supplierSelect.value = matchingOpt.value;
+                        filterSupplierLedger();
+                    }
+                }
+            } 
+            else if (currentUser.role === 'pos_restricted') {
+                ['btnTab1', 'btnTabCashup', 'btnTab2', 'btnTab4', 'btnTab7'].forEach(id => {
+                    if (document.getElementById(id)) document.getElementById(id).style.display = 'block';
+                });
+                ['btnTab3', 'btnTab5', 'btnTab6', 'btnTab8', 'btnTab9'].forEach(id => {
+                    if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
+                });
+                switchTab('tab1');
+            }
+            else if (currentUser.role === 'manager') {
+                ['btnTab1', 'btnTabCashup', 'btnTab2', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8', 'btnTab9'].forEach(id => {
+                    if (document.getElementById(id)) document.getElementById(id).style.display = 'block';
+                });
+                switchTab('tab1');
+            } 
+            else {
+                if (document.getElementById('btnTab1')) document.getElementById('btnTab1').style.display = 'block';
+                if (document.getElementById('btnTabCashup')) document.getElementById('btnTabCashup').style.display = 'block';
+                
+                ['btnTab2', 'btnTab3', 'btnTab4', 'btnTab5', 'btnTab6', 'btnTab7', 'btnTab8', 'btnTab9'].forEach(id => {
+                    if (document.getElementById(id)) document.getElementById(id).style.display = 'none';
+                });
+                switchTab('tab1');
+            }
+
+            closeModal('loginModal');
+            showNotification(`Welcome back, ${currentUser.full_name}! Session started successfully.`, 'success');
+            logAuditAction(`Logged in (${currentUser.full_name} - ${currentUser.role})`);
+            fetchAdminOrders();
+            fetchStaffProfiles();
+        }
+
+        /* DATA FETCHING & REALTIME REFRESH */
+        async function fetchAdminOrders() {
+            if (!supabaseClient) return;
+            const { data: orders } = await supabaseClient.from('orders').select('*').order('created_at', { ascending: false });
+            cachedOrders = orders || [];
+            
+            const { data: inventory } = await supabaseClient.from('inventory').select('*').order('created_at', { ascending: false });
+            cachedInventory = inventory || [];
+
+            const { data: expenses } = await supabaseClient.from('expenses').select('*').order('created_at', { ascending: false });
+            cachedExpenses = expenses || [];
+
+            const { data: cashups } = await supabaseClient.from('cashups').select('*').order('created_at', { ascending: false });
+            cachedCashups = cashups || [];
+
+            renderAdminOrders(cachedOrders);
+            renderStockTable(cachedInventory);
+            renderAccountingDashboard();
+            populateSupplierTradeDropdown();
+            renderSupplierPortal('ALL');
+            fetchReturnsLog();
+            renderCashupHistory();
+        }
+
+        /* CAMERA BARCODE SCANNER INTEGRATION */
+        function toggleCameraScanner() {
+            const modal = document.getElementById('cameraScannerModal');
+            if (modal.style.display === 'block') {
+                stopCameraScanner();
+            } else {
+                modal.style.display = 'block';
+                startCameraScanner();
+            }
+        }
+
+        function startCameraScanner() {
+            if (typeof Html5Qrcode === 'undefined') {
+                showNotification('QR/Barcode scanner library not loaded.', 'error');
+                return;
+            }
+            try {
+                html5QrCodeScanner = new Html5Qrcode("interactive-camera");
+                html5QrCodeScanner.start(
+                    { facingMode: "environment" },
+                    { fps: 10, qrbox: { width: 250, height: 150 } },
+                    (decodedText) => {
+                        document.getElementById('posBarcodeScan').value = decodedText;
+                        handleBarcodeScanInput();
+                        stopCameraScanner();
+                        showNotification(`Scanned barcode: ${decodedText}`, 'success');
+                    },
+                    (errorMessage) => {
+                        // Silent feedback
+                    }
+                ).catch(err => {
+                    console.error("Camera start error:", err);
+                    showNotification('Unable to access camera. Check permissions.', 'error');
+                    stopCameraScanner();
+                });
+            } catch (e) {
+                console.error("Scanner init error:", e);
+                showNotification('Could not initialize camera scanner.', 'error');
+            }
+        }
+
+        function stopCameraScanner() {
+            const modal = document.getElementById('cameraScannerModal');
+            if (modal) modal.style.display = 'none';
+            if (html5QrCodeScanner) {
+                html5QrCodeScanner.stop().then(() => {
+                    html5QrCodeScanner.clear();
+                    html5QrCodeScanner = null;
+                }).catch(err => {
+                    console.error("Failed to stop scanner", err);
+                    html5QrCodeScanner = null;
+                });
+            }
+        }
+
+        /* POS SCAN & CART LOGIC */
+        function handleBarcodeScanInput() {
+            const query = document.getElementById('posBarcodeScan').value.trim().toLowerCase();
+            if (!query) return clearPosSlots();
+
+            const stockMap = {};
+            cachedInventory.forEach(item => {
+                const name = (item.item_name || item.item_description || item.sku || 'Unknown').trim();
+                const sku = item.sku || '';
+                stockMap[name] = stockMap[name] || { 
+                    name: name, 
+                    sku: sku, 
+                    intake: 0, 
+                    dispatched: 0, 
+                    supplier: item.supplier || 'General Wholesaler', 
+                    price: parseFloat(item.wholesale_floor_zar || item.unit_price || item.cost_price || 0),
+                    sellingPrice: parseFloat(item.selling_price || item.retail_price || ((item.wholesale_floor_zar || item.unit_price || 0) * 1.3))
+                };
+                stockMap[name].intake += (parseInt(item.quantity_allocated || item.quantity) || 0);
+            });
+
+            cachedOrders.forEach(order => {
+                if (order.payout_status !== 'RETURNED / CANCELLED') {
+                    const name = (order.item_name || '').trim();
+                    if (stockMap[name]) stockMap[name].dispatched += (parseInt(order.quantity_dispatched) || 1);
+                }
+            });
+
+            let match = null;
+            Object.keys(stockMap).forEach(key => {
+                const item = stockMap[key];
+                if (item.sku.toLowerCase() === query || item.name.toLowerCase().includes(query)) match = item;
+            });
+
+            if (match) {
+                activePosMatch = match;
+                const onHand = match.intake - match.dispatched;
+                document.getElementById('slotProductName').value = match.name;
+                document.getElementById('slotBarcode').value = match.sku || 'N/A';
+                document.getElementById('slotStockOnHand').value = onHand;
+                document.getElementById('slotUnitPrice').value = `R ${match.price.toFixed(2)}`;
+                document.getElementById('slotSellingPrice').value = `R ${match.sellingPrice.toFixed(2)}`;
+                document.getElementById('slotSupplier').value = match.supplier;
+                calculateSlotLineTotal();
+            } else {
+                clearPosSlots();
+            }
+        }
+
+        function clearPosSlots() {
+            activePosMatch = null;
+            document.getElementById('slotProductName').value = '';
+            document.getElementById('slotBarcode').value = '';
+            document.getElementById('slotStockOnHand').value = '';
+            document.getElementById('slotUnitPrice').value = '';
+            document.getElementById('slotSellingPrice').value = '';
+            document.getElementById('slotSupplier').value = '';
+            document.getElementById('slotLineTotal').value = '';
+        }
+
+        function calculateSlotLineTotal() {
+            if (!activePosMatch) return;
+            const qty = parseInt(document.getElementById('posQty').value) || 1;
+            const lineTotal = activePosMatch.sellingPrice * qty;
+            document.getElementById('slotLineTotal').value = `R ${lineTotal.toFixed(2)}`;
+        }
+
+        function handleBarcodeKeydown(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                if (activePosMatch) {
+                    addItemToCart();
+                } else {
+                    showNotification('No matching inventory SKU found.', 'error');
+                }
+            }
+        }
+
+        function addItemToCart() {
+            if (!activePosMatch) {
+                showNotification('Please scan or select a valid inventory item first.', 'error');
+                return;
+            }
+
+            const qty = parseInt(document.getElementById('posQty').value) || 1;
+            const onHand = parseInt(document.getElementById('slotStockOnHand').value) || 0;
+
+            if (qty > onHand) {
+                showNotification(`Warning: Requested quantity (${qty}) exceeds stock on hand (${onHand}).`, 'error');
+            }
+
+            posCart.push({
+                sku: activePosMatch.sku,
+                name: activePosMatch.name,
+                qty: qty,
+                wholesalePrice: activePosMatch.price,
+                sellingPrice: activePosMatch.sellingPrice,
+                subtotal: activePosMatch.sellingPrice * qty,
+                supplier: activePosMatch.supplier
+            });
+
+            renderCartTable();
+            document.getElementById('posBarcodeScan').value = '';
+            document.getElementById('posQty').value = 1;
+            clearPosSlots();
+            document.getElementById('posBarcodeScan').focus();
+            showNotification('Item added to POS checkout batch.', 'success');
+        }
+
+        function renderCartTable() {
+            const tbody = document.getElementById('cartTableBody');
+            if (posCart.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No items in checkout batch.</td></tr>`;
+                document.getElementById('cartGrandTotal').innerText = 'R 0.00';
+                currentGrandTotal = 0;
+                calculateChange();
+                return;
+            }
+
+            tbody.innerHTML = '';
+            currentGrandTotal = 0;
+
+            posCart.forEach((item, index) => {
+                currentGrandTotal += item.subtotal;
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${item.name}</strong><br><small style="color:var(--text-muted);">${item.sku}</small></td>
+                        <td>${item.qty}</td>
+                        <td>R ${item.sellingPrice.toFixed(2)}</td>
+                        <td style="color:var(--gold-light); font-weight:bold;">R ${item.subtotal.toFixed(2)}</td>
+                        <td><button type="button" class="btn-action btn-delete" onclick="removeFromCart(${index})">✕</button></td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('cartGrandTotal').innerText = `R ${currentGrandTotal.toFixed(2)}`;
+            calculateChange();
+        }
+
+        function removeFromCart(index) {
+            posCart.splice(index, 1);
+            renderCartTable();
+        }
+
+        async function checkoutBatchOrder() {
+            if (posCart.length === 0) {
+                showNotification('Cart is empty. Scan items before completing sale.', 'error');
+                return;
+            }
+
+            let orderRef = document.getElementById('posOrderRef').value.trim();
+            if (!orderRef) {
+                orderRef = `POS-${Math.floor(1000 + Math.random() * 9000)}`;
+            }
+
+            const cashierName = currentUser ? currentUser.full_name : 'Floor Cashier';
+            const payloadBatch = posCart.map(item => ({
+                order_ref: orderRef,
+                item_name: item.name,
+                supplier: item.supplier,
+                quantity_dispatched: item.qty,
+                wholesale_cost_zar: item.wholesalePrice * item.qty,
+                selling_price_zar: item.sellingPrice,
+                gross_sale_zar: item.subtotal,
+                payout_status: 'PENDING',
+                cashier_name: cashierName,
+                payment_method: selectedTender,
+                created_at: new Date().toISOString()
+            }));
+
+            if (supabaseClient) {
+                const { error } = await supabaseClient.from('orders').insert(payloadBatch);
+                if (error) {
+                    showNotification(`Checkout Failed: ${error.message}`, 'error');
+                    return;
+                }
+            }
+
+            showNotification(`Sale completed! Reference: ${orderRef}`, 'success');
+            logAuditAction(`Processed checkout sale (${orderRef}) total R ${currentGrandTotal.toFixed(2)}`);
+            
+            generatePrintReceipt(orderRef, cashierName);
+            posCart = [];
+            renderCartTable();
+            document.getElementById('posOrderRef').value = '';
+            document.getElementById('cashReceived').value = '';
+            fetchAdminOrders();
+        }
+
+        function generatePrintReceipt(orderRef, cashier) {
+            const container = document.getElementById('receiptContent');
+            let itemsHtml = '';
+            let total = 0;
+
+            posCart.forEach(item => {
+                total += item.subtotal;
+                itemsHtml += `
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span>${item.qty}x ${item.name}</span>
+                        <span>R ${item.subtotal.toFixed(2)}</span>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = `
+                <p style="margin-bottom:8px;"><strong>DATE:</strong> ${new Date().toLocaleString()}</p>
+                <p style="margin-bottom:8px;"><strong>REF:</strong> ${orderRef}</p>
+                <p style="margin-bottom:12px;"><strong>CASHIER:</strong> ${cashier}</p>
+                <div style="border-top:1px dashed #000; border-bottom:1px dashed #000; padding:8px 0; margin-bottom:8px;">
+                    ${itemsHtml}
+                </div>
+                <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:13px;">
+                    <span>TOTAL:</span>
+                    <span>R ${total.toFixed(2)}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:4px;">
+                    <span>TENDER (${selectedTender}):</span>
+                    <span>R ${total.toFixed(2)}</span>
+                </div>
+            `;
+
+            document.getElementById('receiptModal').style.display = 'flex';
+        }
+
+        /* CASHUP MODULE */
+        function prepareCashupView() {
+            const name = currentUser ? currentUser.full_name : 'UNASSIGNED';
+            document.getElementById('cashupUserBadge').innerText = `USER: ${name.toUpperCase()}`;
+
+            const today = new Date().toISOString().split('T')[0];
+            let expectedCash = 0;
+            let expectedCard = 0;
+
+            cachedOrders.forEach(o => {
+                const date = (o.created_at || '').split('T')[0];
+                if (date === today && o.payout_status !== 'RETURNED / CANCELLED') {
+                    const gross = parseFloat(o.gross_sale_zar || o.selling_price_zar * o.quantity_dispatched) || 0;
+                    if ((o.payment_method || '').toUpperCase() === 'CARD') {
+                        expectedCard += gross;
+                    } else {
+                        expectedCash += gross;
+                    }
+                }
+            });
+
+            document.getElementById('expectedCashSales').innerText = `R ${expectedCash.toFixed(2)}`;
+            document.getElementById('expectedCardSales').innerText = `R ${expectedCard.toFixed(2)}`;
+            calculateCashupVariance();
+        }
+
+        function calculateCashupVariance() {
+            const floatVal = parseFloat(document.getElementById('cashupFloat').value) || 0;
+            const actualCash = parseFloat(document.getElementById('cashupActualCash').value) || 0;
+            const actualCard = parseFloat(document.getElementById('cashupActualCard').value) || 0;
+
+            const expectedCashStr = document.getElementById('expectedCashSales').innerText.replace('R ', '');
+            const expectedCardStr = document.getElementById('expectedCardSales').innerText.replace('R ', '');
+
+            const expectedCash = parseFloat(expectedCashStr) || 0;
+            const expectedCard = parseFloat(expectedCardStr) || 0;
+
+            const cashVariance = actualCash - (expectedCash + floatVal);
+            const cardVariance = actualCard - expectedCard;
+
+            const cashVarEl = document.getElementById('cashupVariance');
+            cashVarEl.value = `R ${cashVariance.toFixed(2)}`;
+            cashVarEl.style.color = cashVariance < 0 ? 'var(--red-alert)' : (cashVariance > 0 ? 'var(--cyan-bright)' : 'var(--green-active)');
+
+            const cardVarEl = document.getElementById('cashupCardVariance');
+            cardVarEl.value = `R ${cardVariance.toFixed(2)}`;
+            cardVarEl.style.color = cardVariance < 0 ? 'var(--red-alert)' : (cardVariance > 0 ? 'var(--cyan-bright)' : 'var(--green-active)');
+        }
+
+        async function submitCashup(event) {
+            event.preventDefault();
+            const cashier = currentUser ? currentUser.full_name : 'Floor Cashier';
+            const floatVal = parseFloat(document.getElementById('cashupFloat').value) || 0;
+            const actualCash = parseFloat(document.getElementById('cashupActualCash').value) || 0;
+            const actualCard = parseFloat(document.getElementById('cashupActualCard').value) || 0;
+            const cashVar = parseFloat(document.getElementById('cashupVariance').value.replace('R ', '')) || 0;
+            const cardVar = parseFloat(document.getElementById('cashupCardVariance').value.replace('R ', '')) || 0;
+            const notes = document.getElementById('cashupNotes').value;
+
+            const record = {
+                cashier_name: cashier,
+                opening_float: floatVal,
+                declared_cash: actualCash,
+                declared_card: actualCard,
+                cash_variance: cashVar,
+                card_variance: cardVar,
+                notes: notes,
+                created_at: new Date().toISOString()
+            };
+
+            if (supabaseClient) {
+                const { error } = await supabaseClient.from('cashups').insert([record]);
+                if (error) {
+                    showNotification(`Cashup Error: ${error.message}`, 'error');
+                    return;
+                }
+            }
+
+            showNotification('Daily cashup report submitted successfully!', 'success');
+            logAuditAction(`Submitted cashup report (Declared Cash R ${actualCash.toFixed(2)}, Var R ${cashVar.toFixed(2)})`);
+            document.getElementById('cashupForm').reset();
+            fetchAdminOrders();
+        }
+
+        function renderCashupHistory() {
+            const tbody = document.getElementById('cashupHistoryTable');
+            if (cachedCashups.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No cashups recorded.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            cachedCashups.forEach(c => {
+                const dateStr = new Date(c.created_at).toLocaleString();
+                const cashVar = parseFloat(c.cash_variance || 0);
+                const cardVar = parseFloat(c.card_variance || 0);
+
+                let statusBadge = '<span class="status-badge status-settled">BALANCED</span>';
+                if (cashVar !== 0 || cardVar !== 0) {
+                    statusBadge = '<span class="status-badge status-returned">DISCREPANCY</span>';
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${dateStr}</td>
+                        <td>${c.cashier_name || 'Staff'}</td>
+                        <td>R ${parseFloat(c.declared_cash || 0).toFixed(2)}</td>
+                        <td style="color:${cashVar < 0 ? 'var(--red-alert)' : 'var(--green-active)'};">R ${cashVar.toFixed(2)}</td>
+                        <td style="color:${cardVar < 0 ? 'var(--red-alert)' : 'var(--green-active)'};">R ${cardVar.toFixed(2)}</td>
+                        <td>${statusBadge}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        /* INVENTORY INTAKE */
+        function addStockItemToBatch(e) {
+            e.preventDefault();
+            const sku = document.getElementById('stockSku').value.trim() || `SKU-${Math.floor(100000 + Math.random() * 900000)}`;
+            const name = document.getElementById('stockName').value.trim();
+            const qty = parseInt(document.getElementById('stockQty').value) || 1;
+            const unitPrice = parseFloat(document.getElementById('stockUnitPrice').value) || 0;
+            const sellingPrice = parseFloat(document.getElementById('stockSellingPrice').value) || 0;
+            const supplier = document.getElementById('stockSupplier').value.trim();
+
+            intakeBatch.push({ sku, name, qty, unitPrice, sellingPrice, supplier });
+            renderIntakeBatchTable();
+            document.getElementById('stockForm').reset();
+            showNotification(`Staged line item: ${name}`, 'success');
+        }
+
+        function renderIntakeBatchTable() {
+            const tbody = document.getElementById('intakeBatchTableBody');
+            document.getElementById('intakeBatchCount').innerText = intakeBatch.length;
+
+            if (intakeBatch.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No inventory staged for intake.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            intakeBatch.forEach((item, index) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${item.sku}</td>
+                        <td>${item.name}</td>
+                        <td>${item.supplier}</td>
+                        <td>${item.qty}</td>
+                        <td>R ${item.unitPrice.toFixed(2)}</td>
+                        <td>R ${item.sellingPrice.toFixed(2)}</td>
+                        <td><button type="button" class="btn-action btn-delete" onclick="removeIntakeLine(${index})">Remove</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function removeIntakeLine(index) {
+            intakeBatch.splice(index, 1);
+            renderIntakeBatchTable();
+        }
+
+        async function commitIntakeBatch() {
+            if (intakeBatch.length === 0) {
+                showNotification('Staging queue is empty.', 'error');
+                return;
+            }
+
+            const payload = intakeBatch.map(item => ({
+                sku: item.sku,
+                item_name: item.name,
+                quantity_allocated: item.qty,
+                wholesale_floor_zar: item.unitPrice,
+                selling_price: item.sellingPrice,
+                supplier: item.supplier,
+                created_at: new Date().toISOString()
+            }));
+
+            if (supabaseClient) {
+                const { error } = await supabaseClient.from('inventory').insert(payload);
+                if (error) {
+                    showNotification(`Intake Failed: ${error.message}`, 'error');
+                    return;
+                }
+            }
+
+            showNotification('Inventory intake committed to master database!', 'success');
+            logAuditAction(`Committed intake batch of ${intakeBatch.length} product lines.`);
+            intakeBatch = [];
+            renderIntakeBatchTable();
+            fetchAdminOrders();
+        }
+
+        /* TRADE LEDGER & SUPPLIER PORTAL */
+        function populateSupplierTradeDropdown() {
+            const select = document.getElementById('supplierSelect');
+            if (!select) return;
+
+            const suppliers = new Set();
+            cachedInventory.forEach(i => { if (i.supplier) suppliers.add(i.supplier); });
+            cachedOrders.forEach(o => { if (o.supplier) suppliers.add(o.supplier); });
+
+            select.innerHTML = '<option value="ALL">-- All Suppliers / Master View --</option>';
+            suppliers.forEach(s => {
+                select.innerHTML += `<option value="${s}">${s}</option>`;
+            });
+        }
+
+        function filterSupplierLedger() {
+            const val = document.getElementById('supplierSelect').value;
+            renderSupplierPortal(val);
+        }
+
+        function renderSupplierPortal(targetSupplier) {
+            let filteredOrders = cachedOrders;
+            let filteredInventory = cachedInventory;
+
+            if (targetSupplier !== 'ALL') {
+                document.getElementById('activeSupplierName').innerText = targetSupplier;
+                filteredOrders = cachedOrders.filter(o => (o.supplier || '').toLowerCase() === targetSupplier.toLowerCase());
+                filteredInventory = cachedInventory.filter(i => (i.supplier || '').toLowerCase() === targetSupplier.toLowerCase());
+            } else {
+                document.getElementById('activeSupplierName').innerText = 'All Consignment Partners';
+            }
+
+            let totalUnitsSold = 0;
+            let totalWholesaleOwed = 0;
+
+            filteredOrders.forEach(o => {
+                if (o.payout_status !== 'RETURNED / CANCELLED') {
+                    totalUnitsSold += (parseInt(o.quantity_dispatched) || 1);
+                    totalWholesaleOwed += parseFloat(o.wholesale_cost_zar || 0);
+                }
+            });
+
+            document.getElementById('tradeUnits').innerText = `${totalUnitsSold} Units`;
+            document.getElementById('tradeOwed').innerText = `R ${totalWholesaleOwed.toFixed(2)}`;
+            document.getElementById('tradeSkus').innerText = `${filteredInventory.length} Lines`;
+
+            const manifestList = document.getElementById('manifestList');
+            manifestList.innerHTML = '';
+
+            if (filteredOrders.length === 0) {
+                manifestList.innerHTML = `<div style="color: var(--text-muted); text-align: center; padding: 40px;">No sales manifest records found for partner.</div>`;
+                return;
+            }
+
+            filteredOrders.forEach(o => {
+                manifestList.innerHTML += `
+                    <div class="manifest-item">
+                        <div>
+                            <strong>${o.item_name || 'Item'}</strong><br>
+                            <small style="color:var(--text-muted);">${o.order_ref || 'POS'} • ${new Date(o.created_at).toLocaleDateString()}</small>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="color:var(--gold-light); font-weight:bold;">R ${parseFloat(o.wholesale_cost_zar || 0).toFixed(2)}</span><br>
+                            <small style="color:var(--text-muted);">${o.quantity_dispatched} units</small>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderVelocityChart(orders) {
+            const ctx = document.getElementById('salesVelocityChart');
+            if (!ctx) return;
+
+            if (salesChartInstance) salesChartInstance.destroy();
+
+            const isLight = document.body.getAttribute('data-skin') === 'light';
+            const axisColor = isLight ? '#3C3C43' : '#8E8E93';
+            const gridColor = isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)';
+            const barBg = isLight ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.8)';
+            const barBorder = isLight ? '#000000' : '#ffffff';
+
+            const daysMap = { 'Mon': 0, 'Tue': 0, 'Wed': 0, 'Thu': 0, 'Fri': 0, 'Sat': 0, 'Sun': 0 };
+            orders.forEach(o => {
+                const day = new Date(o.created_at).toLocaleDateString('en-US', { weekday: 'short' });
+                if (daysMap[day] !== undefined) daysMap[day] += (parseInt(o.quantity_dispatched) || 1);
+            });
+
+            salesChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(daysMap),
+                    datasets: [{
+                        label: 'Units Dispatched',
+                        data: Object.values(daysMap),
+                        backgroundColor: barBg,
+                        borderColor: barBorder,
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { ticks: { color: axisColor }, grid: { color: gridColor } },
+                        x: { ticks: { color: axisColor }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        /* SETTLEMENT LEDGER & ADMIN ORDERS */
+        function renderAdminOrders(orders) {
+            const tbody = document.getElementById('adminOrderTable');
+            if (!tbody) return;
+
+            const startDate = document.getElementById('filterStartDate').value;
+            const endDate = document.getElementById('filterEndDate').value;
+
+            let filtered = orders;
+            if (startDate) filtered = filtered.filter(o => new Date(o.created_at) >= new Date(startDate));
+            if (endDate) filtered = filtered.filter(o => new Date(o.created_at) <= new Date(endDate + 'T23:59:59'));
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="color: var(--text-muted); padding: 20px;">No transactions found in selected range.</td></tr>`;
+                return;
+            }
+
+            let totalOwed = 0;
+            let totalSettled = 0;
+
+            tbody.innerHTML = '';
+            filtered.forEach(o => {
+                const wholesaleCost = parseFloat(o.wholesale_cost_zar || 0);
+                if (o.payout_status === 'SETTLED') totalSettled += wholesaleCost;
+                if (o.payout_status === 'PENDING') totalOwed += wholesaleCost;
+
+                let statusClass = 'status-pending';
+                if (o.payout_status === 'SETTLED') statusClass = 'status-settled';
+                if (o.payout_status === 'RETURNED / CANCELLED') statusClass = 'status-returned';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${o.order_ref || 'POS'}</strong><br><small style="color:var(--text-muted);">${o.item_name}</small></td>
+                        <td>${o.supplier || 'N/A'}</td>
+                        <td>${new Date(o.created_at).toLocaleDateString()}</td>
+                        <td>${o.cashier_name || 'Staff'}</td>
+                        <td>${o.quantity_dispatched}</td>
+                        <td style="color:var(--gold-light); font-weight:bold;">R ${wholesaleCost.toFixed(2)}</td>
+                        <td><span class="status-badge ${statusClass}">${o.payout_status}</span></td>
+                        <td>
+                            ${o.payout_status === 'PENDING' ? `<button class="btn-action btn-settled" onclick="updateOrderStatus('${o.id}', 'SETTLED')">Settle</button>` : ''}
+                            ${o.payout_status === 'SETTLED' ? `<button class="btn-action btn-pending" onclick="updateOrderStatus('${o.id}', 'PENDING')">Unsettle</button>` : ''}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('adminOwed').innerText = `R ${totalOwed.toFixed(2)}`;
+            document.getElementById('adminSettled').innerText = `R ${totalSettled.toFixed(2)}`;
+            document.getElementById('adminNet').innerText = `R ${(totalOwed - PLATFORM_FEE).toFixed(2)}`;
+
+            populateReturnOrderSelect(filtered);
+        }
+
+        async function updateOrderStatus(id, newStatus) {
+            if (supabaseClient) {
+                await supabaseClient.from('orders').update({ payout_status: newStatus }).eq('id', id);
+                showNotification(`Order payout status updated to ${newStatus}.`, 'success');
+                logAuditAction(`Updated order status (${id} -> ${newStatus})`);
+                fetchAdminOrders();
+            }
+        }
+
+        /* STOCK ON-HAND TABLE */
+        function renderStockTable(inventory) {
+            const tbody = document.getElementById('stockTableBody');
+            if (!tbody) return;
+
+            if (inventory.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">No inventory records.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            inventory.forEach(i => {
+                const floor = parseFloat(i.wholesale_floor_zar || i.unit_price || 0);
+                const selling = parseFloat(i.selling_price || floor * 1.3);
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${i.sku || 'N/A'}</strong></td>
+                        <td>${i.item_name || 'Item'}</td>
+                        <td>${i.supplier || 'Wholesaler'}</td>
+                        <td>${i.quantity_allocated || i.quantity || 0}</td>
+                        <td>R ${floor.toFixed(2)}</td>
+                        <td style="color:var(--cyan-bright); font-weight:bold;">R ${selling.toFixed(2)}</td>
+                        <td><button class="btn-action btn-delete" onclick="deleteStockItem('${i.id}')">Delete</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function deleteStockItem(id) {
+            if (confirm('Delete this inventory item line?') && supabaseClient) {
+                await supabaseClient.from('inventory').delete().eq('id', id);
+                showNotification('Inventory line deleted.', 'info');
+                logAuditAction(`Deleted inventory record (${id})`);
+                fetchAdminOrders();
+            }
+        }
+
+        /* STAFF & PROFILE MANAGEMENT */
+        async function fetchStaffProfiles() {
+            if (!supabaseClient) return;
+            const { data } = await supabaseClient.from('staff_profiles').select('*').order('created_at', { ascending: false });
+            renderStaffTable(data || []);
+        }
+
+        function renderStaffTable(profiles) {
+            const tbody = document.getElementById('staffProfileTable');
+            if (!tbody) return;
+
+            if (profiles.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="color: var(--text-muted); padding: 20px;">No profiles recorded.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            profiles.forEach(p => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${p.full_name}</strong></td>
+                        <td><span class="status-badge status-pending">${(p.role || 'staff').toUpperCase()}</span></td>
+                        <td>${new Date(p.created_at).toLocaleDateString()}</td>
+                        <td><button class="btn-action btn-delete" onclick="deleteStaffProfile('${p.id}')">Remove</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function handleCreateStaff(e) {
+            e.preventDefault();
+            const name = document.getElementById('staffNameInput').value.trim();
+            const pin = document.getElementById('staffPinInput').value.trim();
+            const role = document.getElementById('staffRoleSelect').value;
+
+            if (supabaseClient) {
+                const { error } = await supabaseClient.from('staff_profiles').insert([{ full_name: name, pin_code: pin, role: role, created_at: new Date().toISOString() }]);
+                if (error) { showNotification(`Staff Creation Failed: ${error.message}`, 'error'); return; }
+            }
+
+            showNotification(`Created profile for ${name}`, 'success');
+            logAuditAction(`Created new staff/supplier account (${name} - ${role})`);
+            document.getElementById('createStaffForm').reset();
+            fetchStaffProfiles();
+        }
+
+        async function deleteStaffProfile(id) {
+            if (confirm('Remove this staff profile?') && supabaseClient) {
+                await supabaseClient.from('staff_profiles').delete().eq('id', id);
+                showNotification('Staff profile deleted.', 'info');
+                logAuditAction(`Deleted staff profile (${id})`);
+                fetchStaffProfiles();
+            }
+        }
+
+        /* RETURNS MANAGEMENT */
+        function populateReturnOrderSelect(orders) {
+            const select = document.getElementById('returnOrderSelect');
+            if (!select) return;
+
+            select.innerHTML = '<option value="">-- Choose Dispatched Order --</option>';
+            orders.forEach(o => {
+                if (o.payout_status !== 'RETURNED / CANCELLED') {
+                    select.innerHTML += `<option value="${o.id}">${o.order_ref || 'POS'} - ${o.item_name} (Qty: ${o.quantity_dispatched})</option>`;
+                }
+            });
+        }
+
+        async function handleReturnSubmit(e) {
+            e.preventDefault();
+            const orderId = document.getElementById('returnOrderSelect').value;
+            const returnQty = parseInt(document.getElementById('returnQty').value) || 1;
+            const reason = document.getElementById('returnReason').value;
+            const restock = document.getElementById('restockAction').value;
+
+            if (!orderId) { showNotification('Select an order to return.', 'error'); return; }
+
+            const targetOrder = cachedOrders.find(o => o.id.toString() === orderId.toString());
+            if (!targetOrder) return;
+
+            const cashierName = currentUser ? currentUser.full_name : 'System';
+
+            if (supabaseClient) {
+                await supabaseClient.from('orders').update({ payout_status: 'RETURNED / CANCELLED' }).eq('id', orderId);
+
+                await supabaseClient.from('returns_log').insert([{
+                    order_ref: targetOrder.order_ref,
+                    item_name: targetOrder.item_name,
+                    quantity_returned: returnQty,
+                    reason: reason,
+                    restocked: restock === 'YES_RESTOCK',
+                    processed_by: cashierName,
+                    created_at: new Date().toISOString()
+                }]);
+            }
+
+            showNotification('Order return processed successfully.', 'success');
+            logAuditAction(`Processed return for order ${targetOrder.order_ref} (${reason})`);
+            document.getElementById('returnForm').reset();
+            fetchAdminOrders();
+        }
+
+        async function fetchReturnsLog() {
+            if (!supabaseClient) return;
+            const { data } = await supabaseClient.from('returns_log').select('*').order('created_at', { ascending: false });
+            renderReturnsLog(data || []);
+        }
+
+        function renderReturnsLog(returns) {
+            const tbody = document.getElementById('returnsLogTable');
+            if (!tbody) return;
+
+            if (returns.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">No return history found.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            returns.forEach(r => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${new Date(r.created_at).toLocaleDateString()}</td>
+                        <td><strong>${r.order_ref}</strong><br><small style="color:var(--text-muted);">${r.item_name}</small></td>
+                        <td>${r.quantity_returned}</td>
+                        <td>${r.reason}</td>
+                        <td>${r.restocked ? 'YES' : 'NO'}</td>
+                        <td>${r.processed_by || 'Staff'}</td>
+                        <td><span class="status-badge status-returned">RETURNED</span></td>
+                    </tr>
+                `;
+            });
+        }
+
+        /* FINANCIAL ACCOUNTING & P&L */
+        function renderAccountingDashboard() {
+            const startVal = document.getElementById('accFilterStart')?.value;
+            const endVal = document.getElementById('accFilterEnd')?.value;
+
+            let filteredOrders = cachedOrders;
+            if (startVal) filteredOrders = filteredOrders.filter(o => new Date(o.created_at) >= new Date(startVal));
+            if (endVal) filteredOrders = filteredOrders.filter(o => new Date(o.created_at) <= new Date(endVal + 'T23:59:59'));
+
+            let grossSales = 0;
+            let cogs = 0;
+            let cashSales = 0;
+            let cardSales = 0;
+            let unitsSold = 0;
+
+            filteredOrders.forEach(o => {
+                if (o.payout_status !== 'RETURNED / CANCELLED') {
+                    const gross = parseFloat(o.gross_sale_zar || o.selling_price_zar * o.quantity_dispatched) || 0;
+                    const wholesale = parseFloat(o.wholesale_cost_zar) || 0;
+                    const qty = parseInt(o.quantity_dispatched) || 1;
+
+                    grossSales += gross;
+                    cogs += wholesale;
+                    unitsSold += qty;
+
+                    if ((o.payment_method || '').toUpperCase() === 'CARD') {
+                        cardSales += gross;
+                    } else {
+                        cashSales += gross;
+                    }
+                }
+            });
+
+            let totalOpEx = 0;
+            cachedExpenses.forEach(e => totalOpEx += parseFloat(e.amount || 0));
+
+            const grossProfit = grossSales - cogs;
+            const netProfit = grossProfit - totalOpEx - PLATFORM_FEE;
+
+            if (document.getElementById('accGrossSales')) document.getElementById('accGrossSales').innerText = `R ${grossSales.toFixed(2)}`;
+            if (document.getElementById('accCogs')) document.getElementById('accCogs').innerText = `R ${cogs.toFixed(2)}`;
+            if (document.getElementById('accGrossProfit')) document.getElementById('accGrossProfit').innerText = `R ${grossProfit.toFixed(2)}`;
+            if (document.getElementById('accNetProfit')) document.getElementById('accNetProfit').innerText = `R ${netProfit.toFixed(2)}`;
+            if (document.getElementById('accOpEx')) document.getElementById('accOpEx').innerText = `R ${totalOpEx.toFixed(2)}`;
+            if (document.getElementById('accCashTendered')) document.getElementById('accCashTendered').innerText = `R ${cashSales.toFixed(2)}`;
+            if (document.getElementById('accCardTendered')) document.getElementById('accCardTendered').innerText = `R ${cardSales.toFixed(2)}`;
+            if (document.getElementById('accUnitsSold')) document.getElementById('accUnitsSold').innerText = `${unitsSold} Items`;
+
+            renderAccountingTable(filteredOrders);
+        }
+
+        function renderAccountingTable(orders) {
+            const tbody = document.getElementById('accountingTableBody');
+            if (!tbody) return;
+
+            if (orders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">No transaction records available.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            orders.forEach(o => {
+                const gross = parseFloat(o.gross_sale_zar || o.selling_price_zar * o.quantity_dispatched) || 0;
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${o.order_ref || 'POS'}</strong></td>
+                        <td>${new Date(o.created_at).toLocaleString()}</td>
+                        <td>${o.item_name}</td>
+                        <td>${o.quantity_dispatched}</td>
+                        <td>R ${parseFloat(o.selling_price_zar || 0).toFixed(2)}</td>
+                        <td style="color:var(--cyan-bright); font-weight:bold;">R ${gross.toFixed(2)}</td>
+                        <td>${o.payment_method || 'CASH'}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function handleLogExpense(e) {
+            e.preventDefault();
+            const desc = document.getElementById('expDesc').value.trim();
+            const category = document.getElementById('expCategory').value;
+            const amount = parseFloat(document.getElementById('expAmount').value) || 0;
+
+            if (supabaseClient) {
+                const { error } = await supabaseClient.from('expenses').insert([{
+                    description: desc,
+                    category: category,
+                    amount: amount,
+                    created_at: new Date().toISOString()
+                }]);
+                if (error) { showNotification(`Expense Error: ${error.message}`, 'error'); return; }
+            }
+
+            showNotification(`Logged expense: R ${amount.toFixed(2)}`, 'success');
+            logAuditAction(`Logged operational expense (${desc} - R ${amount.toFixed(2)})`);
+            document.getElementById('expenseForm').reset();
+            fetchAdminOrders();
+        }
+
+        /* AUDIT TRAIL LOGGING */
+        async function logAuditAction(actionText) {
+            const user = currentUser ? currentUser.full_name : 'System';
+            if (supabaseClient) {
+                await supabaseClient.from('audit_logs').insert([{
+                    user_name: user,
+                    action: actionText,
+                    created_at: new Date().toISOString()
+                }]);
+            }
+            fetchAuditLogs();
+        }
+
+        async function fetchAuditLogs() {
+            if (!supabaseClient) return;
+            const { data } = await supabaseClient.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(50);
+            renderAuditLogs(data || []);
+        }
+
+        function renderAuditLogs(logs) {
+            const tbody = document.getElementById('auditTableBody');
+            if (!tbody) return;
+
+            if (logs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="color: var(--text-muted); padding: 20px;">No system audit entries.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            logs.forEach(l => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${new Date(l.created_at).toLocaleString()}</td>
+                        <td><strong>${l.user_name}</strong></td>
+                        <td>${l.action}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        /* EXPORT UTILITIES */
+        function exportSupplierStatement() {
+            if (cachedOrders.length === 0) return showNotification('No data to export.', 'error');
+            let csv = 'Order Ref,Item,Supplier,Date,Wholesale Cost,Status\n';
+            cachedOrders.forEach(o => {
+                csv += `"${o.order_ref}","${o.item_name}","${o.supplier}","${o.created_at}",${o.wholesale_cost_zar},"${o.payout_status}"\n`;
+            });
+            downloadCSV(csv, 'supplier_settlement_statement.csv');
+        }
+
+        function exportAccountingCSV() {
+            if (cachedOrders.length === 0) return showNotification('No data to export.', 'error');
+            let csv = 'Order Ref,Date,Item,Qty,Selling Price,Gross Total,Payment Method\n';
+            cachedOrders.forEach(o => {
+                const gross = parseFloat(o.gross_sale_zar || o.selling_price_zar * o.quantity_dispatched) || 0;
+                csv += `"${o.order_ref}","${o.created_at}","${o.item_name}",${o.quantity_dispatched},${o.selling_price_zar},${gross},"${o.payment_method}"\n`;
+            });
+            downloadCSV(csv, 'financial_accounting_report.csv');
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', filename);
+            a.click();
         }
     </script>
 </body>
