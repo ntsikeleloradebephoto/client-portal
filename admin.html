@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+[source: 4]<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -2037,55 +2037,54 @@
             renderPosCart();
             document.getElementById('posOrderRef').value = '';
             document.getElementById('cashReceived').value = '';
-            document.getElementById('changeDue').value = 'R 0.00';
+            showNotification('Checkout completed successfully!', 'success');
             fetchAdminOrders();
-            showNotification(`Transaction ${orderRef} completed successfully!`, 'success');
         }
 
         function openReceiptModal(orderRef, items, total, tender) {
-            let contentHtml = `
-                <p><strong>Order Ref:</strong> ${orderRef}</p>
-                <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
-                <p><strong>Cashier:</strong> ${currentUser ? currentUser.full_name : 'Cashier'}</p>
-                <p><strong>Tender:</strong> ${tender}</p>
-                <hr style="border: 0.5px dashed #000; margin: 8px 0;">
-                <table style="width: 100%; font-size: 11px; text-align: left;">
-                    <thead><tr><th>ITEM</th><th>QTY</th><th style="text-align:right;">TOTAL</th></tr></thead>
-                    <tbody>
-            `;
+            const content = document.getElementById('receiptContent');
+            let itemsHtml = '';
             items.forEach(i => {
-                contentHtml += `
-                    <tr>
-                        <td>${i.name}</td>
-                        <td>${i.qty}</td>
-                        <td style="text-align:right;">R ${i.subtotal.toFixed(2)}</td>
-                    </tr>
+                itemsHtml += `
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span>${i.qty}x ${i.name}</span>
+                        <span>R ${i.subtotal.toFixed(2)}</span>
+                    </div>
                 `;
             });
-            contentHtml += `
-                    </tbody>
-                </table>
-                <hr style="border: 0.5px dashed #000; margin: 8px 0;">
-                <p style="font-size: 13px; font-weight: 700; display: flex; justify-content: space-between;">
-                    <span>GRAND TOTAL:</span> <span>R ${total.toFixed(2)}</span>
-                </p>
+
+            const tenderedVal = parseFloat(document.getElementById('cashReceived').value) || total;
+            const changeVal = Math.max(0, tenderedVal - total);
+
+            content.innerHTML = `
+                <p style="margin:2px 0;"><strong>REF:</strong> ${orderRef}</p>
+                <p style="margin:2px 0;"><strong>DATE:</strong> ${new Date().toLocaleString()}</p>
+                <p style="margin:2px 0 10px 0;"><strong>TENDER:</strong> ${tender}</p>
+                <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 8px 0; margin-bottom: 8px;">
+                    ${itemsHtml}
+                </div>
+                <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:13px;">
+                    <span>TOTAL</span>
+                    <span>R ${total.toFixed(2)}</span>
+                </div>
+                ${tender === 'CASH' ? `
+                <div style="display:flex; justify-content:space-between; margin-top:4px;">
+                    <span>TENDERED</span>
+                    <span>R ${tenderedVal.toFixed(2)}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                    <span>CHANGE</span>
+                    <span>R ${changeVal.toFixed(2)}</span>
+                </div>
+                ` : ''}
             `;
-            if (tender === 'CASH') {
-                const tendered = parseFloat(document.getElementById('cashReceived').value) || total;
-                const change = tendered - total;
-                contentHtml += `
-                    <p style="display: flex; justify-content: space-between;"><span>Cash Tendered:</span> <span>R ${tendered.toFixed(2)}</span></p>
-                    <p style="display: flex; justify-content: space-between;"><span>Change:</span> <span>R ${change.toFixed(2)}</span></p>
-                `;
-            }
-            document.getElementById('receiptContent').innerHTML = contentHtml;
             document.getElementById('receiptModal').style.display = 'flex';
         }
 
-        /* INTAKE BATCH MODULE */
+        /* INTAKE / BATCH MODULE */
         function addStockItemToBatch(e) {
             e.preventDefault();
-            const sku = document.getElementById('stockSku').value.trim() || `SKU-${Math.floor(10000 + Math.random() * 90000)}`;
+            const sku = document.getElementById('stockSku').value.trim() || `SKU-${Math.floor(100000 + Math.random() * 900000)}`;
             const name = document.getElementById('stockName').value.trim();
             const qty = parseInt(document.getElementById('stockQty').value) || 0;
             const unitPrice = parseFloat(document.getElementById('stockUnitPrice').value) || 0;
@@ -2095,8 +2094,7 @@
             intakeBatch.push({ sku, name, qty, unit_price: unitPrice, selling_price: sellingPrice, supplier });
             renderIntakeBatch();
             document.getElementById('stockForm').reset();
-            document.getElementById('stockQty').value = '10';
-            showNotification(`Staged intake item: ${name}`, 'info');
+            showNotification(`Staged ${name} (${qty} units) for intake batch.`, 'success');
         }
 
         function renderIntakeBatch() {
@@ -2106,8 +2104,9 @@
                 tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No inventory staged for intake.</td></tr>`;
                 return;
             }
+
             let html = '';
-            intakeBatch.forEach((item, index) => {
+            intakeBatch.forEach((item, idx) => {
                 html += `
                     <tr>
                         <td>${item.sku}</td>
@@ -2116,23 +2115,24 @@
                         <td>${item.qty}</td>
                         <td>R ${item.unit_price.toFixed(2)}</td>
                         <td>R ${item.selling_price.toFixed(2)}</td>
-                        <td><button class="btn-sec" style="color:var(--red-alert);" onclick="removeIntakeBatchItem(${index})">Remove</button></td>
+                        <td><button class="btn-sec" style="color:var(--red-alert);" onclick="removeIntakeBatchItem(${idx})">Remove</button></td>
                     </tr>
                 `;
             });
             tbody.innerHTML = html;
         }
 
-        function removeIntakeBatchItem(index) {
-            intakeBatch.splice(index, 1);
+        function removeIntakeBatchItem(idx) {
+            intakeBatch.splice(idx, 1);
             renderIntakeBatch();
         }
 
         async function commitIntakeBatch() {
             if (intakeBatch.length === 0) {
-                showNotification('No staged stock to commit.', 'error');
+                showNotification('No items staged in intake queue.', 'error');
                 return;
             }
+
             if (supabaseClient) {
                 for (const item of intakeBatch) {
                     const existing = cachedInventory.find(i => i.sku === item.sku);
@@ -2148,130 +2148,331 @@
                     }
                 }
             }
-            logAuditAction(`Committed intake batch of ${intakeBatch.length} lines`);
+
+            logAuditAction(`Committed intake batch of ${intakeBatch.length} product lines.`);
+            showNotification('Intake batch successfully committed to inventory on-hand!', 'success');
             intakeBatch = [];
             renderIntakeBatch();
             fetchAdminOrders();
-            showNotification('Staged inventory successfully committed to live stock on-hand!', 'success');
         }
 
-        /* LEDGER & SETTLEMENTS */
-        function renderAdminOrders(orders) {
-            const tbody = document.getElementById('adminOrderTable');
-            let start = document.getElementById('filterStartDate')?.value;
-            let end = document.getElementById('filterEndDate')?.value;
+        /* CASHUP MODULE */
+        function prepareCashupView() {
+            const user = currentUser ? currentUser.full_name : 'Unassigned';
+            document.getElementById('cashupUserBadge').innerText = `USER: ${user.toUpperCase()}`;
+            
+            const todayStr = new Date().toISOString().split('T')[0];
+            const todayOrders = cachedOrders.filter(o => o.created_at && o.created_at.startsWith(todayStr));
+            
+            let expCash = 0;
+            let expCard = 0;
+            todayOrders.forEach(o => {
+                const amt = parseFloat(o.total_amount) || 0;
+                if (o.tender_method === 'CARD') expCard += amt;
+                else expCash += amt;
+            });
 
-            let filtered = orders;
-            if (start) filtered = filtered.filter(o => new Date(o.created_at) >= new Date(start));
-            if (end) filtered = filtered.filter(o => new Date(o.created_at) <= new Date(end + 'T23:59:59'));
+            document.getElementById('expectedCashSales').innerText = `R ${expCash.toFixed(2)}`;
+            document.getElementById('expectedCardSales').innerText = `R ${expCard.toFixed(2)}`;
+            calculateCashupVariance();
+        }
 
-            let owed = 0, settled = 0;
+        function calculateCashupVariance() {
+            const floatAmt = parseFloat(document.getElementById('cashupFloat').value) || 0;
+            const actualCash = parseFloat(document.getElementById('cashupActualCash').value) || 0;
+            const actualCard = parseFloat(document.getElementById('cashupActualCard').value) || 0;
+
+            const expCash = parseFloat(document.getElementById('expectedCashSales').innerText.replace('R ', '')) || 0;
+            const expCard = parseFloat(document.getElementById('expectedCardSales').innerText.replace('R ', '')) || 0;
+
+            const cashVar = (actualCash - floatAmt) - expCash;
+            const cardVar = actualCard - expCard;
+
+            const cashEl = document.getElementById('cashupVariance');
+            cashEl.value = `R ${cashVar.toFixed(2)}`;
+            cashEl.style.color = cashVar < 0 ? 'var(--red-alert)' : 'var(--green-active)';
+
+            const cardEl = document.getElementById('cashupCardVariance');
+            cardEl.value = `R ${cardVar.toFixed(2)}`;
+            cardEl.style.color = cardVar < 0 ? 'var(--red-alert)' : 'var(--green-active)';
+        }
+
+        async function submitCashup(e) {
+            e.preventDefault();
+            const floatAmt = parseFloat(document.getElementById('cashupFloat').value) || 0;
+            const actualCash = parseFloat(document.getElementById('cashupActualCash').value) || 0;
+            const actualCard = parseFloat(document.getElementById('cashupActualCard').value) || 0;
+            const cashVar = parseFloat(document.getElementById('cashupVariance').value.replace('R ', '')) || 0;
+            const cardVar = parseFloat(document.getElementById('cashupCardVariance').value.replace('R ', '')) || 0;
+            const notes = document.getElementById('cashupNotes').value;
+            const user = currentUser ? currentUser.full_name : 'Cashier';
+
+            if (supabaseClient) {
+                await supabaseClient.from('cashups').insert([{
+                    cashier: user,
+                    float_amount: floatAmt,
+                    declared_cash: actualCash,
+                    declared_card: actualCard,
+                    cash_variance: cashVar,
+                    card_variance: cardVar,
+                    notes: notes,
+                    status: (cashVar !== 0 || cardVar !== 0) ? 'DISCREPANCY' : 'MATCHED'
+                }]);
+            }
+
+            logAuditAction(`Submitted cashup report by ${user}. Cash Var: R ${cashVar.toFixed(2)}`);
+            showNotification('Cashup report submitted successfully.', 'success');
+            document.getElementById('cashupForm').reset();
+            fetchAdminOrders();
+        }
+
+        function renderCashupHistory() {
+            const tbody = document.getElementById('cashupHistoryTable');
+            if (cachedCashups.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No cashups recorded.</td></tr>`;
+                return;
+            }
+
             let html = '';
-
-            filtered.forEach(o => {
-                const costVal = (parseFloat(o.unit_price) || 0) * (parseInt(o.qty) || 1);
-                if (o.status === 'SETTLED') settled += costVal; else owed += costVal;
-
+            cachedCashups.forEach(c => {
+                const dateStr = new Date(c.created_at).toLocaleString();
+                const statusClass = c.status === 'MATCHED' ? 'status-settled' : 'status-pending';
                 html += `
                     <tr>
-                        <td><strong>${o.order_ref || '#--'}</strong><br><small style="color:var(--text-muted);">${o.item_name}</small></td>
-                        <td>${o.supplier || 'N/A'}</td>
-                        <td>${new Date(o.created_at).toLocaleDateString()}</td>
-                        <td>${o.processed_by || 'System'}</td>
-                        <td>${o.qty}</td>
-                        <td>R ${costVal.toFixed(2)}</td>
-                        <td><span class="status-badge ${o.status === 'SETTLED' ? 'status-settled' : 'status-pending'}">${o.status}</span></td>
+                        <td>${dateStr}</td>
+                        <td>${c.cashier || 'Cashier'}</td>
+                        <td>R ${(parseFloat(c.declared_cash) || 0).toFixed(2)}</td>
+                        <td style="color:${(c.cash_variance || 0) < 0 ? 'var(--red-alert)' : 'var(--green-active)'};">R ${(parseFloat(c.cash_variance) || 0).toFixed(2)}</td>
+                        <td style="color:${(c.card_variance || 0) < 0 ? 'var(--red-alert)' : 'var(--green-active)'};">R ${(parseFloat(c.card_variance) || 0).toFixed(2)}</td>
+                        <td><span class="status-badge ${statusClass}">${c.status}</span></td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function renderManagerCashups() {
+            const tbody = document.getElementById('managerCashupTableBody');
+            const filterDate = document.getElementById('mgrCashupFilterDate').value;
+
+            let filtered = cachedCashups;
+            if (filterDate) {
+                filtered = cachedCashups.filter(c => c.created_at && c.created_at.startsWith(filterDate));
+            }
+
+            document.getElementById('mgrTotalCashupsCount').innerText = filtered.length;
+            
+            let totCash = 0;
+            let totCard = 0;
+            let discCount = 0;
+
+            filtered.forEach(c => {
+                totCash += parseFloat(c.declared_cash) || 0;
+                totCard += parseFloat(c.declared_card) || 0;
+                if ((c.cash_variance && c.cash_variance !== 0) || (c.card_variance && c.card_variance !== 0)) discCount++;
+            });
+
+            document.getElementById('mgrTotalDeclaredCash').innerText = `R ${totCash.toFixed(2)}`;
+            document.getElementById('mgrTotalDeclaredCard').innerText = `R ${totCard.toFixed(2)}`;
+            document.getElementById('mgrDiscrepanciesCount').innerText = discCount;
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 20px;">No cashup records found.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(c => {
+                html += `
+                    <tr>
+                        <td>${new Date(c.created_at).toLocaleString()}</td>
+                        <td>${c.cashier}</td>
+                        <td>R ${(parseFloat(c.float_amount) || 0).toFixed(2)}</td>
+                        <td>R ${(parseFloat(c.declared_cash) || 0).toFixed(2)}</td>
+                        <td>R ${(parseFloat(c.declared_card) || 0).toFixed(2)}</td>
+                        <td style="color:${(c.cash_variance || 0) < 0 ? 'var(--red-alert)' : 'var(--green-active)'};">R ${(parseFloat(c.cash_variance) || 0).toFixed(2)}</td>
+                        <td style="color:${(c.card_variance || 0) < 0 ? 'var(--red-alert)' : 'var(--green-active)'};">R ${(parseFloat(c.card_variance) || 0).toFixed(2)}</td>
+                        <td>${c.notes || '--'}</td>
                         <td>
-                            ${o.status === 'PENDING' ? `<button class="btn-action btn-settled" onclick="markOrderSettled('${o.id}')">Settle Payout</button>` : `<button class="btn-action btn-pending" onclick="markOrderPending('${o.id}')">Revert</button>`}
+                            <button class="btn-sec" onclick="openEditCashupModal('${c.id}')">Edit</button>
+                            <button class="btn-action btn-delete" onclick="deleteCashupRecord('${c.id}')">Delete</button>
                         </td>
                     </tr>
                 `;
             });
-
-            if (filtered.length === 0) html = `<tr><td colspan="8" style="color: var(--text-muted); padding: 20px; text-align:center;">No records match filters.</td></tr>`;
             tbody.innerHTML = html;
+        }
+
+        function openEditCashupModal(id) {
+            const item = cachedCashups.find(c => c.id == id);
+            if (!item) return;
+
+            document.getElementById('editCashupId').value = item.id;
+            document.getElementById('editCashupFloat').value = item.float_amount || 0;
+            document.getElementById('editCashupCash').value = item.declared_cash || 0;
+            document.getElementById('editCashupCard').value = item.declared_card || 0;
+            document.getElementById('editCashupCashVar').value = item.cash_variance || 0;
+            document.getElementById('editCashupCardVar').value = item.card_variance || 0;
+            document.getElementById('editCashupNotes').value = item.notes || '';
+
+            document.getElementById('editCashupModal').style.display = 'flex';
+        }
+
+        async function saveEditedCashup() {
+            const id = document.getElementById('editCashupId').value;
+            const floatAmt = parseFloat(document.getElementById('editCashupFloat').value) || 0;
+            const cash = parseFloat(document.getElementById('editCashupCash').value) || 0;
+            const card = parseFloat(document.getElementById('editCashupCard').value) || 0;
+            const cashVar = parseFloat(document.getElementById('editCashupCashVar').value) || 0;
+            const cardVar = parseFloat(document.getElementById('editCashupCardVar').value) || 0;
+            const notes = document.getElementById('editCashupNotes').value;
+
+            if (supabaseClient) {
+                await supabaseClient.from('cashups').update({
+                    float_amount: floatAmt,
+                    declared_cash: cash,
+                    declared_card: card,
+                    cash_variance: cashVar,
+                    card_variance: cardVar,
+                    notes: notes,
+                    status: (cashVar !== 0 || cardVar !== 0) ? 'DISCREPANCY' : 'MATCHED'
+                }).eq('id', id);
+            }
+
+            closeModal('editCashupModal');
+            showNotification('Cashup record updated.', 'success');
+            fetchAdminOrders();
+        }
+
+        async function deleteCashupRecord(id) {
+            if (!confirm('Are you sure you want to delete this cashup entry?')) return;
+            if (supabaseClient) {
+                await supabaseClient.from('cashups').delete().eq('id', id);
+            }
+            showNotification('Cashup record deleted.', 'info');
+            fetchAdminOrders();
+        }
+
+        /* LEDGERS & ADMIN ORDERS (TAB 3 & TAB 9) */
+        function renderAdminOrders(orders) {
+            const tbody = document.getElementById('adminOrderTable');
+            const start = document.getElementById('filterStartDate').value;
+            const end = document.getElementById('filterEndDate').value;
+
+            let filtered = orders;
+            if (start) filtered = filtered.filter(o => o.created_at >= start);
+            if (end) filtered = filtered.filter(o => o.created_at <= end + 'T23:59:59');
+
+            let owed = 0;
+            let settled = 0;
+
+            filtered.forEach(o => {
+                const cost = (parseFloat(o.unit_price) || 0) * (parseInt(o.qty) || 1);
+                if (o.status === 'SETTLED') settled += cost;
+                else owed += cost;
+            });
 
             document.getElementById('adminOwed').innerText = `R ${owed.toFixed(2)}`;
             document.getElementById('adminSettled').innerText = `R ${settled.toFixed(2)}`;
-            document.getElementById('adminNet').innerText = `R ${(owed + PLATFORM_FEE).toFixed(2)}`;
-            populateReturnOrderSelect(orders);
-        }
+            document.getElementById('adminNet').innerText = `R ${(owed + settled - PLATFORM_FEE).toFixed(2)}`;
 
-        async function markOrderSettled(id) {
-            if (supabaseClient) {
-                await supabaseClient.from('orders').update({ status: 'SETTLED' }).eq('id', id);
-                logAuditAction(`Marked order payout ID ${id} as SETTLED`);
-                fetchAdminOrders();
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="color: var(--text-muted); padding: 20px;">No orders in selected period.</td></tr>`;
+                return;
             }
-        }
 
-        async function markOrderPending(id) {
-            if (supabaseClient) {
-                await supabaseClient.from('orders').update({ status: 'PENDING' }).eq('id', id);
-                logAuditAction(`Reverted order payout ID ${id} to PENDING`);
-                fetchAdminOrders();
-            }
-        }
-
-        function exportSupplierStatement() {
-            let csv = 'Order Ref,Item Name,Supplier,Date,Processed By,Qty,Wholesale Cost,Status\n';
-            cachedOrders.forEach(o => {
+            let html = '';
+            filtered.forEach(o => {
                 const cost = (parseFloat(o.unit_price) || 0) * (parseInt(o.qty) || 1);
-                csv += `"${o.order_ref}","${o.item_name}","${o.supplier}","${o.created_at}","${o.processed_by}",${o.qty},${cost},"${o.status}"\n`;
+                const isSettled = o.status === 'SETTLED';
+                html += `
+                    <tr>
+                        <td><strong>${o.order_ref}</strong><br><small style="color:var(--text-muted);">${o.item_name}</small></td>
+                        <td>${o.supplier || 'N/A'}</td>
+                        <td>${new Date(o.created_at).toLocaleDateString()}</td>
+                        <td>${o.processed_by || 'POS'}</td>
+                        <td>${o.qty}</td>
+                        <td>R ${cost.toFixed(2)}</td>
+                        <td><span class="status-badge ${isSettled ? 'status-settled' : 'status-pending'}">${o.status}</span></td>
+                        <td>
+                            <button class="btn-action ${isSettled ? 'btn-pending' : 'btn-settled'}" onclick="toggleOrderStatus('${o.id}', '${isSettled ? 'PENDING' : 'SETTLED'}')">
+                                ${isSettled ? 'Mark Pending' : 'Settle'}
+                            </button>
+                        </td>
+                    </tr>
+                `;
             });
-            downloadCSV(csv, `Supplier_Statement_${new Date().toISOString().slice(0,10)}.csv`);
+            tbody.innerHTML = html;
         }
 
-        /* SUPPLIER PORTAL LEDGER (TAB 9) */
+        async function toggleOrderStatus(id, newStatus) {
+            if (supabaseClient) {
+                await supabaseClient.from('orders').update({ status: newStatus }).eq('id', id);
+            }
+            showNotification(`Updated settlement status to ${newStatus}`, 'info');
+            fetchAdminOrders();
+        }
+
         function populateSupplierTradeDropdown() {
             const select = document.getElementById('supplierSelect');
             if (!select) return;
-            const suppliers = [...new Set(cachedInventory.map(i => i.supplier).concat(cachedOrders.map(o => o.supplier)))].filter(Boolean);
+
+            const suppliers = new Set();
+            cachedInventory.forEach(i => { if (i.supplier) suppliers.add(i.supplier); });
+            cachedOrders.forEach(o => { if (o.supplier) suppliers.add(o.supplier); });
+
             let html = `<option value="ALL">-- All Suppliers / Master View --</option>`;
-            suppliers.forEach(s => html += `<option value="${s}">${s}</option>`);
+            suppliers.forEach(s => {
+                html += `<option value="${s}">${s}</option>`;
+            });
             select.innerHTML = html;
         }
 
         function filterSupplierLedger() {
-            const selected = document.getElementById('supplierSelect').value;
-            document.getElementById('activeSupplierName').innerText = selected === 'ALL' ? 'All Consignment Partners' : selected;
+            const supplier = document.getElementById('supplierSelect').value;
+            document.getElementById('activeSupplierName').innerText = supplier === 'ALL' ? 'All Consignment Partners' : supplier;
 
             let filteredOrders = cachedOrders;
             let filteredInventory = cachedInventory;
 
-            if (selected !== 'ALL') {
-                filteredOrders = cachedOrders.filter(o => o.supplier === selected);
-                filteredInventory = cachedInventory.filter(i => i.supplier === selected);
+            if (supplier !== 'ALL') {
+                filteredOrders = cachedOrders.filter(o => o.supplier === supplier);
+                filteredInventory = cachedInventory.filter(i => i.supplier === supplier);
             }
 
-            let totalUnits = 0;
-            let totalOwed = 0;
-            let manifestHtml = '';
-
+            let unitsSold = 0;
+            let costOwed = 0;
             filteredOrders.forEach(o => {
-                const qty = parseInt(o.qty) || 1;
-                const cost = (parseFloat(o.unit_price) || 0) * qty;
-                totalUnits += qty;
-                totalOwed += cost;
-
-                manifestHtml += `
-                    <div class="manifest-item">
-                        <div>
-                            <strong>${o.item_name}</strong><br>
-                            <small style="color:var(--text-muted);">${o.order_ref} • ${new Date(o.created_at).toLocaleDateString()}</small>
-                        </div>
-                        <div style="text-align: right;">
-                            <span style="color:var(--gold-light); font-weight:600;">R ${cost.toFixed(2)}</span><br>
-                            <small style="color:var(--cyan-bright);">${qty} Units</small>
-                        </div>
-                    </div>
-                `;
+                unitsSold += parseInt(o.qty) || 0;
+                costOwed += (parseFloat(o.unit_price) || 0) * (parseInt(o.qty) || 0);
             });
 
-            document.getElementById('tradeUnits').innerText = `${totalUnits} Units`;
-            document.getElementById('tradeOwed').innerText = `R ${totalOwed.toFixed(2)}`;
+            document.getElementById('tradeUnits').innerText = `${unitsSold} Units`;
+            document.getElementById('tradeOwed').innerText = `R ${costOwed.toFixed(2)}`;
             document.getElementById('tradeSkus').innerText = `${filteredInventory.length} Lines`;
-            document.getElementById('manifestList').innerHTML = manifestHtml || `<div style="color: var(--text-muted); text-align: center; padding: 40px;">No sales manifest records found.</div>`;
+
+            const manifestList = document.getElementById('manifestList');
+            if (filteredOrders.length === 0) {
+                manifestList.innerHTML = `<div style="color: var(--text-muted); text-align: center; padding: 40px;">No sales manifest records found.</div>`;
+            } else {
+                let html = '';
+                filteredOrders.slice(0, 20).forEach(o => {
+                    const totalCost = (parseFloat(o.unit_price) || 0) * (parseInt(o.qty) || 0);
+                    html += `
+                        <div class="manifest-item">
+                            <div>
+                                <strong>${o.item_name}</strong><br>
+                                <small style="color:var(--text-muted);">${o.order_ref} • ${new Date(o.created_at).toLocaleDateString()}</small>
+                            </div>
+                            <div style="text-align:right;">
+                                <strong style="color:var(--gold-light);">R ${totalCost.toFixed(2)}</strong><br>
+                                <small>${o.qty} pcs @ R ${(parseFloat(o.unit_price) || 0).toFixed(2)}</small>
+                            </div>
+                        </div>
+                    `;
+                });
+                manifestList.innerHTML = html;
+            }
 
             renderVelocityChart(filteredOrders);
         }
@@ -2281,11 +2482,13 @@
             if (!ctx) return;
 
             const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            const counts = [0, 0, 0, 0, 0, 0, 0];
+            const totals = [0, 0, 0, 0, 0, 0, 0];
 
             orders.forEach(o => {
-                const dayIdx = new Date(o.created_at).getDay();
-                counts[dayIdx] += parseInt(o.qty) || 1;
+                if (o.created_at) {
+                    const dayIdx = new Date(o.created_at).getDay();
+                    totals[dayIdx] += parseInt(o.qty) || 0;
+                }
             });
 
             if (salesChartInstance) salesChartInstance.destroy();
@@ -2296,7 +2499,7 @@
                     labels: days,
                     datasets: [{
                         label: 'Units Sold Velocity',
-                        data: counts,
+                        data: totals,
                         borderColor: '#D4AF37',
                         backgroundColor: 'rgba(212, 175, 55, 0.15)',
                         fill: true,
@@ -2308,21 +2511,21 @@
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
-                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.5)' } },
-                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.5)' } }
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8e8e93' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8e8e93' } }
                     }
                 }
             });
         }
 
-        /* STOCK ON-HAND MANAGEMENT (TAB 4) */
+        /* STOCK ON-HAND MODULE (TAB 4) */
         function renderStockTable(inventory) {
             const tbody = document.getElementById('stockTableBody');
-            if (!tbody) return;
             if (inventory.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="color: var(--text-muted); padding: 20px; text-align:center;">Loading active inventory...</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">Loading active inventory...</td></tr>`;
                 return;
             }
+
             let html = '';
             inventory.forEach(i => {
                 html += `
@@ -2330,11 +2533,11 @@
                         <td><strong>${i.sku}</strong></td>
                         <td>${i.name}</td>
                         <td>${i.supplier || 'N/A'}</td>
-                        <td><span style="color:var(--cyan-bright); font-weight:600;">${i.qty}</span></td>
-                        <td>R ${(parseFloat(i.unit_price)||0).toFixed(2)}</td>
-                        <td>R ${(parseFloat(i.selling_price)||0).toFixed(2)}</td>
+                        <td>${i.qty || 0}</td>
+                        <td>R ${(parseFloat(i.unit_price) || 0).toFixed(2)}</td>
+                        <td>R ${(parseFloat(i.selling_price) || parseFloat(i.unit_price) || 0).toFixed(2)}</td>
                         <td>
-                            <button class="btn-action btn-pending" onclick="openEditInventoryModal('${i.id}')">Edit</button>
+                            <button class="btn-sec" onclick="openEditInventoryModal('${i.id}')">Edit</button>
                             <button class="btn-action btn-delete" onclick="deleteInventoryItem('${i.id}')">Delete</button>
                         </td>
                     </tr>
@@ -2346,300 +2549,244 @@
         function openEditInventoryModal(id) {
             const item = cachedInventory.find(i => i.id == id);
             if (!item) return;
+
             document.getElementById('editInvId').value = item.id;
-            document.getElementById('editInvSku').value = item.sku;
-            document.getElementById('editInvName').value = item.name;
-            document.getElementById('editInvSupplier').value = item.supplier;
-            document.getElementById('editInvQty').value = item.qty;
-            document.getElementById('editInvUnitPrice').value = item.unit_price;
-            document.getElementById('editInvSellingPrice').value = item.selling_price;
+            document.getElementById('editInvSku').value = item.sku || '';
+            document.getElementById('editInvName').value = item.name || '';
+            document.getElementById('editInvSupplier').value = item.supplier || '';
+            document.getElementById('editInvQty').value = item.qty || 0;
+            document.getElementById('editInvUnitPrice').value = item.unit_price || 0;
+            document.getElementById('editInvSellingPrice').value = item.selling_price || 0;
+
             document.getElementById('editInventoryModal').style.display = 'flex';
         }
 
         async function saveEditedInventory() {
             const id = document.getElementById('editInvId').value;
-            const updated = {
-                sku: document.getElementById('editInvSku').value,
-                name: document.getElementById('editInvName').value,
-                supplier: document.getElementById('editInvSupplier').value,
-                qty: parseInt(document.getElementById('editInvQty').value) || 0,
-                unit_price: parseFloat(document.getElementById('editInvUnitPrice').value) || 0,
-                selling_price: parseFloat(document.getElementById('editInvSellingPrice').value) || 0
-            };
+            const sku = document.getElementById('editInvSku').value;
+            const name = document.getElementById('editInvName').value;
+            const supplier = document.getElementById('editInvSupplier').value;
+            const qty = parseInt(document.getElementById('editInvQty').value) || 0;
+            const unitPrice = parseFloat(document.getElementById('editInvUnitPrice').value) || 0;
+            const sellingPrice = parseFloat(document.getElementById('editInvSellingPrice').value) || 0;
+
             if (supabaseClient) {
-                await supabaseClient.from('inventory').update(updated).eq('id', id);
-                logAuditAction(`Updated inventory line ID ${id}`);
-                closeModal('editInventoryModal');
-                fetchAdminOrders();
-                showNotification('Inventory line updated!', 'success');
+                await supabaseClient.from('inventory').update({ sku, name, supplier, qty, unit_price: unitPrice, selling_price: sellingPrice }).eq('id', id);
             }
+
+            closeModal('editInventoryModal');
+            showNotification('Inventory line updated.', 'success');
+            fetchAdminOrders();
         }
 
         async function deleteInventoryItem(id) {
-            if (confirm('Delete this inventory line completely?')) {
-                if (supabaseClient) {
-                    await supabaseClient.from('inventory').delete().eq('id', id);
-                    logAuditAction(`Deleted inventory line ID ${id}`);
-                    fetchAdminOrders();
-                    showNotification('Inventory item removed.', 'error');
-                }
+            if (!confirm('Are you sure you want to delete this stock line?')) return;
+            if (supabaseClient) {
+                await supabaseClient.from('inventory').delete().eq('id', id);
             }
+            showNotification('Stock line deleted.', 'info');
+            fetchAdminOrders();
         }
 
-        /* CASHUP RECONCILIATION */
-        function prepareCashupView() {
-            document.getElementById('cashupUserBadge').innerText = `USER: ${currentUser ? currentUser.full_name.toUpperCase() : 'UNASSIGNED'}`;
-            const todayStr = new Date().toISOString().slice(0,10);
-            
-            let cashExpected = 0;
-            let cardExpected = 0;
-
-            cachedOrders.forEach(o => {
-                if (o.created_at && o.created_at.startsWith(todayStr)) {
-                    const total = parseFloat(o.total_amount) || ((parseFloat(o.selling_price) || 0) * (parseInt(o.qty) || 1));
-                    if (o.tender_method === 'CARD') cardExpected += total; else cashExpected += total;
-                }
-            });
-
-            document.getElementById('expectedCashSales').innerText = `R ${cashExpected.toFixed(2)}`;
-            document.getElementById('expectedCardSales').innerText = `R ${cardExpected.toFixed(2)}`;
-            calculateCashupVariance();
-        }
-
-        function calculateCashupVariance() {
-            const expectedCashStr = document.getElementById('expectedCashSales').innerText.replace('R ', '');
-            const expectedCardStr = document.getElementById('expectedCardSales').innerText.replace('R ', '');
-            
-            const expectedCash = parseFloat(expectedCashStr) || 0;
-            const expectedCard = parseFloat(expectedCardStr) || 0;
-
-            const floatVal = parseFloat(document.getElementById('cashupFloat').value) || 0;
-            const actualCash = parseFloat(document.getElementById('cashupActualCash').value) || 0;
-            const actualCard = parseFloat(document.getElementById('cashupActualCard').value) || 0;
-
-            const cashVariance = (actualCash - floatVal) - expectedCash;
-            const cardVariance = actualCard - expectedCard;
-
-            document.getElementById('cashupVariance').value = `R ${cashVariance.toFixed(2)}`;
-            document.getElementById('cashupCardVariance').value = `R ${cardVariance.toFixed(2)}`;
-        }
-
-        async function submitCashup(e) {
+        /* STAFF MANAGEMENT (TAB 5) */
+        async function handleCreateStaff(e) {
             e.preventDefault();
-            const floatVal = parseFloat(document.getElementById('cashupFloat').value) || 0;
-            const actualCash = parseFloat(document.getElementById('cashupActualCash').value) || 0;
-            const actualCard = parseFloat(document.getElementById('cashupActualCard').value) || 0;
-            const cashVar = parseFloat(document.getElementById('cashupVariance').value.replace('R ', '')) || 0;
-            const cardVar = parseFloat(document.getElementById('cashupCardVariance').value.replace('R ', '')) || 0;
-            const notes = document.getElementById('cashupNotes').value;
+            const name = document.getElementById('staffNameInput').value;
+            const pin = document.getElementById('staffPinInput').value;
+            const role = document.getElementById('staffRoleSelect').value;
 
             if (supabaseClient) {
-                await supabaseClient.from('cashups').insert([{
-                    cashier_name: currentUser ? currentUser.full_name : 'Cashier',
-                    opening_float: floatVal,
-                    declared_cash: actualCash,
-                    declared_card: actualCard,
-                    cash_variance: cashVar,
-                    card_variance: cardVar,
-                    notes: notes,
-                    status: (cashVar === 0 && cardVar === 0) ? 'BALANCED' : 'FLAGGED'
-                }]);
-
-                logAuditAction(`Submitted daily cashup report: Cash Var R ${cashVar.toFixed(2)}`);
-                showNotification('Cashup reconciliation report submitted successfully!', 'success');
-                document.getElementById('cashupForm').reset();
-                fetchAdminOrders();
+                await supabaseClient.from('staff_profiles').insert([{ full_name: name, pin_code: pin, role: role }]);
             }
+
+            showNotification(`Created ${role.toUpperCase()} account for ${name}`, 'success');
+            document.getElementById('createStaffForm').reset();
+            fetchStaffProfiles();
         }
 
-        function renderCashupHistory() {
-            const tbody = document.getElementById('cashupHistoryTable');
-            if (!tbody) return;
-            if (cachedCashups.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No cashups recorded.</td></tr>`;
+        async function fetchStaffProfiles() {
+            const tbody = document.getElementById('staffProfileTable');
+            if (!supabaseClient) return;
+
+            const { data } = await supabaseClient.from('staff_profiles').select('*').order('created_at', { ascending: false });
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="color: var(--text-muted); padding: 20px;">No custom staff profiles created.</td></tr>`;
                 return;
             }
+
             let html = '';
-            cachedCashups.slice(0, 10).forEach(c => {
+            data.forEach(s => {
                 html += `
                     <tr>
-                        <td>${new Date(c.created_at).toLocaleDateString()}</td>
-                        <td>${c.cashier_name}</td>
-                        <td>R ${(parseFloat(c.declared_cash)||0).toFixed(2)}</td>
-                        <td style="color:${c.cash_variance < 0 ? 'var(--red-alert)' : 'var(--green-active)'};">R ${(parseFloat(c.cash_variance)||0).toFixed(2)}</td>
-                        <td style="color:${c.card_variance < 0 ? 'var(--red-alert)' : 'var(--green-active)'};">R ${(parseFloat(c.card_variance)||0).toFixed(2)}</td>
-                        <td><span class="status-badge ${c.status === 'BALANCED' ? 'status-settled' : 'status-pending'}">${c.status}</span></td>
+                        <td><strong>${s.full_name}</strong></td>
+                        <td><span class="status-badge status-settled">${s.role.toUpperCase()}</span></td>
+                        <td>${new Date(s.created_at).toLocaleDateString()}</td>
+                        <td><button class="btn-action btn-delete" onclick="deleteStaffProfile('${s.id}')">Delete</button></td>
                     </tr>
                 `;
             });
             tbody.innerHTML = html;
         }
 
-        /* MANAGER CASHUP TRACE (TAB 3 / MGR CASHUP) */
-        function renderManagerCashups() {
-            const tbody = document.getElementById('managerCashupTableBody');
-            if (!tbody) return;
+        async function deleteStaffProfile(id) {
+            if (!confirm('Delete this staff account?')) return;
+            if (supabaseClient) {
+                await supabaseClient.from('staff_profiles').delete().eq('id', id);
+            }
+            showNotification('Account removed.', 'info');
+            fetchStaffProfiles();
+        }
 
-            const dateFilter = document.getElementById('mgrCashupFilterDate')?.value;
-            let filtered = cachedCashups;
-            if (dateFilter) filtered = filtered.filter(c => c.created_at && c.created_at.startsWith(dateFilter));
+        /* AUDIT LOGS (TAB 6) */
+        async function logAuditAction(action) {
+            const user = currentUser ? currentUser.full_name : 'System User';
+            if (supabaseClient) {
+                await supabaseClient.from('audit_logs').insert([{ user_name: user, action_text: action }]);
+            }
+        }
 
-            let totalDeclCash = 0;
-            let totalDeclCard = 0;
-            let discrepancies = 0;
+        async function fetchAuditLogs() {
+            const tbody = document.getElementById('auditTableBody');
+            if (!supabaseClient) return;
+
+            const { data } = await supabaseClient.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(50);
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="color: var(--text-muted); padding: 20px;">No audit actions recorded yet.</td></tr>`;
+                return;
+            }
+
             let html = '';
-
-            filtered.forEach(c => {
-                const declCash = parseFloat(c.declared_cash) || 0;
-                const declCard = parseFloat(c.declared_card) || 0;
-                const cashVar = parseFloat(c.cash_variance) || 0;
-                const cardVar = parseFloat(c.card_variance) || 0;
-
-                totalDeclCash += declCash;
-                totalDeclCard += declCard;
-                if (cashVar !== 0 || cardVar !== 0) discrepancies++;
-
+            data.forEach(a => {
                 html += `
                     <tr>
-                        <td>${new Date(c.created_at).toLocaleString()}</td>
-                        <td>${c.cashier_name}</td>
-                        <td>R ${(parseFloat(c.opening_float)||0).toFixed(2)}</td>
-                        <td>R ${declCash.toFixed(2)}</td>
-                        <td>R ${declCard.toFixed(2)}</td>
-                        <td style="color:${cashVar < 0 ? 'var(--red-alert)' : 'var(--green-active)'}; font-weight:600;">R ${cashVar.toFixed(2)}</td>
-                        <td style="color:${cardVar < 0 ? 'var(--red-alert)' : 'var(--green-active)'}; font-weight:600;">R ${cardVar.toFixed(2)}</td>
-                        <td><small>${c.notes || '--'}</small></td>
-                        <td>
-                            <button class="btn-action btn-pending" onclick="openEditCashupModal('${c.id}')">Edit</button>
-                            <button class="btn-action btn-delete" onclick="deleteCashupRecord('${c.id}')">Delete</button>
-                        </td>
+                        <td>${new Date(a.created_at).toLocaleString()}</td>
+                        <td><strong>${a.user_name}</strong></td>
+                        <td>${a.action_text}</td>
                     </tr>
                 `;
             });
-
-            document.getElementById('mgrTotalCashupsCount').innerText = filtered.length;
-            document.getElementById('mgrTotalDeclaredCash').innerText = `R ${totalDeclCash.toFixed(2)}`;
-            document.getElementById('mgrTotalDeclaredCard').innerText = `R ${totalDeclCard.toFixed(2)}`;
-            document.getElementById('mgrDiscrepanciesCount').innerText = discrepancies;
-
-            tbody.innerHTML = html || `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 20px;">No cashup audit records found.</td></tr>`;
+            tbody.innerHTML = html;
         }
 
-        function openEditCashupModal(id) {
-            const item = cachedCashups.find(c => c.id == id);
-            if (!item) return;
-            document.getElementById('editCashupId').value = item.id;
-            document.getElementById('editCashupFloat').value = item.opening_float;
-            document.getElementById('editCashupCash').value = item.declared_cash;
-            document.getElementById('editCashupCard').value = item.declared_card;
-            document.getElementById('editCashupCashVar').value = item.cash_variance;
-            document.getElementById('editCashupCardVar').value = item.card_variance;
-            document.getElementById('editCashupNotes').value = item.notes;
-            document.getElementById('editCashupModal').style.display = 'flex';
-        }
-
-        async function saveEditedCashup() {
-            const id = document.getElementById('editCashupId').value;
-            const updated = {
-                opening_float: parseFloat(document.getElementById('editCashupFloat').value) || 0,
-                declared_cash: parseFloat(document.getElementById('editCashupCash').value) || 0,
-                declared_card: parseFloat(document.getElementById('editCashupCard').value) || 0,
-                cash_variance: parseFloat(document.getElementById('editCashupCashVar').value) || 0,
-                card_variance: parseFloat(document.getElementById('editCashupCardVar').value) || 0,
-                notes: document.getElementById('editCashupNotes').value
-            };
-            if (supabaseClient) {
-                await supabaseClient.from('cashups').update(updated).eq('id', id);
-                logAuditAction(`Edited cashup audit entry ID ${id}`);
-                closeModal('editCashupModal');
-                fetchAdminOrders();
-                showNotification('Cashup record updated!', 'success');
+        /* RETURNS & RESTOCK MODULE (TAB 7) */
+        function fetchReturnsLog() {
+            const select = document.getElementById('returnOrderSelect');
+            if (select) {
+                let html = `<option value="">-- Choose Dispatched Order --</option>`;
+                cachedOrders.forEach(o => {
+                    html += `<option value="${o.id}">${o.order_ref} - ${o.item_name} (Qty: ${o.qty})</option>`;
+                });
+                select.innerHTML = html;
             }
+
+            fetchReturnsHistoryTable();
         }
 
-        async function deleteCashupRecord(id) {
-            if (confirm('Delete cashup audit entry?')) {
-                if (supabaseClient) {
-                    await supabaseClient.from('cashups').delete().eq('id', id);
-                    logAuditAction(`Deleted cashup entry ID ${id}`);
-                    fetchAdminOrders();
-                    showNotification('Cashup entry deleted.', 'error');
+        async function handleReturnSubmit(e) {
+            e.preventDefault();
+            const orderId = document.getElementById('returnOrderSelect').value;
+            const qty = parseInt(document.getElementById('returnQty').value) || 1;
+            const reason = document.getElementById('returnReason').value;
+            const action = document.getElementById('restockAction').value;
+            const user = currentUser ? currentUser.full_name : 'Staff';
+
+            const order = cachedOrders.find(o => o.id == orderId);
+            if (!order) return;
+
+            if (supabaseClient) {
+                await supabaseClient.from('returns').insert([{
+                    order_ref: order.order_ref,
+                    item_name: order.item_name,
+                    sku: order.sku,
+                    qty: qty,
+                    reason: reason,
+                    restocked: action === 'YES_RESTOCK',
+                    processed_by: user
+                }]);
+
+                if (action === 'YES_RESTOCK') {
+                    const invMatch = cachedInventory.find(i => i.sku === order.sku);
+                    if (invMatch) {
+                        await supabaseClient.from('inventory').update({ qty: (invMatch.qty || 0) + qty }).eq('id', invMatch.id);
+                    }
                 }
             }
+
+            logAuditAction(`Processed return for order ${order.order_ref} (Restocked: ${action})`);
+            showNotification('Return processed successfully!', 'success');
+            document.getElementById('returnForm').reset();
+            fetchAdminOrders();
         }
 
-        /* ACCOUNTING & FINANCIAL P&L (TAB 12) */
+        async function fetchReturnsHistoryTable() {
+            const tbody = document.getElementById('returnsLogTable');
+            if (!supabaseClient) return;
+
+            const { data } = await supabaseClient.from('returns').select('*').order('created_at', { ascending: false });
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">No return history recorded.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            data.forEach(r => {
+                html += `
+                    <tr>
+                        <td>${new Date(r.created_at).toLocaleDateString()}</td>
+                        <td><strong>${r.order_ref}</strong><br><small style="color:var(--text-muted);">${r.item_name}</small></td>
+                        <td>${r.qty}</td>
+                        <td>${r.reason}</td>
+                        <td><span class="status-badge ${r.restocked ? 'status-settled' : 'status-pending'}">${r.restocked ? 'YES' : 'NO'}</span></td>
+                        <td>${r.processed_by || 'Staff'}</td>
+                        <td><span class="status-badge status-settled">PROCESSED</span></td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        /* ACCOUNTING & FINANCIAL P&L MODULE (TAB 12 / TAB 8) */
         function renderAccountingDashboard() {
-            let start = document.getElementById('accFilterStart')?.value;
-            let end = document.getElementById('accFilterEnd')?.value;
+            const start = document.getElementById('accFilterStart').value;
+            const end = document.getElementById('accFilterEnd').value;
 
             let filteredOrders = cachedOrders;
             let filteredExpenses = cachedExpenses;
 
             if (start) {
-                filteredOrders = filteredOrders.filter(o => new Date(o.created_at) >= new Date(start));
-                filteredExpenses = filteredExpenses.filter(e => new Date(e.created_at) >= new Date(start));
+                filteredOrders = filteredOrders.filter(o => o.created_at >= start);
+                filteredExpenses = filteredExpenses.filter(e => e.created_at >= start);
             }
             if (end) {
-                filteredOrders = filteredOrders.filter(o => new Date(o.created_at) <= new Date(end + 'T23:59:59'));
-                filteredExpenses = filteredExpenses.filter(e => new Date(e.created_at) <= new Date(end + 'T23:59:59'));
+                filteredOrders = filteredOrders.filter(o => o.created_at <= end + 'T23:59:59');
+                filteredExpenses = filteredExpenses.filter(e => e.created_at <= end + 'T23:59:59');
             }
 
             let grossSales = 0;
             let totalCogs = 0;
-            let cashCollected = 0;
-            let cardCollected = 0;
-            let totalUnits = 0;
-            let txHtml = '';
+            let cashTendered = 0;
+            let cardTendered = 0;
+            let unitsSold = 0;
 
             filteredOrders.forEach(o => {
-                const qty = parseInt(o.qty) || 1;
-                const sellingPrice = parseFloat(o.selling_price) || (parseFloat(o.total_amount) / qty) || 0;
+                const qty = parseInt(o.qty) || 0;
+                const sellingPrice = parseFloat(o.selling_price) || parseFloat(o.total_amount) / (qty || 1) || 0;
                 const costPrice = parseFloat(o.unit_price) || 0;
-                const lineTotal = parseFloat(o.total_amount) || (sellingPrice * qty);
+
+                const lineTotal = sellingPrice * qty;
                 const lineCogs = costPrice * qty;
 
                 grossSales += lineTotal;
                 totalCogs += lineCogs;
-                totalUnits += qty;
+                unitsSold += qty;
 
-                if (o.tender_method === 'CARD') cardCollected += lineTotal; else cashCollected += lineTotal;
-
-                txHtml += `
-                    <tr>
-                        <td><strong>${o.order_ref || '#--'}</strong></td>
-                        <td>${new Date(o.created_at).toLocaleString()}</td>
-                        <td>${o.item_name}</td>
-                        <td>${qty}</td>
-                        <td>R ${sellingPrice.toFixed(2)}</td>
-                        <td>R ${lineCogs.toFixed(2)}</td>
-                        <td style="color:var(--cyan-bright); font-weight:600;">R ${lineTotal.toFixed(2)}</td>
-                        <td>${o.tender_method || 'CASH'}</td>
-                        <td>
-                            <button class="btn-action btn-pending" onclick="openEditSalesTxModal('${o.id}')">Edit</button>
-                            <button class="btn-action btn-delete" onclick="deleteSalesTx('${o.id}')">Delete</button>
-                        </td>
-                    </tr>
-                `;
+                if (o.tender_method === 'CARD') cardTendered += lineTotal;
+                else cashTendered += lineTotal;
             });
 
             let totalOpEx = 0;
-            let expHtml = '';
             filteredExpenses.forEach(e => {
-                const amt = parseFloat(e.amount) || 0;
-                totalOpEx += amt;
-                expHtml += `
-                    <tr>
-                        <td>${new Date(e.created_at).toLocaleDateString()}</td>
-                        <td>${e.description}</td>
-                        <td>${e.category}</td>
-                        <td>R ${amt.toFixed(2)}</td>
-                        <td>
-                            <button class="btn-action btn-pending" onclick="openEditExpenseModal('${e.id}')">Edit</button>
-                            <button class="btn-action btn-delete" onclick="deleteExpenseEntry('${e.id}')">Delete</button>
-                        </td>
-                    </tr>
-                `;
+                totalOpEx += parseFloat(e.amount) || 0;
             });
 
             const grossProfit = grossSales - totalCogs;
@@ -2650,272 +2797,201 @@
             document.getElementById('accGrossProfit').innerText = `R ${grossProfit.toFixed(2)}`;
             document.getElementById('accNetProfit').innerText = `R ${netProfit.toFixed(2)}`;
             document.getElementById('accOpEx').innerText = `R ${totalOpEx.toFixed(2)}`;
-            document.getElementById('accCashTendered').innerText = `R ${cashCollected.toFixed(2)}`;
-            document.getElementById('accCardTendered').innerText = `R ${cardCollected.toFixed(2)}`;
-            document.getElementById('accUnitsSold').innerText = `${totalUnits} Items`;
+            document.getElementById('accCashTendered').innerText = `R ${cashTendered.toFixed(2)}`;
+            document.getElementById('accCardTendered').innerText = `R ${cardTendered.toFixed(2)}`;
+            document.getElementById('accUnitsSold').innerText = `${unitsSold} Items`;
 
-            document.getElementById('accountingTableBody').innerHTML = txHtml || `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 20px;">No accounting records found.</td></tr>`;
-            document.getElementById('accountingExpensesTableBody').innerHTML = expHtml || `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No expense records found.</td></tr>`;
+            renderExpensesTable(filteredExpenses);
+            renderSalesAccountingTable(filteredOrders);
         }
 
         async function handleLogExpense(e) {
             e.preventDefault();
             const desc = document.getElementById('expDesc').value;
             const category = document.getElementById('expCategory').value;
-            const amt = parseFloat(document.getElementById('expAmount').value) || 0;
+            const amount = parseFloat(document.getElementById('expAmount').value) || 0;
 
             if (supabaseClient) {
-                await supabaseClient.from('expenses').insert([{ description: desc, category, amount: amt }]);
-                logAuditAction(`Logged operating expense: ${desc} R ${amt.toFixed(2)}`);
-                document.getElementById('expenseForm').reset();
-                fetchAdminOrders();
-                showNotification('Operating expense logged!', 'success');
+                await supabaseClient.from('expenses').insert([{ description: desc, category, amount }]);
             }
+
+            showNotification(`Logged expense: ${desc} (R ${amount.toFixed(2)})`, 'success');
+            document.getElementById('expenseForm').reset();
+            fetchAdminOrders();
+        }
+
+        function renderExpensesTable(expenses) {
+            const tbody = document.getElementById('accountingExpensesTableBody');
+            if (expenses.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No expense records found.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            expenses.forEach(e => {
+                html += `
+                    <tr>
+                        <td>${new Date(e.created_at).toLocaleDateString()}</td>
+                        <td><strong>${e.description}</strong></td>
+                        <td><span class="status-badge status-pending">${e.category}</span></td>
+                        <td style="color:var(--red-alert);">R ${(parseFloat(e.amount) || 0).toFixed(2)}</td>
+                        <td>
+                            <button class="btn-sec" onclick="openEditExpenseModal('${e.id}')">Edit</button>
+                            <button class="btn-action btn-delete" onclick="deleteExpense('${e.id}')">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
         }
 
         function openEditExpenseModal(id) {
             const exp = cachedExpenses.find(e => e.id == id);
             if (!exp) return;
+
             document.getElementById('editExpId').value = exp.id;
-            document.getElementById('editExpDesc').value = exp.description;
-            document.getElementById('editExpCategory').value = exp.category;
-            document.getElementById('editExpAmount').value = exp.amount;
+            document.getElementById('editExpDesc').value = exp.description || '';
+            document.getElementById('editExpCategory').value = exp.category || 'Rent';
+            document.getElementById('editExpAmount').value = exp.amount || 0;
+
             document.getElementById('editExpenseModal').style.display = 'flex';
         }
 
         async function saveEditedExpense() {
             const id = document.getElementById('editExpId').value;
-            const updated = {
-                description: document.getElementById('editExpDesc').value,
-                category: document.getElementById('editExpCategory').value,
-                amount: parseFloat(document.getElementById('editExpAmount').value) || 0
-            };
+            const desc = document.getElementById('editExpDesc').value;
+            const category = document.getElementById('editExpCategory').value;
+            const amount = parseFloat(document.getElementById('editExpAmount').value) || 0;
+
             if (supabaseClient) {
-                await supabaseClient.from('expenses').update(updated).eq('id', id);
-                logAuditAction(`Updated expense entry ID ${id}`);
-                closeModal('editExpenseModal');
-                fetchAdminOrders();
-                showNotification('Expense entry saved!', 'success');
+                await supabaseClient.from('expenses').update({ description: desc, category, amount }).eq('id', id);
             }
+
+            closeModal('editExpenseModal');
+            showNotification('Expense entry updated.', 'success');
+            fetchAdminOrders();
         }
 
-        async function deleteExpenseEntry(id) {
-            if (confirm('Delete expense entry?')) {
-                if (supabaseClient) {
-                    await supabaseClient.from('expenses').delete().eq('id', id);
-                    logAuditAction(`Deleted expense entry ID ${id}`);
-                    fetchAdminOrders();
-                    showNotification('Expense deleted.', 'error');
-                }
+        async function deleteExpense(id) {
+            if (!confirm('Delete this expense line?')) return;
+            if (supabaseClient) {
+                await supabaseClient.from('expenses').delete().eq('id', id);
             }
+            showNotification('Expense entry deleted.', 'info');
+            fetchAdminOrders();
+        }
+
+        function renderSalesAccountingTable(orders) {
+            const tbody = document.getElementById('accountingTableBody');
+            if (orders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 20px;">No sales accounting records found.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            orders.forEach(o => {
+                const qty = parseInt(o.qty) || 0;
+                const sellingPrice = parseFloat(o.selling_price) || parseFloat(o.total_amount) / (qty || 1) || 0;
+                const costPrice = parseFloat(o.unit_price) || 0;
+                const lineTotal = sellingPrice * qty;
+
+                html += `
+                    <tr>
+                        <td><strong>${o.order_ref}</strong></td>
+                        <td>${new Date(o.created_at).toLocaleDateString()}</td>
+                        <td>${o.item_name}</td>
+                        <td>${qty}</td>
+                        <td>R ${sellingPrice.toFixed(2)}</td>
+                        <td style="color:var(--red-alert);">R ${(costPrice * qty).toFixed(2)}</td>
+                        <td style="color:var(--green-active);">R ${lineTotal.toFixed(2)}</td>
+                        <td><span class="status-badge status-settled">${o.tender_method || 'CASH'}</span></td>
+                        <td>
+                            <button class="btn-sec" onclick="openEditSalesTxModal('${o.id}')">Edit</button>
+                            <button class="btn-action btn-delete" onclick="deleteSalesTransaction('${o.id}')">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
         }
 
         function openEditSalesTxModal(id) {
             const tx = cachedOrders.find(o => o.id == id);
             if (!tx) return;
+
             document.getElementById('editTxId').value = tx.id;
-            document.getElementById('editTxOrderRef').value = tx.order_ref;
-            document.getElementById('editTxItemName').value = tx.item_name;
-            document.getElementById('editTxQty').value = tx.qty;
-            document.getElementById('editTxSellingPrice').value = tx.selling_price;
+            document.getElementById('editTxOrderRef').value = tx.order_ref || '';
+            document.getElementById('editTxItemName').value = tx.item_name || '';
+            document.getElementById('editTxQty').value = tx.qty || 1;
+            document.getElementById('editTxSellingPrice').value = tx.selling_price || 0;
             document.getElementById('editTxTender').value = tx.tender_method || 'CASH';
+
             document.getElementById('editSalesTransactionModal').style.display = 'flex';
         }
 
         async function saveEditedSalesTransaction() {
             const id = document.getElementById('editTxId').value;
+            const ref = document.getElementById('editTxOrderRef').value;
+            const name = document.getElementById('editTxItemName').value;
             const qty = parseInt(document.getElementById('editTxQty').value) || 1;
             const price = parseFloat(document.getElementById('editTxSellingPrice').value) || 0;
-            const updated = {
-                order_ref: document.getElementById('editTxOrderRef').value,
-                item_name: document.getElementById('editTxItemName').value,
-                qty: qty,
-                selling_price: price,
-                total_amount: qty * price,
-                tender_method: document.getElementById('editTxTender').value
-            };
+            const tender = document.getElementById('editTxTender').value;
+
             if (supabaseClient) {
-                await supabaseClient.from('orders').update(updated).eq('id', id);
-                logAuditAction(`Edited sales transaction ID ${id}`);
-                closeModal('editSalesTransactionModal');
-                fetchAdminOrders();
-                showNotification('Sales transaction updated!', 'success');
+                await supabaseClient.from('orders').update({
+                    order_ref: ref,
+                    item_name: name,
+                    qty: qty,
+                    selling_price: price,
+                    total_amount: price * qty,
+                    tender_method: tender
+                }).eq('id', id);
             }
+
+            closeModal('editSalesTransactionModal');
+            showNotification('Transaction record updated.', 'success');
+            fetchAdminOrders();
         }
 
-        async function deleteSalesTx(id) {
-            if (confirm('Delete transaction from sales ledger?')) {
-                if (supabaseClient) {
-                    await supabaseClient.from('orders').delete().eq('id', id);
-                    logAuditAction(`Deleted sales transaction ID ${id}`);
-                    fetchAdminOrders();
-                    showNotification('Sales entry removed.', 'error');
-                }
+        async function deleteSalesTransaction(id) {
+            if (!confirm('Delete this sales record permanently?')) return;
+            if (supabaseClient) {
+                await supabaseClient.from('orders').delete().eq('id', id);
             }
+            showNotification('Sales transaction deleted.', 'info');
+            fetchAdminOrders();
+        }
+
+        function exportSupplierStatement() {
+            let csv = 'Order Ref,Supplier,Date,Processed By,Qty,Cost Amount,Status\n';
+            cachedOrders.forEach(o => {
+                const cost = (parseFloat(o.unit_price) || 0) * (parseInt(o.qty) || 1);
+                csv += `"${o.order_ref}","${o.supplier}","${o.created_at}","${o.processed_by}",${o.qty},${cost},"${o.status}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Supplier_Statement_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
         }
 
         function exportAccountingCSV() {
-            let csv = 'Order Ref,Timestamp,Product Name,Qty,Selling Price,COGS,Gross Total,Tender Method\n';
+            let csv = 'Order Ref,Date,Product Name,Qty,Selling Price,Cost Price,Line Total,Tender Method\n';
             cachedOrders.forEach(o => {
-                const qty = o.qty || 1;
-                const selling = o.selling_price || 0;
-                const cogs = (o.unit_price || 0) * qty;
-                csv += `"${o.order_ref}","${o.created_at}","${o.item_name}",${qty},${selling},${cogs},${o.total_amount || (qty * selling)},"${o.tender_method || 'CASH'}"\n`;
+                const qty = parseInt(o.qty) || 1;
+                const price = parseFloat(o.selling_price) || 0;
+                const cost = parseFloat(o.unit_price) || 0;
+                csv += `"${o.order_ref}","${o.created_at}","${o.item_name}",${qty},${price},${cost},${price * qty},"${o.tender_method}"\n`;
             });
-            downloadCSV(csv, `Nguni_Financial_P&L_${new Date().toISOString().slice(0,10)}.csv`);
-        }
 
-        /* STAFF MANAGEMENT (TAB 5) */
-        async function handleCreateStaff(e) {
-            e.preventDefault();
-            const name = document.getElementById('staffNameInput').value.trim();
-            const pin = document.getElementById('staffPinInput').value.trim();
-            const role = document.getElementById('staffRoleSelect').value;
-
-            if (supabaseClient) {
-                await supabaseClient.from('staff_profiles').insert([{ full_name: name, pin_code: pin, role: role }]);
-                logAuditAction(`Created staff profile for ${name} (${role})`);
-                document.getElementById('createStaffForm').reset();
-                fetchStaffProfiles();
-                showNotification(`Profile created for ${name}!`, 'success');
-            }
-        }
-
-        async function fetchStaffProfiles() {
-            if (!supabaseClient) return;
-            const { data } = await supabaseClient.from('staff_profiles').select('*').order('created_at', { ascending: false });
-            const tbody = document.getElementById('staffProfileTable');
-            if (!tbody) return;
-
-            let html = '';
-            (data || []).forEach(p => {
-                html += `
-                    <tr>
-                        <td><strong>${p.full_name}</strong></td>
-                        <td><span class="status-badge status-settled">${p.role}</span></td>
-                        <td>${new Date(p.created_at).toLocaleDateString()}</td>
-                        <td><button class="btn-action btn-delete" onclick="deleteStaffProfile('${p.id}')">Delete</button></td>
-                    </tr>
-                `;
-            });
-            tbody.innerHTML = html || `<tr><td colspan="4" style="color: var(--text-muted); padding: 20px; text-align:center;">No custom staff profiles found.</td></tr>`;
-        }
-
-        async function deleteStaffProfile(id) {
-            if (confirm('Delete staff profile?')) {
-                if (supabaseClient) {
-                    await supabaseClient.from('staff_profiles').delete().eq('id', id);
-                    fetchStaffProfiles();
-                    showNotification('Staff profile deleted.', 'error');
-                }
-            }
-        }
-
-        /* RETURNS & RESTOCK (TAB 7) */
-        function populateReturnOrderSelect(orders) {
-            const select = document.getElementById('returnOrderSelect');
-            if (!select) return;
-            let html = `<option value="">-- Choose Dispatched Order --</option>`;
-            orders.forEach(o => html += `<option value="${o.id}">${o.order_ref} - ${o.item_name} (${o.qty} Units)</option>`);
-            select.innerHTML = html;
-        }
-
-        async function handleReturnSubmit(e) {
-            e.preventDefault();
-            const orderId = document.getElementById('returnOrderSelect').value;
-            const qty = parseInt(document.getElementById('returnQty').value) || 1;
-            const reason = document.getElementById('returnReason').value;
-            const action = document.getElementById('restockAction').value;
-
-            const order = cachedOrders.find(o => o.id == orderId);
-            if (!order) return;
-
-            if (supabaseClient) {
-                await supabaseClient.from('returns').insert([{
-                    order_ref: order.order_ref,
-                    item_name: order.item_name,
-                    qty: qty,
-                    reason: reason,
-                    restocked: action === 'YES_RESTOCK',
-                    processed_by: currentUser ? currentUser.full_name : 'Staff'
-                }]);
-
-                if (action === 'YES_RESTOCK') {
-                    const inv = cachedInventory.find(i => i.sku === order.sku);
-                    if (inv) {
-                        await supabaseClient.from('inventory').update({ qty: (inv.qty || 0) + qty }).eq('id', inv.id);
-                    }
-                }
-
-                logAuditAction(`Processed return for ${order.order_ref}: ${qty} units (${reason})`);
-                showNotification('Order return processed successfully!', 'success');
-                document.getElementById('returnForm').reset();
-                fetchAdminOrders();
-            }
-        }
-
-        async function fetchReturnsLog() {
-            if (!supabaseClient) return;
-            const { data } = await supabaseClient.from('returns').select('*').order('created_at', { ascending: false });
-            const tbody = document.getElementById('returnsLogTable');
-            if (!tbody) return;
-
-            let html = '';
-            (data || []).forEach(r => {
-                html += `
-                    <tr>
-                        <td>${new Date(r.created_at).toLocaleDateString()}</td>
-                        <td><strong>${r.order_ref}</strong><br><small style="color:var(--text-muted);">${r.item_name}</small></td>
-                        <td>${r.qty}</td>
-                        <td>${r.reason}</td>
-                        <td>${r.restocked ? '<span style="color:var(--green-active);">YES</span>' : '<span style="color:var(--red-alert);">NO</span>'}</td>
-                        <td>${r.processed_by || 'Staff'}</td>
-                        <td><span class="status-badge status-settled">PROCESSED</span></td>
-                    </tr>
-                `;
-            });
-            tbody.innerHTML = html || `<tr><td colspan="7" style="color: var(--text-muted); padding: 20px; text-align:center;">No return history found.</td></tr>`;
-        }
-
-        /* AUDIT LOGGING & UTILS */
-        async function logAuditAction(actionText) {
-            if (supabaseClient) {
-                await supabaseClient.from('audit_logs').insert([{
-                    user_name: currentUser ? currentUser.full_name : 'System',
-                    action_executed: actionText
-                }]);
-            }
-        }
-
-        async function fetchAuditLogs() {
-            if (!supabaseClient) return;
-            const { data } = await supabaseClient.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(30);
-            const tbody = document.getElementById('auditTableBody');
-            if (!tbody) return;
-
-            let html = '';
-            (data || []).forEach(a => {
-                html += `
-                    <tr>
-                        <td>${new Date(a.created_at).toLocaleString()}</td>
-                        <td><strong>${a.user_name}</strong></td>
-                        <td>${a.action_executed}</td>
-                    </tr>
-                `;
-            });
-            tbody.innerHTML = html || `<tr><td colspan="3" style="color: var(--text-muted); padding: 20px; text-align:center;">No audit logs available.</td></tr>`;
-        }
-
-        function downloadCSV(csvContent, fileName) {
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', fileName);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Financial_Report_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
         }
     </script>
 </body>
