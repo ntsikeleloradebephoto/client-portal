@@ -2859,5 +2859,226 @@
             link.click();
             document.body.removeChild(link);
         }
-    2. Frontend Patch: Complete JavaScript Engine
-Replace or complete the <script> section at the bottom of your HTML file with this script block. It handles pricing calculations, staging intake stock, committing batches to Supabase, barcode lookup, cart management, and order checkouts.
+    </script>
+    <script>
+  // Staging state
+  let intakeStagingBatch = [];
+  let posCart = [];
+  let cachedInventory = [];
+
+  // 1. Live Markup & Pricing Calculator
+  function runPricingLiveCalc() {
+    const unitPrice = parseFloat(document.getElementById('intakeCostPrice').value) || 0;
+    const markupPerc = parseFloat(document.getElementById('intakeMarkup').value) || 0;
+    
+    if (unitPrice > 0) {
+      const calculatedSelling = unitPrice + (unitPrice * (markupPerc / 100));
+      document.getElementById('intakeSellingPrice').value = calculatedSelling.toFixed(2);
+    }
+  }
+
+  // 2. Intake: Stage Items in Local Memory
+  function addStockItemToBatch() {
+    const sku = document.getElementById('intakeSKU').value.trim();
+    const item_name = document.getElementById('intakeName').value.trim();
+    const unit_price = parseFloat(document.getElementById('intakeCostPrice').value) || 0;
+    const selling_price = parseFloat(document.getElementById('intakeSellingPrice').value) || 0;
+    const stock_on_hand = parseInt(document.getElementById('intakeQty').value, 10) || 0;
+    const supplier = document.getElementById('intakeSupplier').value.trim();
+
+    if (!sku || !item_name || stock_on_hand <= 0) {
+      alert("Please provide a valid SKU, Item Name, and Quantity.");
+      return;
+    }
+
+    intakeStagingBatch.push({ sku, item_name, unit_price, selling_price, stock_on_hand, supplier });
+    renderIntakeStagingTable();
+    clearIntakeInputs();
+  }
+
+  function renderIntakeStagingTable() {
+    const tbody = document.getElementById('intakeStagingTbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    intakeStagingBatch.forEach((item, index) => {
+      const row = `<tr>
+        <td>${item.sku}</td>
+        <td>${item.item_name}</td>
+        <td>R${item.unit_price.toFixed(2)}</td>
+        <td>R${item.selling_price.toFixed(2)}</td>
+        <td>${item.stock_on_hand}</td>
+        <td>${item.supplier}</td>
+        <td><button type="button" onclick="removeStagedItem(${index})">Remove</button></td>
+      </tr>`;
+      tbody.insertAdjacentHTML('beforeend', row);
+    });
+  }
+
+  function removeStagedItem(index) {
+    intakeStagingBatch.splice(index, 1);
+    renderIntakeStagingTable();
+  }
+
+  function clearIntakeInputs() {
+    document.getElementById('intakeSKU').value = '';
+    document.getElementById('intakeName').value = '';
+    document.getElementById('intakeCostPrice').value = '';
+    document.getElementById('intakeSellingPrice').value = '';
+    document.getElementById('intakeQty').value = '';
+    document.getElementById('intakeSupplier').value = '';
+  }
+
+  // 3. Intake: Commit Staged Items to Supabase
+  async function commitIntakeBatch() {
+    if (intakeStagingBatch.length === 0) {
+      alert("No items in staging batch to commit.");
+      return;
+    }
+
+    try {
+      const { data, error } = await _supabase
+        .from('inventory')
+        .upsert(intakeStagingBatch, { onConflict: 'sku' });
+
+      if (error) throw error;
+
+      alert("Inventory intake committed successfully!");
+      intakeStagingBatch = [];
+      renderIntakeStagingTable();
+      loadInventoryCache(); // Refresh cache
+    } catch (err) {
+      console.error("Intake commit failed:", err);
+      alert("Failed to commit inventory: " + err.message);
+    }
+  }
+
+  // 4. POS: SKU Search & Auto-Fill
+  function handleBarcodeLookup(skuQuery) {
+    const matched = cachedInventory.find(i => i.sku.toLowerCase() === skuQuery.toLowerCase());
+    if (matched) {
+      document.getElementById('slotProductName').value = matched.item_name;
+      document.getElementById('slotUnitPrice').value = matched.selling_price;
+      document.getElementById('slotSellingPrice').value = matched.selling_price;
+      document.getElementById('slotSKU').dataset.matchedItem = JSON.stringify(matched);
+    }
+  }
+
+  // 5. POS: Add Item to Cart
+  function addItemToCart() {
+    const rawData = document.getElementById('slotSKU').dataset.matchedItem;
+    if (!rawData) {
+      alert("Please enter or scan a valid SKU first.");
+      return;
+    }
+
+    const item = JSON.parse(rawData);
+    const qty = parseInt(document.getElementById('slotQty').value, 10) || 1;
+
+    const existingIndex = posCart.findIndex(c => c.sku === item.sku);
+    if (existingIndex > -1) {
+      posCart[existingIndex].quantity += qty;
+      posCart[existingIndex].total = posCart[existingIndex].quantity * posCart[existingIndex].unit_price;
+    } else {
+      posCart.push({
+        sku: item.sku,
+        item_name: item.item_name,
+        quantity: qty,
+        unit_price: item.selling_price,
+        total: qty * item.selling_price
+      });
+    }
+
+    renderPosCart();
+  }
+
+  function renderPosCart() {
+    const tbody = document.getElementById('cartTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    let grandTotal = 0;
+
+    posCart.forEach((item, index) => {
+      grandTotal += item.total;
+      const row = `<tr>
+        <td>${item.sku}</td>
+        <td>${item.item_name}</td>
+        <td>${item.quantity}</td>
+        <td>R${item.unit_price.toFixed(2)}</td>
+        <td>R${item.total.toFixed(2)}</td>
+        <td><button type="button" onclick="removeFromCart(${index})">X</button></td>
+      </tr>`;
+      tbody.insertAdjacentHTML('beforeend', row);
+    });
+
+    const totalEl = document.getElementById('cartGrandTotal');
+    if (totalEl) totalEl.innerText = `R${grandTotal.toFixed(2)}`;
+  }
+
+  function removeFromCart(index) {
+    posCart.splice(index, 1);
+    renderPosCart();
+  }
+
+  // 6. POS: Complete Order Checkout
+  async function checkoutBatchOrder() {
+    if (posCart.length === 0) {
+      alert("Cart is empty.");
+      return;
+    }
+
+    const orderRef = "ORD-" + Date.now();
+    const paymentMethod = document.getElementById('posPaymentMethod')?.value || 'Cash';
+
+    const orderPayload = posCart.map(item => ({
+      order_ref: orderRef,
+      sku: item.sku,
+      item_name: item.item_name,
+      quantity: item.quantity,
+      unit_price: item.unit_price,
+      total_price: item.total,
+      tender_method: paymentMethod
+    }));
+
+    try {
+      // Record Sale
+      const { error: orderErr } = await _supabase.from('orders').insert(orderPayload);
+      if (orderErr) throw orderErr;
+
+      // Deduct Inventory Stock
+      for (const item of posCart) {
+        const invItem = cachedInventory.find(i => i.sku === item.sku);
+        if (invItem) {
+          const newQty = Math.max(0, invItem.stock_on_hand - item.quantity);
+          await _supabase.from('inventory').update({ stock_on_hand: newQty }).eq('sku', item.sku);
+        }
+      }
+
+      alert(`Sale completed! Reference: ${orderRef}`);
+      posCart = [];
+      renderPosCart();
+      loadInventoryCache();
+    } catch (err) {
+      console.error("Checkout error:", err);
+      alert("Checkout failed: " + err.message);
+    }
+  }
+
+  // 7. Utility: Pre-load Inventory Cache
+  async function loadInventoryCache() {
+    try {
+      const { data, error } = await _supabase.from('inventory').select('*');
+      if (error) throw error;
+      cachedInventory = data || [];
+    } catch (err) {
+      console.error("Failed to load inventory cache:", err);
+    }
+  }
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', () => {
+    loadInventoryCache();
+  });
+</script>
+</body>
+</html>
