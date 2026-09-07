@@ -1,4 +1,121 @@
-function showReceiptModal(orderRef, items, total, tender) {
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nguni Homeware - Management System</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0f1115;
+            --card-bg: #181b20;
+            --border-color: #262930;
+            --gold-light: #D4AF37;
+            --green-active: #2ecc71;
+            --red-alert: #e74c3c;
+            --cyan-bright: #00d2d3;
+            --text-main: #f5f6fa;
+            --text-muted: #8c92a0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .btn-action, .btn-sec {
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-action { background: var(--gold-light); color: #000; }
+        .btn-sec { background: var(--border-color); color: var(--text-main); }
+        .btn-delete { background: var(--red-alert); color: #fff; }
+
+        .status-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .status-settled { background: rgba(46, 204, 113, 0.2); color: var(--green-active); }
+        .status-pending { background: rgba(231, 76, 60, 0.2); color: var(--red-alert); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        th { color: var(--text-muted); font-size: 12px; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+
+    <!-- Modals Placeholders -->
+    <div id="receiptModal" class="modal"><div id="receiptContent" style="background: #fff; color: #000; padding: 20px; border-radius: 8px; width: 300px;"></div></div>
+    <div id="editCashupModal" class="modal"></div>
+    <div id="editInventoryModal" class="modal"></div>
+    <div id="editExpenseModal" class="modal"></div>
+    <div id="editSalesTransactionModal" class="modal"></div>
+
+    <script>
+        // Global state and initialization
+        let supabaseClient = null;
+        let currentUser = null;
+        let cachedOrders = [];
+        let cachedInventory = [];
+        let cachedCashups = [];
+        let cachedExpenses = [];
+        let intakeBatch = [];
+        let salesChartInstance = null;
+        const PLATFORM_FEE = 0.00;
+
+        function showNotification(msg, type = 'info') {
+            console.log(`[${type.toUpperCase()}] ${msg}`);
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.style.display = 'none';
+        }
+
+        function fetchAdminOrders() {
+            if (typeof renderStockTable === 'function') renderStockTable(cachedInventory);
+            if (typeof populateSupplierTradeDropdown === 'function') populateSupplierTradeDropdown();
+            if (typeof filterSupplierLedger === 'function') filterSupplierLedger();
+            if (typeof renderAdminOrders === 'function') renderAdminOrders(cachedOrders);
+            if (typeof renderCashupHistory === 'function') renderCashupHistory();
+            if (typeof renderManagerCashups === 'function') renderManagerCashups();
+            if (typeof renderAccountingDashboard === 'function') renderAccountingDashboard();
+        }
+
+        /* RECEIPT MODAL MODULE */
+        function showReceiptModal(orderRef, items, total, tender) {
             let html = `
                 <p><strong>Order Ref:</strong> ${orderRef}</p>
                 <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
@@ -38,7 +155,8 @@ function showReceiptModal(orderRef, items, total, tender) {
         /* CASHUP RECONCILIATION MODULE */
         function prepareCashupView() {
             const userName = currentUser ? currentUser.full_name : 'Cashier';
-            document.getElementById('cashupUserBadge').innerText = `USER: ${userName.toUpperCase()}`;
+            const badge = document.getElementById('cashupUserBadge');
+            if (badge) badge.innerText = `USER: ${userName.toUpperCase()}`;
 
             const todayStr = new Date().toISOString().split('T')[0];
             const todaysOrders = cachedOrders.filter(o => o.created_at && o.created_at.startsWith(todayStr));
@@ -55,18 +173,20 @@ function showReceiptModal(orderRef, items, total, tender) {
                 }
             });
 
-            document.getElementById('expectedCashSales').innerText = `R ${cashTotal.toFixed(2)}`;
-            document.getElementById('expectedCardSales').innerText = `R ${cardTotal.toFixed(2)}`;
+            const expCash = document.getElementById('expectedCashSales');
+            const expCard = document.getElementById('expectedCardSales');
+            if (expCash) expCash.innerText = `R ${cashTotal.toFixed(2)}`;
+            if (expCard) expCard.innerText = `R ${cardTotal.toFixed(2)}`;
             calculateCashupVariance();
         }
 
         function calculateCashupVariance() {
-            const floatAmt = parseFloat(document.getElementById('cashupFloat').value) || 0;
-            const actualCash = parseFloat(document.getElementById('cashupActualCash').value) || 0;
-            const actualCard = parseFloat(document.getElementById('cashupActualCard').value) || 0;
+            const floatAmt = parseFloat(document.getElementById('cashupFloat')?.value) || 0;
+            const actualCash = parseFloat(document.getElementById('cashupActualCash')?.value) || 0;
+            const actualCard = parseFloat(document.getElementById('cashupActualCard')?.value) || 0;
 
-            const expectedCashStr = document.getElementById('expectedCashSales').innerText.replace('R ', '');
-            const expectedCardStr = document.getElementById('expectedCardSales').innerText.replace('R ', '');
+            const expectedCashStr = document.getElementById('expectedCashSales')?.innerText.replace('R ', '') || '0';
+            const expectedCardStr = document.getElementById('expectedCardSales')?.innerText.replace('R ', '') || '0';
 
             const expectedCash = parseFloat(expectedCashStr) || 0;
             const expectedCard = parseFloat(expectedCardStr) || 0;
@@ -77,15 +197,19 @@ function showReceiptModal(orderRef, items, total, tender) {
             const cashVarEl = document.getElementById('cashupVariance');
             const cardVarEl = document.getElementById('cashupCardVariance');
 
-            cashVarEl.value = `R ${cashVariance.toFixed(2)}`;
-            cashVarEl.style.color = cashVariance < 0 ? 'var(--red-alert)' : (cashVariance > 0 ? 'var(--green-active)' : 'inherit');
+            if (cashVarEl) {
+                cashVarEl.value = `R ${cashVariance.toFixed(2)}`;
+                cashVarEl.style.color = cashVariance < 0 ? 'var(--red-alert)' : (cashVariance > 0 ? 'var(--green-active)' : 'inherit');
+            }
 
-            cardVarEl.value = `R ${cardVariance.toFixed(2)}`;
-            cardVarEl.style.color = cardVariance < 0 ? 'var(--red-alert)' : (cardVariance > 0 ? 'var(--green-active)' : 'inherit');
+            if (cardVarEl) {
+                cardVarEl.value = `R ${cardVariance.toFixed(2)}`;
+                cardVarEl.style.color = cardVariance < 0 ? 'var(--red-alert)' : (cardVariance > 0 ? 'var(--green-active)' : 'inherit');
+            }
         }
 
         async function submitCashup(event) {
-            event.preventDefault();
+            if (event) event.preventDefault();
             const floatAmt = parseFloat(document.getElementById('cashupFloat').value) || 0;
             const actualCash = parseFloat(document.getElementById('cashupActualCash').value) || 0;
             const actualCard = parseFloat(document.getElementById('cashupActualCard').value) || 0;
@@ -99,29 +223,36 @@ function showReceiptModal(orderRef, items, total, tender) {
 
             const sellerName = currentUser ? currentUser.full_name : 'Cashier';
 
+            const cashupRecord = {
+                id: Date.now().toString(),
+                seller: sellerName,
+                opening_float: floatAmt,
+                declared_cash: actualCash,
+                declared_card: actualCard,
+                cash_variance: cashVariance,
+                card_variance: cardVariance,
+                notes: notes,
+                status: (cashVariance !== 0 || cardVariance !== 0) ? 'DISCREPANCY' : 'MATCHED',
+                created_at: new Date().toISOString()
+            };
+
             if (supabaseClient) {
-                await supabaseClient.from('cashups').insert([{
-                    seller: sellerName,
-                    opening_float: floatAmt,
-                    declared_cash: actualCash,
-                    declared_card: actualCard,
-                    cash_variance: cashVariance,
-                    card_variance: cardVariance,
-                    notes: notes,
-                    status: (cashVariance !== 0 || cardVariance !== 0) ? 'DISCREPANCY' : 'MATCHED'
-                }]);
+                await supabaseClient.from('cashups').insert([cashupRecord]);
+            } else {
+                cachedCashups.unshift(cashupRecord);
             }
 
             logAuditAction(`Submitted Cashup Report by ${sellerName}. Cash Var: R ${cashVariance.toFixed(2)}, Card Var: R ${cardVariance.toFixed(2)}`);
             showNotification('Cashup report submitted successfully!', 'success');
             
-            document.getElementById('cashupForm').reset();
-            document.getElementById('cashupFloat').value = '0.00';
+            document.getElementById('cashupForm')?.reset();
+            if (document.getElementById('cashupFloat')) document.getElementById('cashupFloat').value = '0.00';
             fetchAdminOrders();
         }
 
         function renderCashupHistory() {
             const tbody = document.getElementById('cashupHistoryTable');
+            if (!tbody) return;
             if (!cachedCashups || cachedCashups.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No cashups recorded.</td></tr>`;
                 return;
@@ -148,14 +279,15 @@ function showReceiptModal(orderRef, items, total, tender) {
         /* MANAGER CASHUP AUDIT MODULE */
         function renderManagerCashups() {
             const tbody = document.getElementById('managerCashupTableBody');
-            const filterDate = document.getElementById('mgrCashupFilterDate').value;
+            if (!tbody) return;
+            const filterDate = document.getElementById('mgrCashupFilterDate')?.value;
 
             let filtered = [...cachedCashups];
             if (filterDate) {
                 filtered = filtered.filter(c => c.created_at && c.created_at.startsWith(filterDate));
             }
 
-            document.getElementById('mgrTotalCashupsCount').innerText = filtered.length;
+            if (document.getElementById('mgrTotalCashupsCount')) document.getElementById('mgrTotalCashupsCount').innerText = filtered.length;
 
             let totalCash = 0;
             let totalCard = 0;
@@ -169,9 +301,9 @@ function showReceiptModal(orderRef, items, total, tender) {
                 }
             });
 
-            document.getElementById('mgrTotalDeclaredCash').innerText = `R ${totalCash.toFixed(2)}`;
-            document.getElementById('mgrTotalDeclaredCard').innerText = `R ${totalCard.toFixed(2)}`;
-            document.getElementById('mgrDiscrepanciesCount').innerText = discrepancies;
+            if (document.getElementById('mgrTotalDeclaredCash')) document.getElementById('mgrTotalDeclaredCash').innerText = `R ${totalCash.toFixed(2)}`;
+            if (document.getElementById('mgrTotalDeclaredCard')) document.getElementById('mgrTotalDeclaredCard').innerText = `R ${totalCard.toFixed(2)}`;
+            if (document.getElementById('mgrDiscrepanciesCount')) document.getElementById('mgrDiscrepanciesCount').innerText = discrepancies;
 
             if (filtered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 20px;">No cashup audit records found.</td></tr>`;
@@ -235,6 +367,17 @@ function showReceiptModal(orderRef, items, total, tender) {
                     notes: notes,
                     status: (cashVar !== 0 || cardVar !== 0) ? 'DISCREPANCY' : 'MATCHED'
                 }).eq('id', id);
+            } else {
+                const match = cachedCashups.find(c => String(c.id) === String(id));
+                if (match) {
+                    match.opening_float = floatAmt;
+                    match.declared_cash = declaredCash;
+                    match.declared_card = declaredCard;
+                    match.cash_variance = cashVar;
+                    match.card_variance = cardVar;
+                    match.notes = notes;
+                    match.status = (cashVar !== 0 || cardVar !== 0) ? 'DISCREPANCY' : 'MATCHED';
+                }
             }
 
             logAuditAction(`Updated Cashup Record ID ${id}`);
@@ -248,6 +391,8 @@ function showReceiptModal(orderRef, items, total, tender) {
 
             if (supabaseClient) {
                 await supabaseClient.from('cashups').delete().eq('id', cashupId);
+            } else {
+                cachedCashups = cachedCashups.filter(c => String(c.id) !== String(cashupId));
             }
 
             logAuditAction(`Deleted Cashup Record ID ${cashupId}`);
@@ -255,9 +400,9 @@ function showReceiptModal(orderRef, items, total, tender) {
             fetchAdminOrders();
         }
 
-        /* INVENTORY INTAKE BATCH MODULE */
+        /* INVENTORY INTAKE BATCH MODULE (TAB 5) -> ACTIVE STOCK ON-HAND (TAB 8) & CASHIER POS LINKING */
         function addStockItemToBatch(event) {
-            event.preventDefault();
+            if (event) event.preventDefault();
             const sku = document.getElementById('stockSku').value.trim() || `SKU-${Math.floor(10000 + Math.random() * 90000)}`;
             const name = document.getElementById('stockName').value.trim();
             const qty = parseInt(document.getElementById('stockQty').value) || 0;
@@ -268,14 +413,15 @@ function showReceiptModal(orderRef, items, total, tender) {
             intakeBatch.push({ sku, name, qty, unit_price: unitPrice, selling_price: sellingPrice, supplier });
             renderIntakeBatch();
 
-            document.getElementById('stockForm').reset();
-            document.getElementById('stockQty').value = '10';
+            document.getElementById('stockForm')?.reset();
+            if (document.getElementById('stockQty')) document.getElementById('stockQty').value = '10';
             showNotification(`Staged "${name}" into intake batch queue.`, 'info');
         }
 
         function renderIntakeBatch() {
             const tbody = document.getElementById('intakeBatchTableBody');
-            document.getElementById('intakeBatchCount').innerText = intakeBatch.length;
+            if (!tbody) return;
+            if (document.getElementById('intakeBatchCount')) document.getElementById('intakeBatchCount').innerText = intakeBatch.length;
 
             if (intakeBatch.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No inventory staged for intake.</td></tr>`;
@@ -311,6 +457,7 @@ function showReceiptModal(orderRef, items, total, tender) {
             }
 
             for (const item of intakeBatch) {
+                // Update or Insert into Supabase if connected
                 if (supabaseClient) {
                     const existing = cachedInventory.find(i => i.sku === item.sku);
                     if (existing) {
@@ -321,15 +468,44 @@ function showReceiptModal(orderRef, items, total, tender) {
                             selling_price: item.selling_price,
                             supplier: item.supplier
                         }).eq('id', existing.id);
+
+                        // Sync local array
+                        existing.qty = newQty;
+                        existing.unit_price = item.unit_price;
+                        existing.selling_price = item.selling_price;
+                        existing.supplier = item.supplier;
                     } else {
-                        await supabaseClient.from('inventory').insert([{
+                        const { data } = await supabaseClient.from('inventory').insert([{
                             sku: item.sku,
                             name: item.name,
                             qty: item.qty,
                             unit_price: item.unit_price,
                             selling_price: item.selling_price,
                             supplier: item.supplier
-                        }]);
+                        }]).select();
+
+                        if (data && data[0]) {
+                            cachedInventory.push(data[0]);
+                        }
+                    }
+                } else {
+                    // Local fallback sync for Stock on Hand and Cashier POS
+                    const existing = cachedInventory.find(i => i.sku === item.sku);
+                    if (existing) {
+                        existing.qty = (existing.qty || 0) + item.qty;
+                        existing.unit_price = item.unit_price;
+                        existing.selling_price = item.selling_price;
+                        existing.supplier = item.supplier;
+                    } else {
+                        cachedInventory.push({
+                            id: Date.now().toString() + Math.random().toString().slice(2, 6),
+                            sku: item.sku,
+                            name: item.name,
+                            qty: item.qty,
+                            unit_price: item.unit_price,
+                            selling_price: item.selling_price,
+                            supplier: item.supplier
+                        });
                     }
                 }
             }
@@ -338,6 +514,10 @@ function showReceiptModal(orderRef, items, total, tender) {
             showNotification(`Successfully committed ${intakeBatch.length} stock items to active inventory!`, 'success');
             intakeBatch = [];
             renderIntakeBatch();
+            
+            // Re-render Tab 8 Stock on Hand & refresh all views for Cashier POS catalog
+            if (typeof renderStockTable === 'function') renderStockTable(cachedInventory);
+            if (typeof renderPosCatalog === 'function') renderPosCatalog(cachedInventory);
             fetchAdminOrders();
         }
 
@@ -362,8 +542,10 @@ function showReceiptModal(orderRef, items, total, tender) {
         }
 
         function filterSupplierLedger() {
-            const selectedSupplier = document.getElementById('supplierSelect').value;
-            document.getElementById('activeSupplierName').innerText = selectedSupplier === 'ALL' ? 'All Consignment Partners' : selectedSupplier;
+            const select = document.getElementById('supplierSelect');
+            if (!select) return;
+            const selectedSupplier = select.value;
+            if (document.getElementById('activeSupplierName')) document.getElementById('activeSupplierName').innerText = selectedSupplier === 'ALL' ? 'All Consignment Partners' : selectedSupplier;
 
             let filteredOrders = cachedOrders;
             let filteredInventory = cachedInventory;
@@ -383,9 +565,9 @@ function showReceiptModal(orderRef, items, total, tender) {
                 totalWholesaleOwed += (qty * unitPrice);
             });
 
-            document.getElementById('tradeUnits').innerText = `${totalUnitsSold} Units`;
-            document.getElementById('tradeOwed').innerText = `R ${totalWholesaleOwed.toFixed(2)}`;
-            document.getElementById('tradeSkus').innerText = `${filteredInventory.length} Lines`;
+            if (document.getElementById('tradeUnits')) document.getElementById('tradeUnits').innerText = `${totalUnitsSold} Units`;
+            if (document.getElementById('tradeOwed')) document.getElementById('tradeOwed').innerText = `R ${totalWholesaleOwed.toFixed(2)}`;
+            if (document.getElementById('tradeSkus')) document.getElementById('tradeSkus').innerText = `${filteredInventory.length} Lines`;
 
             renderManifestList(filteredOrders);
             renderVelocityChart(filteredOrders);
@@ -393,6 +575,7 @@ function showReceiptModal(orderRef, items, total, tender) {
 
         function renderManifestList(orders) {
             const manifestList = document.getElementById('manifestList');
+            if (!manifestList) return;
             if (!orders || orders.length === 0) {
                 manifestList.innerHTML = `<div style="color: var(--text-muted); text-align: center; padding: 40px;">No consignment sales records for this partner.</div>`;
                 return;
@@ -405,7 +588,7 @@ function showReceiptModal(orderRef, items, total, tender) {
                 const dateStr = o.created_at ? new Date(o.created_at).toLocaleDateString() : '--';
 
                 html += `
-                    <div class="manifest-item">
+                    <div class="manifest-item" style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color);">
                         <div>
                             <strong>${o.item_name || 'Item'}</strong><br>
                             <small style="color:var(--text-muted);">${o.order_ref || ''} • ${dateStr} • ${o.supplier || 'Partner'}</small>
@@ -464,10 +647,11 @@ function showReceiptModal(orderRef, items, total, tender) {
         /* SETTLEMENT LEDGER MODULE */
         function renderAdminOrders(orders) {
             const tbody = document.getElementById('adminOrderTable');
-            const start = document.getElementById('filterStartDate').value;
-            const end = document.getElementById('filterEndDate').value;
+            if (!tbody) return;
+            const start = document.getElementById('filterStartDate')?.value;
+            const end = document.getElementById('filterEndDate')?.value;
 
-            let filtered = orders;
+            let filtered = orders || [];
             if (start) filtered = filtered.filter(o => o.created_at && o.created_at >= start);
             if (end) filtered = filtered.filter(o => o.created_at && o.created_at <= end + 'T23:59:59');
 
@@ -483,9 +667,9 @@ function showReceiptModal(orderRef, items, total, tender) {
                 }
             });
 
-            document.getElementById('adminOwed').innerText = `R ${pendingOwed.toFixed(2)}`;
-            document.getElementById('adminSettled').innerText = `R ${settledOwed.toFixed(2)}`;
-            document.getElementById('adminNet').innerText = `R ${(pendingOwed - PLATFORM_FEE).toFixed(2)}`;
+            if (document.getElementById('adminOwed')) document.getElementById('adminOwed').innerText = `R ${pendingOwed.toFixed(2)}`;
+            if (document.getElementById('adminSettled')) document.getElementById('adminSettled').innerText = `R ${settledOwed.toFixed(2)}`;
+            if (document.getElementById('adminNet')) document.getElementById('adminNet').innerText = `R ${(pendingOwed - PLATFORM_FEE).toFixed(2)}`;
 
             if (filtered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="8" style="color: var(--text-muted); padding: 20px;">No settlement ledger records found.</td></tr>`;
@@ -521,6 +705,9 @@ function showReceiptModal(orderRef, items, total, tender) {
         async function toggleOrderStatus(orderId, newStatus) {
             if (supabaseClient) {
                 await supabaseClient.from('orders').update({ status: newStatus }).eq('id', orderId);
+            } else {
+                const match = cachedOrders.find(o => String(o.id) === String(orderId));
+                if (match) match.status = newStatus;
             }
             logAuditAction(`Updated Order ID ${orderId} status to ${newStatus}`);
             showNotification(`Settlement status updated to ${newStatus}.`, 'success');
@@ -543,9 +730,10 @@ function showReceiptModal(orderRef, items, total, tender) {
             showNotification('Settlement CSV statement exported.', 'success');
         }
 
-        /* ACTIVE STOCK ON-HAND MODULE */
+        /* ACTIVE STOCK ON-HAND MODULE (TAB 8) */
         function renderStockTable(inventory) {
             const tbody = document.getElementById('stockTableBody');
+            if (!tbody) return;
             if (!inventory || inventory.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" style="color: var(--text-muted); padding: 20px;">No active inventory records found.</td></tr>`;
                 return;
@@ -599,6 +787,16 @@ function showReceiptModal(orderRef, items, total, tender) {
                 await supabaseClient.from('inventory').update({
                     sku, name, supplier, qty, unit_price: unitPrice, selling_price: sellingPrice
                 }).eq('id', id);
+            } else {
+                const match = cachedInventory.find(i => String(i.id) === String(id));
+                if (match) {
+                    match.sku = sku;
+                    match.name = name;
+                    match.supplier = supplier;
+                    match.qty = qty;
+                    match.unit_price = unitPrice;
+                    match.selling_price = sellingPrice;
+                }
             }
 
             logAuditAction(`Updated Inventory Item SKU ${sku}`);
@@ -612,6 +810,8 @@ function showReceiptModal(orderRef, items, total, tender) {
 
             if (supabaseClient) {
                 await supabaseClient.from('inventory').delete().eq('id', invId);
+            } else {
+                cachedInventory = cachedInventory.filter(i => String(i.id) !== String(invId));
             }
 
             logAuditAction(`Deleted Inventory Item ID ${invId}`);
@@ -622,6 +822,7 @@ function showReceiptModal(orderRef, items, total, tender) {
         /* STAFF & PROFILE MANAGEMENT MODULE */
         async function fetchStaffProfiles() {
             const tbody = document.getElementById('staffProfileTable');
+            if (!tbody) return;
             if (!supabaseClient) return;
 
             const { data } = await supabaseClient.from('staff_profiles').select('*').order('created_at', { ascending: false });
@@ -646,7 +847,7 @@ function showReceiptModal(orderRef, items, total, tender) {
         }
 
         async function handleCreateStaff(event) {
-            event.preventDefault();
+            if (event) event.preventDefault();
             const name = document.getElementById('staffNameInput').value.trim();
             const pin = document.getElementById('staffPinInput').value.trim();
             const role = document.getElementById('staffRoleSelect').value;
@@ -657,7 +858,7 @@ function showReceiptModal(orderRef, items, total, tender) {
 
             logAuditAction(`Created new staff profile for ${name} (${role})`);
             showNotification(`Created profile for ${name}.`, 'success');
-            document.getElementById('createStaffForm').reset();
+            document.getElementById('createStaffForm')?.reset();
             fetchStaffProfiles();
         }
 
@@ -683,6 +884,7 @@ function showReceiptModal(orderRef, items, total, tender) {
 
         async function fetchAuditLogs() {
             const tbody = document.getElementById('auditTableBody');
+            if (!tbody) return;
             if (!supabaseClient) return;
 
             const { data } = await supabaseClient.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(20);
@@ -718,6 +920,7 @@ function showReceiptModal(orderRef, items, total, tender) {
                 select.innerHTML = opts;
             }
 
+            if (!tbody) return;
             if (!supabaseClient) return;
 
             const { data } = await supabaseClient.from('returns').select('*').order('created_at', { ascending: false });
@@ -745,7 +948,7 @@ function showReceiptModal(orderRef, items, total, tender) {
         }
 
         async function handleReturnSubmit(event) {
-            event.preventDefault();
+            if (event) event.preventDefault();
             const orderId = document.getElementById('returnOrderSelect').value;
             const returnQty = parseInt(document.getElementById('returnQty').value) || 1;
             const reason = document.getElementById('returnReason').value;
@@ -776,20 +979,24 @@ function showReceiptModal(orderRef, items, total, tender) {
                     if (invMatch) {
                         const updatedQty = (invMatch.qty || 0) + returnQty;
                         await supabaseClient.from('inventory').update({ qty: updatedQty }).eq('id', invMatch.id);
+                        invMatch.qty = updatedQty;
                     }
                 }
+            } else if (shouldRestock && match.sku) {
+                const invMatch = cachedInventory.find(i => i.sku === match.sku);
+                if (invMatch) invMatch.qty = (invMatch.qty || 0) + returnQty;
             }
 
             logAuditAction(`Processed return for order ${match.order_ref} (Qty: ${returnQty}, Restocked: ${shouldRestock})`);
             showNotification('Return processed successfully!', 'success');
-            document.getElementById('returnForm').reset();
+            document.getElementById('returnForm')?.reset();
             fetchAdminOrders();
         }
 
         /* ENTERPRISE FINANCIAL P&L & COGS ACCOUNTING MODULE */
         function renderAccountingDashboard() {
-            const start = document.getElementById('accFilterStart').value;
-            const end = document.getElementById('accFilterEnd').value;
+            const start = document.getElementById('accFilterStart')?.value;
+            const end = document.getElementById('accFilterEnd')?.value;
 
             let filteredOrders = cachedOrders;
             let filteredExpenses = cachedExpenses;
@@ -834,15 +1041,15 @@ function showReceiptModal(orderRef, items, total, tender) {
             const grossProfit = grossSales - totalCogs;
             const netProfit = grossProfit - totalOpEx - PLATFORM_FEE;
 
-            document.getElementById('accGrossSales').innerText = `R ${grossSales.toFixed(2)}`;
-            document.getElementById('accCogs').innerText = `R ${totalCogs.toFixed(2)}`;
-            document.getElementById('accGrossProfit').innerText = `R ${grossProfit.toFixed(2)}`;
-            document.getElementById('accNetProfit').innerText = `R ${netProfit.toFixed(2)}`;
+            if (document.getElementById('accGrossSales')) document.getElementById('accGrossSales').innerText = `R ${grossSales.toFixed(2)}`;
+            if (document.getElementById('accCogs')) document.getElementById('accCogs').innerText = `R ${totalCogs.toFixed(2)}`;
+            if (document.getElementById('accGrossProfit')) document.getElementById('accGrossProfit').innerText = `R ${grossProfit.toFixed(2)}`;
+            if (document.getElementById('accNetProfit')) document.getElementById('accNetProfit').innerText = `R ${netProfit.toFixed(2)}`;
             
-            document.getElementById('accOpEx').innerText = `R ${totalOpEx.toFixed(2)}`;
-            document.getElementById('accCashTendered').innerText = `R ${cashTendered.toFixed(2)}`;
-            document.getElementById('accCardTendered').innerText = `R ${cardTendered.toFixed(2)}`;
-            document.getElementById('accUnitsSold').innerText = `${unitsSold} Items`;
+            if (document.getElementById('accOpEx')) document.getElementById('accOpEx').innerText = `R ${totalOpEx.toFixed(2)}`;
+            if (document.getElementById('accCashTendered')) document.getElementById('accCashTendered').innerText = `R ${cashTendered.toFixed(2)}`;
+            if (document.getElementById('accCardTendered')) document.getElementById('accCardTendered').innerText = `R ${cardTendered.toFixed(2)}`;
+            if (document.getElementById('accUnitsSold')) document.getElementById('accUnitsSold').innerText = `${unitsSold} Items`;
 
             renderExpensesTable(filteredExpenses);
             renderAccountingSalesTable(filteredOrders);
@@ -850,6 +1057,7 @@ function showReceiptModal(orderRef, items, total, tender) {
 
         function renderExpensesTable(expenses) {
             const tbody = document.getElementById('accountingExpensesTableBody');
+            if (!tbody) return;
             if (!expenses || expenses.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No expense records found.</td></tr>`;
                 return;
@@ -876,6 +1084,7 @@ function showReceiptModal(orderRef, items, total, tender) {
 
         function renderAccountingSalesTable(orders) {
             const tbody = document.getElementById('accountingTableBody');
+            if (!tbody) return;
             if (!orders || orders.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 20px;">Loading accounting records...</td></tr>`;
                 return;
@@ -911,18 +1120,22 @@ function showReceiptModal(orderRef, items, total, tender) {
         }
 
         async function handleLogExpense(event) {
-            event.preventDefault();
+            if (event) event.preventDefault();
             const desc = document.getElementById('expDesc').value.trim();
             const cat = document.getElementById('expCategory').value;
             const amt = parseFloat(document.getElementById('expAmount').value) || 0;
 
+            const expData = { id: Date.now().toString(), description: desc, category: cat, amount: amt, created_at: new Date().toISOString() };
+
             if (supabaseClient) {
                 await supabaseClient.from('expenses').insert([{ description: desc, category: cat, amount: amt }]);
+            } else {
+                cachedExpenses.unshift(expData);
             }
 
             logAuditAction(`Logged expense: ${desc} (R ${amt.toFixed(2)})`);
             showNotification(`Logged expense R ${amt.toFixed(2)} under ${cat}.`, 'success');
-            document.getElementById('expenseForm').reset();
+            document.getElementById('expenseForm')?.reset();
             fetchAdminOrders();
         }
 
@@ -946,6 +1159,13 @@ function showReceiptModal(orderRef, items, total, tender) {
 
             if (supabaseClient) {
                 await supabaseClient.from('expenses').update({ description: desc, category: cat, amount: amt }).eq('id', id);
+            } else {
+                const match = cachedExpenses.find(e => String(e.id) === String(id));
+                if (match) {
+                    match.description = desc;
+                    match.category = cat;
+                    match.amount = amt;
+                }
             }
 
             logAuditAction(`Updated Expense Entry ID ${id}`);
@@ -959,6 +1179,8 @@ function showReceiptModal(orderRef, items, total, tender) {
 
             if (supabaseClient) {
                 await supabaseClient.from('expenses').delete().eq('id', expId);
+            } else {
+                cachedExpenses = cachedExpenses.filter(e => String(e.id) !== String(expId));
             }
 
             logAuditAction(`Deleted Expense Entry ID ${expId}`);
@@ -997,6 +1219,16 @@ function showReceiptModal(orderRef, items, total, tender) {
                     total_amount: qty * price,
                     tender_method: tender
                 }).eq('id', id);
+            } else {
+                const match = cachedOrders.find(o => String(o.id) === String(id));
+                if (match) {
+                    match.order_ref = ref;
+                    match.item_name = name;
+                    match.qty = qty;
+                    match.selling_price = price;
+                    match.total_amount = qty * price;
+                    match.tender_method = tender;
+                }
             }
 
             logAuditAction(`Updated Sales Transaction ID ${id}`);
@@ -1010,6 +1242,8 @@ function showReceiptModal(orderRef, items, total, tender) {
 
             if (supabaseClient) {
                 await supabaseClient.from('orders').delete().eq('id', txId);
+            } else {
+                cachedOrders = cachedOrders.filter(o => String(o.id) !== String(txId));
             }
 
             logAuditAction(`Deleted Sales Transaction ID ${txId}`);
