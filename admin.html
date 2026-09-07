@@ -1,4 +1,4 @@
-function showReceiptModal(orderRef, items, total, tender) {
+[source: 1]function showReceiptModal(orderRef, items, total, tender) {
             let html = `
                 <p><strong>Order Ref:</strong> ${orderRef}</p>
                 <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
@@ -315,41 +315,34 @@ function showReceiptModal(orderRef, items, total, tender) {
                     const existing = cachedInventory.find(i => i.sku === item.sku);
                     if (existing) {
                         const newQty = (existing.qty || 0) + item.qty;
-                        const { data } = await supabaseClient.from('inventory').update({
+                        await supabaseClient.from('inventory').update({
+                            name: item.name,
                             qty: newQty,
                             unit_price: item.unit_price,
                             selling_price: item.selling_price,
                             supplier: item.supplier
-                        }).eq('id', existing.id).select();
-                        
-                        if (data && data[0]) {
-                            const idx = cachedInventory.findIndex(i => i.id === existing.id);
-                            if (idx !== -1) cachedInventory[idx] = data[0];
-                        }
+                        }).eq('id', existing.id);
                     } else {
-                        const { data } = await supabaseClient.from('inventory').insert([{
+                        await supabaseClient.from('inventory').insert([{
                             sku: item.sku,
                             name: item.name,
                             qty: item.qty,
                             unit_price: item.unit_price,
                             selling_price: item.selling_price,
                             supplier: item.supplier
-                        }]).select();
-
-                        if (data && data[0]) {
-                            cachedInventory.push(data[0]);
-                        }
+                        }]);
                     }
                 } else {
-                    const existingIdx = cachedInventory.findIndex(i => i.sku === item.sku);
-                    if (existingIdx !== -1) {
-                        cachedInventory[existingIdx].qty = (cachedInventory[existingIdx].qty || 0) + item.qty;
-                        cachedInventory[existingIdx].unit_price = item.unit_price;
-                        cachedInventory[existingIdx].selling_price = item.selling_price;
-                        cachedInventory[existingIdx].supplier = item.supplier;
+                    const existing = cachedInventory.find(i => i.sku === item.sku);
+                    if (existing) {
+                        existing.qty = (existing.qty || 0) + item.qty;
+                        existing.name = item.name;
+                        existing.unit_price = item.unit_price;
+                        existing.selling_price = item.selling_price;
+                        existing.supplier = item.supplier;
                     } else {
                         cachedInventory.push({
-                            id: 'temp-' + Date.now() + '-' + Math.random(),
+                            id: Date.now() + Math.random(),
                             sku: item.sku,
                             name: item.name,
                             qty: item.qty,
@@ -365,10 +358,6 @@ function showReceiptModal(orderRef, items, total, tender) {
             showNotification(`Successfully committed ${intakeBatch.length} stock items to active inventory!`, 'success');
             intakeBatch = [];
             renderIntakeBatch();
-            
-            renderStockTable(cachedInventory);
-            populateSupplierTradeDropdown();
-            if (typeof renderPOSProducts === 'function') renderPOSProducts();
             fetchAdminOrders();
         }
 
