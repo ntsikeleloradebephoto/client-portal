@@ -1,4 +1,4 @@
-[source: 4]<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -2081,14 +2081,23 @@
                 document.getElementById('slotBarcode').value = match.sku || '--';
                 document.getElementById('slotStockOnHand').value = match.quantity_allocated || match.quantity || 0;
                 
-                const unitPrice = parseFloat(match.wholesale_floor_zar || match.unit_price || 0);
-                const sellingPrice = parseFloat(match.selling_price || match.retail_price || 0);
-                
-                document.getElementById('slotUnitPrice').value = `R ${unitPrice.toFixed(2)}`;
-                document.getElementById('slotSellingPrice').value = `R ${sellingPrice.toFixed(2)}`;
-                document.getElementById('slotSupplier').value = match.supplier || 'General Partner';
-                
+                const cost = parseFloat(match.wholesale_floor_zar || match.unit_price || 0);
+                const price = parseFloat(match.selling_price || match.retail_price || 0);
+
+                document.getElementById('slotUnitPrice').value = `R ${cost.toFixed(2)}`;
+                document.getElementById('slotSellingPrice').value = `R ${price.toFixed(2)}`;
+                document.getElementById('slotSupplier').value = match.supplier || 'General Wholesaler';
+
                 calculateSlotLineTotal();
+            } else {
+                activePosMatch = null;
+                document.getElementById('slotProductName').value = 'Not Found';
+                document.getElementById('slotBarcode').value = query;
+                document.getElementById('slotStockOnHand').value = '0';
+                document.getElementById('slotUnitPrice').value = 'R 0.00';
+                document.getElementById('slotSellingPrice').value = 'R 0.00';
+                document.getElementById('slotSupplier').value = '--';
+                document.getElementById('slotLineTotal').value = 'R 0.00';
             }
         }
 
@@ -2098,61 +2107,58 @@
                 if (activePosMatch) {
                     addItemToCart();
                 } else {
-                    showNotification('No matching inventory item found for entered query.', 'error');
+                    showNotification('No valid product selected to add.', 'error');
                 }
             }
         }
 
         function calculateSlotLineTotal() {
             if (!activePosMatch) return;
+            const price = parseFloat(activePosMatch.selling_price || activePosMatch.retail_price || 0);
             const qty = parseInt(document.getElementById('posQty').value) || 1;
-            const sellingPrice = parseFloat(activePosMatch.selling_price || activePosMatch.retail_price || 0);
-            const lineTotal = qty * sellingPrice;
-            document.getElementById('slotLineTotal').value = `R ${lineTotal.toFixed(2)}`;
+            const subtotal = price * qty;
+            document.getElementById('slotLineTotal').value = `R ${subtotal.toFixed(2)}`;
         }
 
         function addItemToCart() {
             if (!activePosMatch) {
-                showNotification('Please scan or select a valid inventory item first.', 'error');
+                showNotification('Scan or select an item first.', 'error');
                 return;
             }
 
             const qty = parseInt(document.getElementById('posQty').value) || 1;
-            const availableStock = parseInt(activePosMatch.quantity_allocated || activePosMatch.quantity || 0);
+            const price = parseFloat(activePosMatch.selling_price || activePosMatch.retail_price || 0);
+            const cost = parseFloat(activePosMatch.wholesale_floor_zar || activePosMatch.unit_price || 0);
 
-            if (qty > availableStock) {
-                showNotification(`Warning: Only ${availableStock} units available in stock.`, 'error');
+            const existingIndex = posCart.findIndex(item => item.id === activePosMatch.id);
+            if (existingIndex > -1) {
+                posCart[existingIndex].qty += qty;
+                posCart[existingIndex].subtotal = posCart[existingIndex].qty * price;
+            } else {
+                posCart.push({
+                    id: activePosMatch.id,
+                    sku: activePosMatch.sku,
+                    name: activePosMatch.item_name || activePosMatch.item_description,
+                    supplier: activePosMatch.supplier,
+                    price: price,
+                    cost: cost,
+                    qty: qty,
+                    subtotal: price * qty
+                });
             }
 
-            const sellingPrice = parseFloat(activePosMatch.selling_price || activePosMatch.retail_price || 0);
-            const wholesalePrice = parseFloat(activePosMatch.wholesale_floor_zar || activePosMatch.unit_price || 0);
-
-            posCart.push({
-                inventory_id: activePosMatch.id,
-                sku: activePosMatch.sku || 'SKU-GEN',
-                name: activePosMatch.item_name || activePosMatch.item_description || 'Product',
-                qty: qty,
-                sellingPrice: sellingPrice,
-                wholesalePrice: wholesalePrice,
-                supplier: activePosMatch.supplier || 'General Partner',
-                subtotal: qty * sellingPrice
-            });
-
             renderCartTable();
-            showNotification(`Added ${qty}x ${activePosMatch.item_name} to checkout cart.`, 'success');
-
-            // Reset slots
-            activePosMatch = null;
             document.getElementById('posBarcodeScan').value = '';
+            document.getElementById('posBarcodeScan').focus();
+            activePosMatch = null;
             document.getElementById('slotProductName').value = '';
             document.getElementById('slotBarcode').value = '';
             document.getElementById('slotStockOnHand').value = '0';
             document.getElementById('slotUnitPrice').value = 'R 0.00';
             document.getElementById('slotSellingPrice').value = 'R 0.00';
-            document.getElementById('slotSupplier').value = '';
+            document.getElementById('slotSupplier').value = '--';
             document.getElementById('slotLineTotal').value = 'R 0.00';
-            document.getElementById('posQty').value = 1;
-            document.getElementById('posBarcodeScan').focus();
+            document.getElementById('posQty').value = '1';
         }
 
         function renderCartTable() {
@@ -2168,23 +2174,23 @@
             }
 
             tbody.innerHTML = '';
-            let total = 0;
+            let grandTotal = 0;
 
-            posCart.forEach((item, idx) => {
-                total += item.subtotal;
+            posCart.forEach((item, index) => {
+                grandTotal += item.subtotal;
                 tbody.innerHTML += `
                     <tr>
                         <td><strong>${item.name}</strong><br><small style="color:var(--text-muted);">${item.sku}</small></td>
                         <td>${item.qty}</td>
-                        <td>R ${item.sellingPrice.toFixed(2)}</td>
+                        <td>R ${item.price.toFixed(2)}</td>
                         <td style="color:var(--gold-light);">R ${item.subtotal.toFixed(2)}</td>
-                        <td><button class="btn-action btn-delete" onclick="removeCartItem(${idx})">×</button></td>
+                        <td><button class="btn-action btn-delete" onclick="removeCartItem(${index})">✕</button></td>
                     </tr>
                 `;
             });
 
-            currentGrandTotal = total;
-            document.getElementById('cartGrandTotal').innerText = `R ${total.toFixed(2)}`;
+            currentGrandTotal = grandTotal;
+            document.getElementById('cartGrandTotal').innerText = `R ${grandTotal.toFixed(2)}`;
             calculateChange();
         }
 
@@ -2195,120 +2201,127 @@
 
         async function checkoutBatchOrder() {
             if (posCart.length === 0) {
-                showNotification('Cannot checkout an empty cart.', 'error');
+                showNotification('Cart is empty! Scan items before checkout.', 'error');
                 return;
             }
 
             if (selectedTender === 'CASH') {
-                const tendered = parseFloat(document.getElementById('cashReceived').value) || 0;
-                if (tendered < currentGrandTotal) {
-                    showNotification('Insufficient cash tendered for complete payment.', 'error');
+                const change = calculateChange();
+                if (change < 0) {
+                    showNotification('Cash tendered is less than Grand Total!', 'error');
                     return;
                 }
             }
 
-            const customRef = document.getElementById('posOrderRef').value.trim();
-            const orderRef = customRef ? customRef : `POS-${Math.floor(100000 + Math.random() * 900000)}`;
+            const orderRef = document.getElementById('posOrderRef').value.trim() || `POS-${Math.floor(100000 + Math.random() * 900000)}`;
+            const cashier = currentUser ? currentUser.full_name : 'Default Cashier';
 
             if (!supabaseClient) {
-                showNotification('Database connection uninitialized.', 'error');
+                showNotification('Supabase connection offline.', 'error');
                 return;
             }
 
-            try {
-                // Ensure every staged cart item includes order_ref and matches the DB insert schema
-                const insertPayloads = posCart.map(item => ({
+            let insertedCount = 0;
+            for (const item of posCart) {
+                const orderData = {
                     order_ref: orderRef,
-                    sku: item.sku || 'SKU-PRO-5150',
-                    product_description: item.name || 'tv',
-                    item_description: item.name || 'tv',
-                    quantity: item.qty,
-                    wholesale_cost_amount: item.wholesalePrice * item.qty,
-                    selling_price: item.sellingPrice,
+                    item_description: item.name,
+                    sku: item.sku,
                     supplier: item.supplier,
-                    status: 'PENDING_PAYOUT',
-                    fulfillment_channel: selectedTender === 'CASH' ? 'Cash Sales Desk' : 'Card POS Desk',
-                    processed_by: currentUser ? currentUser.full_name : 'POS Terminal'
-                }));
+                    quantity_sold: item.qty,
+                    wholesale_floor_zar: item.cost,
+                    selling_price: item.price,
+                    wholesale_cost_total: item.cost * item.qty,
+                    gross_sales_total: item.subtotal,
+                    tender_type: selectedTender,
+                    processed_by: cashier,
+                    status: 'PENDING'
+                };
 
-                const { error: insertErr } = await supabaseClient.from('orders').insert(insertPayloads);
-                if (insertErr) throw insertErr;
-
-                // Decrement inventory quantities for staged items
-                for (let item of posCart) {
-                    if (item.inventory_id) {
-                        const invItem = cachedInventory.find(i => String(i.id) === String(item.inventory_id));
-                        if (invItem) {
-                            const currentQty = invItem.quantity_allocated || invItem.quantity || 0;
-                            const newQty = Math.max(0, currentQty - item.qty);
-                            await supabaseClient.from('inventory').update({ quantity_allocated: newQty }).eq('id', item.inventory_id);
-                        }
+                const { error } = await supabaseClient.from('orders').insert([orderData]);
+                if (!error) {
+                    insertedCount++;
+                    // Deduct stock if item matched
+                    const matchedInv = cachedInventory.find(i => i.id === item.id);
+                    if (matchedInv) {
+                        const currentQty = matchedInv.quantity_allocated || matchedInv.quantity || 0;
+                        const newQty = Math.max(0, currentQty - item.qty);
+                        await supabaseClient.from('inventory').update({ quantity_allocated: newQty }).eq('id', item.id);
                     }
                 }
+            }
 
-                showNotification(`Order ${orderRef} processed successfully!`, 'success');
-                logAuditAction(`Dispatched Order ${orderRef} (${posCart.length} items, Total R${currentGrandTotal.toFixed(2)})`);
-
-                generateReceiptPrintout(orderRef);
-
-                // Reset Cart & State
+            if (insertedCount > 0) {
+                showNotification(`Sale #${orderRef} completed successfully!`, 'success');
+                logAuditAction(`Completed POS checkout order #${orderRef} (${posCart.length} items, Total: R${currentGrandTotal.toFixed(2)}, Tender: ${selectedTender})`);
+                
+                generateReceiptSlip(orderRef, cashier);
                 posCart = [];
                 renderCartTable();
                 document.getElementById('posOrderRef').value = '';
                 document.getElementById('cashReceived').value = '';
                 document.getElementById('changeDue').value = 'R 0.00';
-
                 fetchAdminOrders();
-            } catch (err) {
-                console.error("Checkout error:", err);
-                showNotification(`Checkout Failed: ${err.message}`, 'error');
+            } else {
+                showNotification('Failed to process checkout transaction.', 'error');
             }
         }
 
-        function generateReceiptPrintout(orderRef) {
+        function generateReceiptSlip(orderRef, cashier) {
             const container = document.getElementById('receiptContent');
             if (!container) return;
 
-            let itemsHtml = '';
-            let total = 0;
+            let html = `
+                <div style="margin-bottom: 8px;">
+                    <div><strong>REF:</strong> ${orderRef}</div>
+                    <div><strong>DATE:</strong> ${new Date().toLocaleString()}</div>
+                    <div><strong>CASHIER:</strong> ${cashier}</div>
+                    <div><strong>TENDER:</strong> ${selectedTender}</div>
+                </div>
+                <table style="width:100%; border-collapse:collapse; margin-bottom: 8px;">
+                    <tr style="border-bottom: 1px solid #000;">
+                        <th style="text-align:left;">QTY/ITEM</th>
+                        <th style="text-align:right;">AMOUNT</th>
+                    </tr>
+            `;
 
             posCart.forEach(item => {
-                total += item.subtotal;
-                itemsHtml += `
-                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                        <span>${item.qty}x ${item.name}</span>
-                        <span>R ${item.subtotal.toFixed(2)}</span>
-                    </div>
+                html += `
+                    <tr>
+                        <td>${item.qty}x ${item.name}</td>
+                        <td style="text-align:right;">R ${item.subtotal.toFixed(2)}</td>
+                    </tr>
                 `;
             });
 
-            const change = calculateChange();
-
-            container.innerHTML = `
-                <p><strong>Ref:</strong> ${orderRef}</p>
-                <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
-                <p><strong>Cashier:</strong> ${currentUser ? currentUser.full_name : 'Staff'}</p>
-                <hr style="border:none; border-top:1px dashed #000; margin:8px 0;">
-                ${itemsHtml}
-                <hr style="border:none; border-top:1px dashed #000; margin:8px 0;">
-                <div style="display:flex; justify-content:space-between; font-weight:bold;">
+            html += `
+                </table>
+                <div style="border-top: 1px solid #000; padding-top: 4px; font-weight: bold; display: flex; justify-content: space-between;">
                     <span>TOTAL:</span>
-                    <span>R ${total.toFixed(2)}</span>
-                </div>
-                <div style="display:flex; justify-content:space-between;">
-                    <span>TENDERED (${selectedTender}):</span>
-                    <span>R ${selectedTender === 'CASH' ? (parseFloat(document.getElementById('cashReceived').value) || 0).toFixed(2) : total.toFixed(2)}</span>
-                </div>
-                <div style="display:flex; justify-content:space-between;">
-                    <span>CHANGE:</span>
-                    <span>R ${change.toFixed(2)}</span>
+                    <span>R ${currentGrandTotal.toFixed(2)}</span>
                 </div>
             `;
 
+            if (selectedTender === 'CASH') {
+                const tendered = parseFloat(document.getElementById('cashReceived').value) || 0;
+                const change = tendered - currentGrandTotal;
+                html += `
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>CASH TENDERED:</span>
+                        <span>R ${tendered.toFixed(2)}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>CHANGE:</span>
+                        <span>R ${change.toFixed(2)}</span>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
             document.getElementById('receiptModal').style.display = 'flex';
         }
 
-        /* INTAKE BATCH LOGIC */
+        /* INTAKE STAGING & COMMIT LOGIC */
         function addStockItemToBatch(e) {
             e.preventDefault();
             const sku = document.getElementById('stockSku').value.trim() || `SKU-${Math.floor(100000 + Math.random() * 900000)}`;
@@ -2321,7 +2334,8 @@
             intakeBatch.push({ sku, name, qty, unitPrice, sellingPrice, supplier });
             renderIntakeBatchTable();
             document.getElementById('stockForm').reset();
-            showNotification(`Staged ${qty}x ${name} for batch intake.`, 'info');
+            document.getElementById('stockQty').value = '10';
+            showNotification(`Staged stock line for "${name}"`, 'info');
         }
 
         function renderIntakeBatchTable() {
@@ -2336,132 +2350,144 @@
             }
 
             tbody.innerHTML = '';
-            intakeBatch.forEach((item, idx) => {
+            intakeBatch.forEach((item, index) => {
                 tbody.innerHTML += `
                     <tr>
                         <td><strong>${item.sku}</strong></td>
                         <td>${item.name}</td>
                         <td>${item.supplier}</td>
                         <td>${item.qty}</td>
-                        <td>R ${item.unitPrice.toFixed(2)}</td>
-                        <td>R ${item.sellingPrice.toFixed(2)}</td>
-                        <td><button class="btn-action btn-delete" onclick="removeIntakeItem(${idx})">Remove</button></td>
+                        <td style="color:var(--gold-light);">R ${item.unitPrice.toFixed(2)}</td>
+                        <td style="color:var(--cyan-bright);">R ${item.sellingPrice.toFixed(2)}</td>
+                        <td><button class="btn-action btn-delete" onclick="removeIntakeItem(${index})">Remove</button></td>
                     </tr>
                 `;
             });
         }
 
-        function removeIntakeItem(idx) {
-            intakeBatch.splice(idx, 1);
+        function removeIntakeItem(index) {
+            intakeBatch.splice(index, 1);
             renderIntakeBatchTable();
         }
 
         async function commitIntakeBatch() {
             if (intakeBatch.length === 0) {
-                showNotification('No staged items to commit.', 'error');
+                showNotification('No staged stock to commit.', 'error');
                 return;
             }
 
-            if (!supabaseClient) return;
+            if (!supabaseClient) {
+                showNotification('Database connection uninitialized.', 'error');
+                return;
+            }
 
-            const payloads = intakeBatch.map(item => ({
-                sku: item.sku,
-                item_name: item.name,
-                item_description: item.name,
-                quantity_allocated: item.qty,
-                wholesale_floor_zar: item.unitPrice,
-                selling_price: item.sellingPrice,
-                supplier: item.supplier
-            }));
+            let insertedCount = 0;
+            for (const item of intakeBatch) {
+                const { error } = await supabaseClient.from('inventory').insert([{
+                    sku: item.sku,
+                    item_name: item.name,
+                    quantity_allocated: item.qty,
+                    wholesale_floor_zar: item.unitPrice,
+                    selling_price: item.sellingPrice,
+                    supplier: item.supplier
+                }]);
 
-            const { error } = await supabaseClient.from('inventory').insert(payloads);
-            if (error) {
-                showNotification(`Intake Failed: ${error.message}`, 'error');
-            } else {
-                showNotification(`Successfully committed ${intakeBatch.length} inventory lines!`, 'success');
-                logAuditAction(`Committed intake batch of ${intakeBatch.length} product lines.`);
+                if (!error) insertedCount++;
+            }
+
+            if (insertedCount > 0) {
+                showNotification(`Successfully committed ${insertedCount} inventory lines!`, 'success');
+                logAuditAction(`Committed intake batch containing ${insertedCount} inventory lines.`);
                 intakeBatch = [];
                 renderIntakeBatchTable();
                 fetchAdminOrders();
+            } else {
+                showNotification('Failed to commit intake batch.', 'error');
             }
         }
 
         /* CASHUP RECONCILIATION LOGIC */
         function prepareCashupView() {
-            document.getElementById('cashupUserBadge').innerText = `USER: ${currentUser ? currentUser.full_name.toUpperCase() : 'UNASSIGNED'}`;
-            
-            // Calculate today's sales totals
-            const todayStr = new Date().toISOString().split('T')[0];
-            let expectedCash = 0;
-            let expectedCard = 0;
+            const cashierName = currentUser ? currentUser.full_name : 'UNASSIGNED';
+            document.getElementById('cashupUserBadge').innerText = `USER: ${cashierName.toUpperCase()}`;
 
-            cachedOrders.forEach(o => {
-                const orderDate = (o.created_at || '').split('T')[0];
-                if (orderDate === todayStr) {
-                    const channel = (o.fulfillment_channel || '').toLowerCase();
-                    const amt = parseFloat(o.selling_price || 0) * parseInt(o.quantity || 1);
-                    if (channel.includes('cash')) {
-                        expectedCash += amt;
-                    } else {
-                        expectedCard += amt;
-                    }
+            // Calculate expected totals for today
+            const todayStr = new Date().toISOString().split('T')[0];
+            const todayOrders = cachedOrders.filter(o => (o.created_at || '').split('T')[0] === todayStr);
+
+            let cashExp = 0;
+            let cardExp = 0;
+
+            todayOrders.forEach(o => {
+                const val = parseFloat(o.gross_sales_total || o.selling_price || 0);
+                if (o.tender_type === 'CARD') {
+                    cardExp += val;
+                } else {
+                    cashExp += val;
                 }
             });
 
-            document.getElementById('expectedCashSales').innerText = `R ${expectedCash.toFixed(2)}`;
-            document.getElementById('expectedCardSales').innerText = `R ${expectedCard.toFixed(2)}`;
+            document.getElementById('expectedCashSales').innerText = `R ${cashExp.toFixed(2)}`;
+            document.getElementById('expectedCardSales').innerText = `R ${cardExp.toFixed(2)}`;
             calculateCashupVariance();
         }
 
         function calculateCashupVariance() {
+            const expCash = parseFloat(document.getElementById('expectedCashSales').innerText.replace('R ', '')) || 0;
+            const expCard = parseFloat(document.getElementById('expectedCardSales').innerText.replace('R ', '')) || 0;
+
             const floatVal = parseFloat(document.getElementById('cashupFloat').value) || 0;
             const actualCash = parseFloat(document.getElementById('cashupActualCash').value) || 0;
             const actualCard = parseFloat(document.getElementById('cashupActualCard').value) || 0;
 
-            const expCashStr = document.getElementById('expectedCashSales').innerText.replace('R ', '');
-            const expCardStr = document.getElementById('expectedCardSales').innerText.replace('R ', '');
+            const cashVar = actualCash - (expCash + floatVal);
+            const cardVar = actualCard - expCard;
 
-            const expectedCash = parseFloat(expCashStr) || 0;
-            const expectedCard = parseFloat(expCardStr) || 0;
+            const cashEl = document.getElementById('cashupVariance');
+            cashEl.value = `R ${cashVar.toFixed(2)}`;
+            cashEl.style.color = cashVar < 0 ? 'var(--red-alert)' : (cashVar > 0 ? 'var(--gold-light)' : 'var(--green-active)');
 
-            const cashVar = actualCash - (expectedCash + floatVal);
-            const cardVar = actualCard - expectedCard;
-
-            const cashVarInput = document.getElementById('cashupVariance');
-            cashVarInput.value = `R ${cashVar.toFixed(2)}`;
-            cashVarInput.style.color = cashVar < 0 ? 'var(--red-alert)' : 'var(--green-active)';
-
-            const cardVarInput = document.getElementById('cashupCardVariance');
-            cardVarInput.value = `R ${cardVar.toFixed(2)}`;
-            cardVarInput.style.color = cardVar < 0 ? 'var(--red-alert)' : 'var(--green-active)';
+            const cardEl = document.getElementById('cashupCardVariance');
+            cardEl.value = `R ${cardVar.toFixed(2)}`;
+            cardEl.style.color = cardVar < 0 ? 'var(--red-alert)' : (cardVar > 0 ? 'var(--gold-light)' : 'var(--green-active)');
         }
 
         async function submitCashup(e) {
             e.preventDefault();
-            if (!supabaseClient) return;
-
             const floatVal = parseFloat(document.getElementById('cashupFloat').value) || 0;
             const actualCash = parseFloat(document.getElementById('cashupActualCash').value) || 0;
             const actualCard = parseFloat(document.getElementById('cashupActualCard').value) || 0;
-            const cashVarStr = document.getElementById('cashupVariance').value.replace('R ', '');
-            const cardVarStr = document.getElementById('cashupCardVariance').value.replace('R ', '');
             const notes = document.getElementById('cashupNotes').value.trim();
+            const cashier = currentUser ? currentUser.full_name : 'Cashier';
+
+            const expCash = parseFloat(document.getElementById('expectedCashSales').innerText.replace('R ', '')) || 0;
+            const expCard = parseFloat(document.getElementById('expectedCardSales').innerText.replace('R ', '')) || 0;
+
+            const cashVar = actualCash - (expCash + floatVal);
+            const cardVar = actualCard - expCard;
+
+            if (!supabaseClient) {
+                showNotification('Database connection uninitialized.', 'error');
+                return;
+            }
 
             const { error } = await supabaseClient.from('cashups').insert([{
-                cashier_name: currentUser ? currentUser.full_name : 'Unknown Cashier',
+                cashier_name: cashier,
                 opening_float: floatVal,
                 declared_cash: actualCash,
                 declared_card: actualCard,
-                cash_variance: parseFloat(cashVarStr),
-                card_variance: parseFloat(cardVarStr),
+                expected_cash: expCash,
+                expected_card: expCard,
+                cash_variance: cashVar,
+                card_variance: cardVar,
                 notes: notes
             }]);
 
             if (error) {
-                showNotification(`Cashup submission error: ${error.message}`, 'error');
+                showNotification(`Error submitting cashup: ${error.message}`, 'error');
             } else {
                 showNotification('Daily cashup report submitted successfully!', 'success');
-                logAuditAction(`Submitted Cashup Report (Declared Cash: R${actualCash}, Card: R${actualCard})`);
+                logAuditAction(`Submitted cashup report (Declared Cash: R${actualCash}, Declared Card: R${actualCard})`);
                 document.getElementById('cashupForm').reset();
                 fetchAdminOrders();
             }
@@ -2471,7 +2497,7 @@
             const tbody = document.getElementById('cashupHistoryTable');
             if (!tbody) return;
 
-            if (cachedCashups.length === 0) {
+            if (!cachedCashups || cachedCashups.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No cashups recorded.</td></tr>`;
                 return;
             }
@@ -2479,58 +2505,55 @@
             const isManager = currentUser && (currentUser.role === 'manager' || currentUser.full_name === 'Default Manager');
 
             tbody.innerHTML = '';
-            cachedCashups.forEach(c => {
+            cachedCashups.slice(0, 10).forEach(c => {
                 const cashVar = parseFloat(c.cash_variance || 0);
                 const cardVar = parseFloat(c.card_variance || 0);
-                const hasDiscrepancy = cashVar !== 0 || cardVar !== 0;
+                const isDiscrepant = cashVar !== 0 || cardVar !== 0;
 
-                let actionBtnHtml = '';
+                let actionTd = '';
                 if (isManager) {
-                    actionBtnHtml = `<td><button class="btn-action btn-delete" onclick="deleteCashupRecord('${c.id}')">Delete</button></td>`;
+                    actionTd = `<td><button class="btn-action btn-delete" onclick="deleteCashup('${c.id}')">Delete</button></td>`;
                 }
 
                 tbody.innerHTML += `
                     <tr>
                         <td>${new Date(c.created_at).toLocaleDateString()} ${new Date(c.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
-                        <td>${c.cashier_name}</td>
+                        <td>${c.cashier_name || 'Cashier'}</td>
                         <td>R ${parseFloat(c.declared_cash || 0).toFixed(2)}</td>
                         <td style="color:${cashVar < 0 ? 'var(--red-alert)' : 'var(--green-active)'};">R ${cashVar.toFixed(2)}</td>
                         <td style="color:${cardVar < 0 ? 'var(--red-alert)' : 'var(--green-active)'};">R ${cardVar.toFixed(2)}</td>
-                        <td><span class="status-badge ${hasDiscrepancy ? 'status-returned' : 'status-settled'}">${hasDiscrepancy ? 'FLAGGED' : 'BALANCED'}</span></td>
-                        ${actionBtnHtml}
+                        <td><span class="status-badge ${isDiscrepant ? 'status-returned' : 'status-settled'}">${isDiscrepant ? 'FLAGGED' : 'BALANCED'}</span></td>
+                        ${actionTd}
                     </tr>
                 `;
             });
         }
 
-        async function deleteCashupRecord(id) {
-            if (!confirm('Are you sure you want to delete this cashup record?')) return;
+        async function deleteCashup(id) {
+            if (!confirm('Delete this cashup entry?')) return;
             if (!supabaseClient) return;
-
             const { error } = await supabaseClient.from('cashups').delete().eq('id', id);
             if (error) {
                 showNotification(`Error deleting cashup: ${error.message}`, 'error');
             } else {
                 showNotification('Cashup record deleted.', 'success');
-                logAuditAction(`Deleted cashup ID: ${id}`);
+                logAuditAction(`Deleted cashup record ID: ${id}`);
                 fetchAdminOrders();
             }
         }
 
-        /* AUDIT LOGGING HUB */
-        async function logAuditAction(actionText) {
+        /* AUDIT LOG LOGIC */
+        async function logAuditAction(actionStr) {
             if (!supabaseClient) return;
-            await supabaseClient.from('audit_logs').insert([{
-                user_name: currentUser ? currentUser.full_name : 'System User',
-                action: actionText
-            }]);
+            const user = currentUser ? currentUser.full_name : 'System';
+            await supabaseClient.from('audit_logs').insert([{ user_name: user, action: actionStr }]);
         }
 
         function renderAuditLogs() {
             const tbody = document.getElementById('auditTableBody');
             if (!tbody) return;
 
-            if (cachedAuditLogs.length === 0) {
+            if (!cachedAuditLogs || cachedAuditLogs.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="4" style="color: var(--text-muted); padding: 20px; text-align: center;">No activity logs recorded.</td></tr>`;
                 return;
             }
@@ -2538,283 +2561,69 @@
             const isManager = currentUser && (currentUser.role === 'manager' || currentUser.full_name === 'Default Manager');
 
             tbody.innerHTML = '';
-            cachedAuditLogs.forEach(a => {
-                let actionBtnHtml = '';
+            cachedAuditLogs.slice(0, 50).forEach(log => {
+                let actionTd = '';
                 if (isManager) {
-                    actionBtnHtml = `<td><button class="btn-action btn-delete" onclick="deleteAuditLogRecord('${a.id}')">Delete</button></td>`;
+                    actionTd = `<td><button class="btn-action btn-delete" onclick="deleteAuditLog('${log.id}')">Clear</button></td>`;
                 }
 
                 tbody.innerHTML += `
                     <tr>
-                        <td>${new Date(a.created_at).toLocaleString()}</td>
-                        <td><strong>${a.user_name || 'System'}</strong></td>
-                        <td>${a.action}</td>
-                        ${actionBtnHtml}
+                        <td>${new Date(log.created_at).toLocaleString()}</td>
+                        <td><strong>${log.user_name || 'System'}</strong></td>
+                        <td>${log.action}</td>
+                        ${actionTd}
                     </tr>
                 `;
             });
         }
 
-        async function deleteAuditLogRecord(id) {
-            if (!confirm('Are you sure you want to delete this audit log entry?')) return;
+        async function deleteAuditLog(id) {
+            if (!confirm('Clear this log entry?')) return;
             if (!supabaseClient) return;
-
-            const { error } = await supabaseClient.from('audit_logs').delete().eq('id', id);
-            if (error) {
-                showNotification(`Error deleting log: ${error.message}`, 'error');
-            } else {
-                showNotification('Audit record deleted.', 'success');
-                fetchAdminOrders();
-            }
+            await supabaseClient.from('audit_logs').delete().eq('id', id);
+            fetchAdminOrders();
         }
 
-        /* SUPPLIER TRADE LEDGER & PORTAL */
-        function populateSupplierTradeDropdown() {
-            const select = document.getElementById('supplierSelect');
-            if (!select) return;
-
-            const currentVal = select.value;
-            select.innerHTML = `<option value="ALL">-- All Suppliers / Master View --</option>`;
-
-            const suppliers = new Set();
-            cachedOrders.forEach(o => { if (o.supplier) suppliers.add(o.supplier); });
-            cachedInventory.forEach(i => { if (i.supplier) suppliers.add(i.supplier); });
-
-            suppliers.forEach(s => {
-                select.innerHTML += `<option value="${s}">${s}</option>`;
-            });
-
-            select.value = currentVal;
-        }
-
-        function filterSupplierLedger() {
-            const selected = document.getElementById('supplierSelect').value;
-            document.getElementById('activeSupplierName').innerText = selected === 'ALL' ? 'All Consignment Partners' : selected;
-            renderSupplierPortal(selected);
-        }
-
-        function renderSupplierPortal(supplierFilter = 'ALL') {
-            let filteredOrders = cachedOrders;
-            let filteredInventory = cachedInventory;
-
-            if (supplierFilter !== 'ALL') {
-                filteredOrders = cachedOrders.filter(o => o.supplier && o.supplier.toLowerCase() === supplierFilter.toLowerCase());
-                filteredInventory = cachedInventory.filter(i => i.supplier && i.supplier.toLowerCase() === supplierFilter.toLowerCase());
+        /* RETURNS & RESTOCK LOGIC */
+        function fetchReturnsLog() {
+            const select = document.getElementById('returnOrderSelect');
+            if (select) {
+                select.innerHTML = '<option value="">-- Choose Dispatched Order --</option>';
+                cachedOrders.forEach(o => {
+                    select.innerHTML += `<option value="${o.id}">${o.order_ref || 'ORD'} - ${o.item_description} (Qty: ${o.quantity_sold})</option>`;
+                });
             }
 
-            let totalUnits = 0;
-            let wholesaleOwed = 0;
-
-            filteredOrders.forEach(o => {
-                const qty = parseInt(o.quantity || 1);
-                const cost = parseFloat(o.wholesale_cost_amount || 0);
-                totalUnits += qty;
-                if (o.status !== 'SETTLED') {
-                    wholesaleOwed += cost;
-                }
-            });
-
-            document.getElementById('tradeUnits').innerText = `${totalUnits} Units`;
-            document.getElementById('tradeOwed').innerText = `R ${wholesaleOwed.toFixed(2)}`;
-            document.getElementById('tradeSkus').innerText = `${filteredInventory.length} Lines`;
-
-            const manifestList = document.getElementById('manifestList');
-            if (manifestList) {
-                if (filteredOrders.length === 0) {
-                    manifestList.innerHTML = `<div style="color: var(--text-muted); text-align: center; padding: 40px;">No sales manifest items for partner.</div>`;
-                } else {
-                    manifestList.innerHTML = '';
-                    filteredOrders.slice(0, 15).forEach(o => {
-                        const name = o.product_description || o.item_description || 'Consigned Item';
-                        const cost = parseFloat(o.wholesale_cost_amount || 0);
-                        manifestList.innerHTML += `
-                            <div class="manifest-item">
-                                <div>
-                                    <strong>${name}</strong>
-                                    <div style="font-size:10px; color:var(--text-muted);">${new Date(o.created_at).toLocaleDateString()} - Qty: ${o.quantity || 1}</div>
-                                </div>
-                                <div style="color:var(--gold-light); font-weight:600;">R ${cost.toFixed(2)}</div>
-                            </div>
-                        `;
-                    });
-                }
-            }
-
-            renderVelocityChart(filteredOrders);
-        }
-
-        function renderVelocityChart(ordersList) {
-            const ctx = document.getElementById('salesVelocityChart');
-            if (!ctx) return;
-
-            if (salesChartInstance) salesChartInstance.destroy();
-
-            // Aggregate last 7 days sales
-            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            const last7Days = [];
-            const counts = [0, 0, 0, 0, 0, 0, 0];
-
-            for (let i = 6; i >= 0; i--) {
-                const d = new Date();
-                d.setDate(d.getDate() - i);
-                last7Days.push(days[d.getDay()]);
-            }
-
-            ordersList.forEach(o => {
-                const oDate = new Date(o.created_at);
-                const diffTime = Math.abs(new Date() - oDate);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                if (diffDays <= 7) {
-                    const dayIdx = 7 - diffDays;
-                    if (dayIdx >= 0 && dayIdx < 7) {
-                        counts[dayIdx] += parseInt(o.quantity || 1);
-                    }
-                }
-            });
-
-            salesChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: last7Days,
-                    datasets: [{
-                        label: 'Units Dispatched',
-                        data: counts,
-                        borderColor: '#D4AF37',
-                        backgroundColor: 'rgba(212, 175, 55, 0.15)',
-                        fill: true,
-                        tension: 0.35,
-                        borderWidth: 2,
-                        pointRadius: 4,
-                        pointBackgroundColor: '#F3E5AB'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.6)', font: { size: 10 } } },
-                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.6)', font: { size: 10 } }, beginAtZero: true }
-                    }
-                }
-            });
-        }
-
-        /* SETTLEMENT LEDGER RENDER */
-        function renderAdminOrders(orders) {
-            const tbody = document.getElementById('adminOrderTable');
+            const tbody = document.getElementById('returnsLogTable');
             if (!tbody) return;
 
-            const start = document.getElementById('filterStartDate').value;
-            const end = document.getElementById('filterEndDate').value;
-
-            let filtered = orders;
-            if (start) filtered = filtered.filter(o => (o.created_at || '').split('T')[0] >= start);
-            if (end) filtered = filtered.filter(o => (o.created_at || '').split('T')[0] <= end);
-
-            let pendingCost = 0;
-            let settledCost = 0;
-
-            filtered.forEach(o => {
-                const cost = parseFloat(o.wholesale_cost_amount || 0);
-                if (o.status === 'SETTLED') {
-                    settledCost += cost;
-                } else {
-                    pendingCost += cost;
-                }
-            });
-
-            document.getElementById('adminOwed').innerText = `R ${pendingCost.toFixed(2)}`;
-            document.getElementById('adminSettled').innerText = `R ${settledCost.toFixed(2)}`;
-            document.getElementById('adminNet').innerText = `R ${(pendingCost + PLATFORM_FEE).toFixed(2)}`;
-
-            populateReturnOrderSelect(orders);
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" style="color: var(--text-muted); padding: 20px; text-align: center;">No orders recorded for selected period.</td></tr>`;
+            if (!cachedReturns || cachedReturns.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="color: var(--text-muted); padding: 20px; text-align: center;">No return history logged.</td></tr>`;
                 return;
             }
 
+            const isManager = currentUser && (currentUser.role === 'manager' || currentUser.full_name === 'Default Manager');
+
             tbody.innerHTML = '';
-            filtered.forEach(o => {
-                const isSettled = o.status === 'SETTLED';
-                const isReturned = o.status === 'RETURNED';
-
-                let statusBadge = `<span class="status-badge status-pending">PENDING</span>`;
-                if (isSettled) statusBadge = `<span class="status-badge status-settled">SETTLED</span>`;
-                if (isReturned) statusBadge = `<span class="status-badge status-returned">RETURNED</span>`;
-
-                const name = o.product_description || o.item_description || 'Product';
-                const cost = parseFloat(o.wholesale_cost_amount || 0);
+            cachedReturns.forEach(r => {
+                let actionTd = '';
+                if (isManager) {
+                    actionTd = `<td><button class="btn-action btn-delete" onclick="deleteReturnLog('${r.id}')">Remove</button></td>`;
+                }
 
                 tbody.innerHTML += `
                     <tr>
-                        <td><strong>${o.order_ref || o.id}</strong><br><small style="color:var(--text-muted);">${name}</small></td>
-                        <td>${o.supplier || 'General Partner'}</td>
-                        <td>${new Date(o.created_at).toLocaleDateString()}</td>
-                        <td>${o.processed_by || 'Cashier'}</td>
-                        <td>${o.quantity || 1}</td>
-                        <td style="color: var(--gold-light);">R ${cost.toFixed(2)}</td>
-                        <td>${statusBadge}</td>
-                        <td>
-                            ${!isSettled && !isReturned ? `<button class="btn-action btn-settled" onclick="updateOrderStatus('${o.id}', 'SETTLED')">Settle</button>` : ''}
-                            ${isSettled ? `<button class="btn-action btn-pending" onclick="updateOrderStatus('${o.id}', 'PENDING_PAYOUT')">Revert</button>` : ''}
-                            <button class="btn-action btn-delete" onclick="deleteOrderRecord('${o.id}')">Delete</button>
-                        </td>
+                        <td>${new Date(r.created_at).toLocaleDateString()}</td>
+                        <td><strong>${r.item_description || 'Item'}</strong></td>
+                        <td>${r.quantity_returned}</td>
+                        <td>${r.reason}</td>
+                        <td>${r.restocked ? '<span style="color:var(--green-active);">YES</span>' : '<span style="color:var(--red-alert);">NO</span>'}</td>
+                        <td>${r.processed_by || 'Staff'}</td>
+                        <td><span class="status-badge status-returned">RETURNED</span></td>
+                        ${actionTd}
                     </tr>
                 `;
-            });
-        }
-
-        async function updateOrderStatus(id, newStatus) {
-            if (!supabaseClient) return;
-            const { error } = await supabaseClient.from('orders').update({ status: newStatus }).eq('id', id);
-            if (error) {
-                showNotification(`Status update failed: ${error.message}`, 'error');
-            } else {
-                showNotification(`Order status updated to ${newStatus}`, 'success');
-                logAuditAction(`Updated Order ID ${id} status to ${newStatus}`);
-                fetchAdminOrders();
-            }
-        }
-
-        async function deleteOrderRecord(id) {
-            if (!confirm('Are you sure you want to delete this order ledger entry?')) return;
-            if (!supabaseClient) return;
-
-            const { error } = await supabaseClient.from('orders').delete().eq('id', id);
-            if (error) {
-                showNotification(`Delete failed: ${error.message}`, 'error');
-            } else {
-                showNotification('Order entry deleted from ledger.', 'success');
-                logAuditAction(`Deleted Order ID ${id} from ledger.`);
-                fetchAdminOrders();
-            }
-        }
-
-        function exportSupplierStatement() {
-            let csv = "Order Ref,Supplier,Date,Processed By,Qty,Wholesale Cost,Status\n";
-            cachedOrders.forEach(o => {
-                csv += `"${o.order_ref || o.id}","${o.supplier || ''}","${o.created_at}","${o.processed_by || ''}",${o.quantity || 1},${o.wholesale_cost_amount || 0},"${o.status || ''}"\n`;
-            });
-
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.setAttribute('href', url);
-            a.setAttribute('download', `Nguni_Supplier_Statement_${new Date().toISOString().split('T')[0]}.csv`);
-            a.click();
-        }
-
-        /* RETURNS & RESTOCK MODULE */
-        function populateReturnOrderSelect(orders) {
-            const select = document.getElementById('returnOrderSelect');
-            if (!select) return;
-
-            select.innerHTML = `<option value="">-- Choose Dispatched Order --</option>`;
-            orders.forEach(o => {
-                const name = o.product_description || o.item_description || 'Product';
-                select.innerHTML += `<option value="${o.id}">${o.order_ref || o.id} - ${name} (Qty: ${o.quantity || 1})</option>`;
             });
         }
 
@@ -2823,112 +2632,287 @@
             const orderId = document.getElementById('returnOrderSelect').value;
             const returnQty = parseInt(document.getElementById('returnQty').value) || 1;
             const reason = document.getElementById('returnReason').value;
-            const restockAction = document.getElementById('restockAction').value;
+            const restock = document.getElementById('restockAction').value === 'YES_RESTOCK';
+            const processor = currentUser ? currentUser.full_name : 'Staff';
 
-            const order = cachedOrders.find(o => String(o.id) === String(orderId));
-            if (!order) {
-                showNotification('Selected order not found.', 'error');
+            const targetOrder = cachedOrders.find(o => String(o.id) === String(orderId));
+            if (!targetOrder) {
+                showNotification('Please select a valid dispatched order.', 'error');
                 return;
             }
 
             if (!supabaseClient) return;
 
-            // Log return record
-            const { error: returnErr } = await supabaseClient.from('returns').insert([{
-                order_id: orderId,
-                order_ref: order.order_ref || order.id,
-                item_description: order.product_description || order.item_description || 'Product',
-                quantity: returnQty,
+            const { error } = await supabaseClient.from('returns').insert([{
+                order_id: targetOrder.id,
+                item_description: targetOrder.item_description,
+                sku: targetOrder.sku,
+                quantity_returned: returnQty,
                 reason: reason,
-                restocked: restockAction === 'YES_RESTOCK',
-                processed_by: currentUser ? currentUser.full_name : 'Staff'
+                restocked: restock,
+                processed_by: processor
             }]);
 
-            if (returnErr) {
-                showNotification(`Return processing failed: ${returnErr.message}`, 'error');
-                return;
-            }
-
-            // Update order status
-            await supabaseClient.from('orders').update({ status: 'RETURNED' }).eq('id', orderId);
-
-            // Restock into inventory if selected
-            if (restockAction === 'YES_RESTOCK' && order.sku) {
-                const invItem = cachedInventory.find(i => i.sku && i.sku.toLowerCase() === order.sku.toLowerCase());
-                if (invItem) {
-                    const currentQty = invItem.quantity_allocated || invItem.quantity || 0;
-                    await supabaseClient.from('inventory').update({ quantity_allocated: currentQty + returnQty }).eq('id', invItem.id);
+            if (!error) {
+                if (restock) {
+                    const matchedInv = cachedInventory.find(i => i.sku === targetOrder.sku);
+                    if (matchedInv) {
+                        const cur = matchedInv.quantity_allocated || matchedInv.quantity || 0;
+                        await supabaseClient.from('inventory').update({ quantity_allocated: cur + returnQty }).eq('id', matchedInv.id);
+                    }
                 }
-            }
 
-            showNotification(`Processed return for order ${order.order_ref || order.id}`, 'success');
-            logAuditAction(`Processed Return for Order ${order.order_ref || order.id} (Restocked: ${restockAction})`);
-            document.getElementById('returnForm').reset();
+                showNotification('Order return processed successfully.', 'success');
+                logAuditAction(`Processed return for item "${targetOrder.item_description}" (Qty: ${returnQty}, Restocked: ${restock})`);
+                document.getElementById('returnForm').reset();
+                fetchAdminOrders();
+            } else {
+                showNotification(`Error processing return: ${error.message}`, 'error');
+            }
+        }
+
+        async function deleteReturnLog(id) {
+            if (!confirm('Remove this return record?')) return;
+            if (!supabaseClient) return;
+            await supabaseClient.from('returns').delete().eq('id', id);
             fetchAdminOrders();
         }
 
-        function fetchReturnsLog() {
-            const tbody = document.getElementById('returnsLogTable');
-            if (!tbody) return;
+        /* SUPPLIER TRADE LEDGER & CHART LOGIC */
+        function populateSupplierTradeDropdown() {
+            const select = document.getElementById('supplierSelect');
+            if (!select) return;
 
-            if (cachedReturns.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" style="color: var(--text-muted); padding: 20px; text-align: center;">No returns recorded.</td></tr>`;
+            const suppliers = new Set();
+            cachedOrders.forEach(o => { if (o.supplier) suppliers.add(o.supplier); });
+            cachedInventory.forEach(i => { if (i.supplier) suppliers.add(i.supplier); });
+
+            const currentVal = select.value;
+            select.innerHTML = '<option value="ALL">-- All Suppliers / Master View --</option>';
+
+            suppliers.forEach(sup => {
+                select.innerHTML += `<option value="${sup}">${sup}</option>`;
+            });
+
+            if (Array.from(select.options).some(o => o.value === currentVal)) {
+                select.value = currentVal;
+            }
+        }
+
+        function filterSupplierLedger() {
+            const selected = document.getElementById('supplierSelect').value;
+            renderSupplierPortal(selected);
+        }
+
+        function renderSupplierPortal(supplierName) {
+            document.getElementById('activeSupplierName').innerText = supplierName === 'ALL' ? 'All Consignment Partners' : supplierName;
+
+            let filteredOrders = cachedOrders;
+            let filteredInv = cachedInventory;
+
+            if (supplierName !== 'ALL') {
+                filteredOrders = cachedOrders.filter(o => o.supplier === supplierName);
+                filteredInv = cachedInventory.filter(i => i.supplier === supplierName);
+            }
+
+            let totalUnitsSold = 0;
+            let totalOwed = 0;
+
+            filteredOrders.forEach(o => {
+                const qty = parseInt(o.quantity_sold) || 1;
+                const cost = parseFloat(o.wholesale_floor_zar || o.unit_price || 0);
+                totalUnitsSold += qty;
+                if (o.status !== 'SETTLED') {
+                    totalOwed += (cost * qty);
+                }
+            });
+
+            document.getElementById('tradeUnits').innerText = `${totalUnitsSold} Units`;
+            document.getElementById('tradeOwed').innerText = `R ${totalOwed.toFixed(2)}`;
+            document.getElementById('tradeSkus').innerText = `${filteredInv.length} Lines`;
+
+            // Manifest List Render
+            const manifestContainer = document.getElementById('manifestList');
+            if (!manifestContainer) return;
+
+            if (filteredOrders.length === 0) {
+                manifestContainer.innerHTML = `<div style="color: var(--text-muted); text-align: center; padding: 40px;">No sales manifest records found.</div>`;
                 return;
             }
 
-            const isManager = currentUser && (currentUser.role === 'manager' || currentUser.full_name === 'Default Manager');
+            manifestContainer.innerHTML = '';
+            filteredOrders.slice(0, 20).forEach(o => {
+                const cost = parseFloat(o.wholesale_floor_zar || o.unit_price || 0);
+                const qty = parseInt(o.quantity_sold) || 1;
+                const subtotal = cost * qty;
 
-            tbody.innerHTML = '';
-            cachedReturns.forEach(r => {
-                let actionBtnHtml = '';
-                if (isManager) {
-                    actionBtnHtml = `<td><button class="btn-action btn-delete" onclick="deleteReturnRecord('${r.id}')">Delete</button></td>`;
-                }
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${new Date(r.created_at).toLocaleDateString()}</td>
-                        <td><strong>${r.order_ref || r.order_id}</strong><br><small style="color:var(--text-muted);">${r.item_description || ''}</small></td>
-                        <td>${r.quantity}</td>
-                        <td>${r.reason}</td>
-                        <td><span class="status-badge ${r.restocked ? 'status-settled' : 'status-returned'}">${r.restocked ? 'YES' : 'NO'}</span></td>
-                        <td>${r.processed_by || 'Staff'}</td>
-                        <td><span class="status-badge status-returned">PROCESSED</span></td>
-                        ${actionBtnHtml}
-                    </tr>
+                manifestContainer.innerHTML += `
+                    <div class="manifest-item">
+                        <div>
+                            <strong>${o.item_description || 'Item'}</strong>
+                            <div style="font-size:10px; color:var(--text-muted);">${new Date(o.created_at).toLocaleDateString()} • Qty: ${qty} • ${o.supplier || 'Supplier'}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <strong style="color:var(--gold-light);">R ${subtotal.toFixed(2)}</strong>
+                            <div><span class="status-badge ${o.status === 'SETTLED' ? 'status-settled' : 'status-pending'}">${o.status || 'PENDING'}</span></div>
+                        </div>
+                    </div>
                 `;
+            });
+
+            renderVelocityChart(filteredOrders);
+        }
+
+        function renderVelocityChart(orders) {
+            const ctx = document.getElementById('salesVelocityChart');
+            if (!ctx) return;
+
+            if (salesChartInstance) salesChartInstance.destroy();
+
+            // Aggregate by day of week
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const counts = [0, 0, 0, 0, 0, 0, 0];
+
+            orders.forEach(o => {
+                const dayIdx = new Date(o.created_at).getDay();
+                counts[dayIdx] += (parseInt(o.quantity_sold) || 1);
+            });
+
+            salesChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: days,
+                    datasets: [{
+                        label: 'Units Sold',
+                        data: counts,
+                        backgroundColor: 'rgba(212, 175, 55, 0.6)',
+                        borderColor: '#D4AF37',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.6)' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.6)' } }
+                    }
+                }
             });
         }
 
-        async function deleteReturnRecord(id) {
-            if (!confirm('Are you sure you want to delete this return record?')) return;
-            if (!supabaseClient) return;
+        /* TAB 3: SETTLEMENT LEDGER RENDER & ACTION HANDLERS */
+        function renderAdminOrders(orders) {
+            const tbody = document.getElementById('adminOrderTable');
+            if (!tbody) return;
 
-            const { error } = await supabaseClient.from('returns').delete().eq('id', id);
-            if (error) {
-                showNotification(`Error deleting return log: ${error.message}`, 'error');
-            } else {
-                showNotification('Return record deleted.', 'success');
-                logAuditAction(`Deleted return log ID: ${id}`);
+            const startDate = document.getElementById('filterStartDate').value;
+            const endDate = document.getElementById('filterEndDate').value;
+
+            let filtered = orders;
+            if (startDate) filtered = filtered.filter(o => (o.created_at || '').split('T')[0] >= startDate);
+            if (endDate) filtered = filtered.filter(o => (o.created_at || '').split('T')[0] <= endDate);
+
+            let totalPending = 0;
+            let totalSettled = 0;
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="color: var(--text-muted); padding: 20px; text-align: center;">No settlement transactions recorded.</td></tr>`;
+                document.getElementById('adminOwed').innerText = 'R 0.00';
+                document.getElementById('adminSettled').innerText = 'R 0.00';
+                document.getElementById('adminNet').innerText = 'R 0.00';
+                return;
+            }
+
+            tbody.innerHTML = '';
+            filtered.forEach(o => {
+                const cost = parseFloat(o.wholesale_floor_zar || o.unit_price || 0);
+                const qty = parseInt(o.quantity_sold) || 1;
+                const wholesaleTotal = cost * qty;
+
+                if (o.status === 'SETTLED') {
+                    totalSettled += wholesaleTotal;
+                } else {
+                    totalPending += wholesaleTotal;
+                }
+
+                const isSettled = o.status === 'SETTLED';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${o.order_ref || '#ORD'}</strong><br><small style="color:var(--text-muted);">${o.item_description}</small></td>
+                        <td>${o.supplier || 'Supplier'}</td>
+                        <td>${new Date(o.created_at).toLocaleDateString()}</td>
+                        <td>${o.processed_by || 'Cashier'}</td>
+                        <td>${qty}</td>
+                        <td style="color:var(--gold-light);">R ${wholesaleTotal.toFixed(2)}</td>
+                        <td><span class="status-badge ${isSettled ? 'status-settled' : 'status-pending'}">${o.status || 'PENDING'}</span></td>
+                        <td>
+                            ${isSettled 
+                                ? `<button class="btn-action btn-pending" onclick="updateOrderStatus('${o.id}', 'PENDING')">Mark Pending</button>`
+                                : `<button class="btn-action btn-settled" onclick="updateOrderStatus('${o.id}', 'SETTLED')">Settle Payout</button>`
+                            }
+                        </td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('adminOwed').innerText = `R ${totalPending.toFixed(2)}`;
+            document.getElementById('adminSettled').innerText = `R ${totalSettled.toFixed(2)}`;
+            document.getElementById('adminNet').innerText = `R ${(totalPending + PLATFORM_FEE).toFixed(2)}`;
+        }
+
+        async function updateOrderStatus(orderId, newStatus) {
+            if (!supabaseClient) return;
+            const { error } = await supabaseClient.from('orders').update({ status: newStatus }).eq('id', orderId);
+            if (!error) {
+                showNotification(`Order status updated to ${newStatus}.`, 'success');
+                logAuditAction(`Updated order ID ${orderId} settlement status to ${newStatus}`);
                 fetchAdminOrders();
+            } else {
+                showNotification(`Failed to update status: ${error.message}`, 'error');
             }
         }
 
-        /* ACCOUNTING & FINANCIAL DASHBOARD */
+        function exportSupplierStatement() {
+            if (cachedOrders.length === 0) {
+                showNotification('No settlement data to export.', 'error');
+                return;
+            }
+
+            let csv = 'Order Ref,Item,Supplier,Date,Qty,Wholesale Total,Status\n';
+            cachedOrders.forEach(o => {
+                const cost = parseFloat(o.wholesale_floor_zar || o.unit_price || 0);
+                const qty = parseInt(o.quantity_sold) || 1;
+                csv += `"${o.order_ref}","${o.item_description}","${o.supplier}","${new Date(o.created_at).toLocaleDateString()}",${qty},${(cost * qty).toFixed(2)},"${o.status}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Nguni_Settlement_Statement_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            showNotification('Exported Settlement Statement CSV!', 'success');
+        }
+
+        /* TAB 8: FULL FINANCIAL ACCOUNTING & P&L LOGIC */
         function renderAccountingDashboard() {
-            const start = document.getElementById('accFilterStart').value;
-            const end = document.getElementById('accFilterEnd').value;
+            const startDate = document.getElementById('accFilterStart').value;
+            const endDate = document.getElementById('accFilterEnd').value;
 
             let filteredOrders = cachedOrders;
             let filteredExpenses = cachedExpenses;
 
-            if (start) {
-                filteredOrders = filteredOrders.filter(o => (o.created_at || '').split('T')[0] >= start);
-                filteredExpenses = filteredExpenses.filter(e => (e.created_at || '').split('T')[0] >= start);
+            if (startDate) {
+                filteredOrders = filteredOrders.filter(o => (o.created_at || '').split('T')[0] >= startDate);
+                filteredExpenses = filteredExpenses.filter(e => (e.created_at || '').split('T')[0] >= startDate);
             }
-            if (end) {
-                filteredOrders = filteredOrders.filter(o => (o.created_at || '').split('T')[0] <= end);
-                filteredExpenses = filteredExpenses.filter(e => (e.created_at || '').split('T')[0] <= end);
+            if (endDate) {
+                filteredOrders = filteredOrders.filter(o => (o.created_at || '').split('T')[0] <= endDate);
+                filteredExpenses = filteredExpenses.filter(e => (e.created_at || '').split('T')[0] <= endDate);
             }
 
             let grossSales = 0;
@@ -2938,69 +2922,73 @@
             let unitsSold = 0;
 
             filteredOrders.forEach(o => {
-                const qty = parseInt(o.quantity || 1);
-                const sellingPrice = parseFloat(o.selling_price || 0);
-                const wholesaleCost = parseFloat(o.wholesale_cost_amount || 0);
-                const lineTotal = sellingPrice * qty;
+                const price = parseFloat(o.selling_price || 0);
+                const cost = parseFloat(o.wholesale_floor_zar || o.unit_price || 0);
+                const qty = parseInt(o.quantity_sold) || 1;
 
-                grossSales += lineTotal;
-                cogs += wholesaleCost;
+                const lineGross = o.gross_sales_total ? parseFloat(o.gross_sales_total) : (price * qty);
+                const lineCogs = o.wholesale_cost_total ? parseFloat(o.wholesale_cost_total) : (cost * qty);
+
+                grossSales += lineGross;
+                cogs += lineCogs;
                 unitsSold += qty;
 
-                const channel = (o.fulfillment_channel || '').toLowerCase();
-                if (channel.includes('cash')) {
-                    cashTendered += lineTotal;
+                if (o.tender_type === 'CARD') {
+                    cardTendered += lineGross;
                 } else {
-                    cardTendered += lineTotal;
+                    cashTendered += lineGross;
                 }
             });
 
-            let opexTotal = 0;
-            filteredExpenses.forEach(e => {
-                opexTotal += parseFloat(e.amount || 0);
+            let totalOpEx = 0;
+            filteredExpenses.forEach(exp => {
+                totalOpEx += parseFloat(exp.amount || 0);
             });
 
             const grossProfit = grossSales - cogs;
-            const netProfit = grossProfit - opexTotal - PLATFORM_FEE;
+            const netProfit = grossProfit - totalOpEx - PLATFORM_FEE;
 
             document.getElementById('accGrossSales').innerText = `R ${grossSales.toFixed(2)}`;
             document.getElementById('accCogs').innerText = `R ${cogs.toFixed(2)}`;
             document.getElementById('accGrossProfit').innerText = `R ${grossProfit.toFixed(2)}`;
             document.getElementById('accNetProfit').innerText = `R ${netProfit.toFixed(2)}`;
-            document.getElementById('accOpEx').innerText = `R ${opexTotal.toFixed(2)}`;
+            document.getElementById('accOpEx').innerText = `R ${totalOpEx.toFixed(2)}`;
             document.getElementById('accCashTendered').innerText = `R ${cashTendered.toFixed(2)}`;
             document.getElementById('accCardTendered').innerText = `R ${cardTendered.toFixed(2)}`;
             document.getElementById('accUnitsSold').innerText = `${unitsSold} Items`;
 
-            renderAccountingTable(filteredOrders);
-        }
-
-        function renderAccountingTable(orders) {
+            // Render Table
             const tbody = document.getElementById('accountingTableBody');
             if (!tbody) return;
 
-            if (orders.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 20px;">No transaction records found.</td></tr>`;
+            if (filteredOrders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 20px;">Loading accounting records...</td></tr>`;
                 return;
             }
 
+            const isManager = currentUser && (currentUser.role === 'manager' || currentUser.full_name === 'Default Manager');
+
             tbody.innerHTML = '';
-            orders.forEach(o => {
-                const qty = parseInt(o.quantity || 1);
-                const sellingPrice = parseFloat(o.selling_price || 0);
-                const lineTotal = sellingPrice * qty;
-                const name = o.product_description || o.item_description || 'Product';
+            filteredOrders.forEach(o => {
+                const price = parseFloat(o.selling_price || 0);
+                const qty = parseInt(o.quantity_sold) || 1;
+                const grossTotal = o.gross_sales_total ? parseFloat(o.gross_sales_total) : (price * qty);
+
+                let actionTd = '';
+                if (isManager) {
+                    actionTd = `<td><button class="btn-action btn-delete" onclick="deleteAccountingRecord('${o.id}')">Delete</button></td>`;
+                }
 
                 tbody.innerHTML += `
                     <tr>
-                        <td><strong>${o.order_ref || o.id}</strong></td>
+                        <td><strong>${o.order_ref || '#ORD'}</strong></td>
                         <td>${new Date(o.created_at).toLocaleString()}</td>
-                        <td>${name}<br><small style="color:var(--text-muted);">${o.sku || ''}</small></td>
+                        <td>${o.item_description || 'Item'}</td>
                         <td>${qty}</td>
-                        <td>R ${sellingPrice.toFixed(2)}</td>
-                        <td style="color:var(--cyan-bright);">R ${lineTotal.toFixed(2)}</td>
-                        <td>${o.fulfillment_channel || 'POS Terminal'}</td>
-                        <td><button class="btn-action btn-delete" onclick="deleteOrderRecord('${o.id}')">Delete</button></td>
+                        <td>R ${price.toFixed(2)}</td>
+                        <td style="color:var(--cyan-bright);">R ${grossTotal.toFixed(2)}</td>
+                        <td><span class="status-badge status-settled">${o.tender_type || 'CASH'}</span></td>
+                        ${actionTd}
                     </tr>
                 `;
             });
@@ -3021,31 +3009,51 @@
                 logged_by: currentUser ? currentUser.full_name : 'Staff'
             }]);
 
-            if (error) {
-                showNotification(`Failed to log expense: ${error.message}`, 'error');
-            } else {
-                showNotification(`Logged expense: R ${amount.toFixed(2)} (${category})`, 'success');
-                logAuditAction(`Logged Expense: R${amount} for ${desc} (${category})`);
+            if (!error) {
+                showNotification(`Logged operating expense: R ${amount.toFixed(2)} (${desc})`, 'success');
+                logAuditAction(`Logged OpEx: "${desc}" (R${amount.toFixed(2)})`);
                 document.getElementById('expenseForm').reset();
                 fetchAdminOrders();
+            } else {
+                showNotification(`Error logging expense: ${error.message}`, 'error');
+            }
+        }
+
+        async function deleteAccountingRecord(id) {
+            if (!confirm('Are you sure you want to delete this accounting transaction record?')) return;
+            if (!supabaseClient) return;
+
+            const { error } = await supabaseClient.from('orders').delete().eq('id', id);
+            if (!error) {
+                showNotification('Transaction record deleted.', 'success');
+                logAuditAction(`Deleted accounting transaction record ID: ${id}`);
+                fetchAdminOrders();
+            } else {
+                showNotification(`Error deleting record: ${error.message}`, 'error');
             }
         }
 
         function exportAccountingCSV() {
-            let csv = "Order ID,Timestamp,Product SKU,Item Description,Qty,Unit Price,Gross Total,Channel\n";
+            if (cachedOrders.length === 0) {
+                showNotification('No accounting data to export.', 'error');
+                return;
+            }
+
+            let csv = 'Order Ref,Timestamp,Item,Qty,Unit Price,Gross Total,Tender\n';
             cachedOrders.forEach(o => {
-                const qty = parseInt(o.quantity || 1);
                 const price = parseFloat(o.selling_price || 0);
+                const qty = parseInt(o.quantity_sold) || 1;
                 const total = price * qty;
-                csv += `"${o.order_ref || o.id}","${o.created_at}","${o.sku || ''}","${o.product_description || o.item_description || ''}",${qty},${price},${total},"${o.fulfillment_channel || ''}"\n`;
+                csv += `"${o.order_ref}","${new Date(o.created_at).toLocaleString()}","${o.item_description}",${qty},${price.toFixed(2)},${total.toFixed(2)},"${o.tender_type}"\n`;
             });
 
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.setAttribute('href', url);
-            a.setAttribute('download', `Nguni_Accounting_Report_${new Date().toISOString().split('T')[0]}.csv`);
+            a.href = url;
+            a.download = `Nguni_Accounting_Ledger_${new Date().toISOString().split('T')[0]}.csv`;
             a.click();
+            showNotification('Exported Accounting Ledger CSV!', 'success');
         }
     </script>
 </body>
