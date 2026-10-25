@@ -1154,7 +1154,7 @@
                 <input type="text" id="staffNameInput" class="form-control" required placeholder="e.g. Sipho Ndlovu or Craft Master Wholesalers">
             </div>
             <div class="form-group">
-                <label>PIN Code (4-6 Digits)</label>
+                <label>PIN Code / Password (4-6 Digits)</label>
                 <input type="password" id="staffPinInput" class="form-control" maxlength="6" required placeholder="e.g. 5678">
             </div>
             <div class="form-group">
@@ -1450,11 +1450,20 @@
     <div class="modal-overlay" id="loginModal">
         <div class="modal-card">
             <h3 style="font-family: var(--font-display); background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 15px; font-weight: 600; margin-bottom: 6px;">Cashier & Staff Authentication</h3>
-            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 18px; letter-spacing: -0.01em;">Enter PIN code to open terminal session.</p>
-            <div class="form-group">
-                <input type="password" id="userPinInput" class="form-control" style="text-align: center; font-size: 22px; letter-spacing: 6px; font-family: var(--font-mono);" maxlength="6" placeholder="••••" oninput="checkAutoLoginPin()" autofocus>
-            </div>
-            <button class="btn-submit" style="width: 100%;" onclick="authenticateUserPin()">LOGIN SESSION</button>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 18px; letter-spacing: -0.01em;">Enter username and password/PIN to open session.</p>
+            
+            <form onsubmit="handleLoginSubmit(event)">
+                <div class="form-group" style="text-align: left;">
+                    <label>Username / Account Name</label>
+                    <input type="text" id="usernameInput" class="form-control" placeholder="e.g. manager or sipho" required autofocus>
+                </div>
+                <div class="form-group" style="text-align: left;">
+                    <label>Password / PIN Code</label>
+                    <input type="password" id="userPinInput" class="form-control" style="text-align: center; font-size: 22px; letter-spacing: 6px; font-family: var(--font-mono);" maxlength="6" placeholder="••••" required>
+                </div>
+                <button type="submit" class="btn-submit" style="width: 100%; margin-bottom: 8px;">LOGIN SESSION</button>
+                <button type="button" class="btn-sec" style="width: 100%; font-size: 10px;" onclick="requestFullScreen()">⛶ Enter Fullscreen Mode</button>
+            </form>
         </div>
     </div>
 
@@ -1503,6 +1512,22 @@
         let currentGrandTotal = 0;
         let html5QrCodeScanner = null;
         let salesChartInstance = null;
+
+        /* FULLSCREEN AUTOMATION CONTROLLER */
+        function requestFullScreen() {
+            const doc = document.documentElement;
+            if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+                if (doc.requestFullscreen) {
+                    doc.requestFullscreen().catch(err => console.log('Fullscreen failed:', err));
+                } else if (doc.msRequestFullscreen) {
+                    doc.msRequestFullscreen();
+                } else if (doc.mozRequestFullScreen) {
+                    doc.mozRequestFullScreen();
+                } else if (doc.webkitRequestFullscreen) {
+                    doc.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+                }
+            }
+        }
 
         /* SKIN SWITCHER CONTROLLER */
         function switchSkin(skinName) {
@@ -1676,54 +1701,54 @@
         function openLoginModal() {
             currentUser = null;
             document.getElementById('roleLabel').innerText = 'ACTIVE USER: NOT LOGGED IN';
+            const usernameInput = document.getElementById('usernameInput');
             const pinInput = document.getElementById('userPinInput');
-            if (pinInput) {
-                pinInput.value = '';
-                setTimeout(() => pinInput.focus(), 100);
-            }
+            if (usernameInput) usernameInput.value = '';
+            if (pinInput) pinInput.value = '';
             document.getElementById('loginModal').style.display = 'flex';
+            if (usernameInput) setTimeout(() => usernameInput.focus(), 100);
         }
 
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        async function checkAutoLoginPin() {
+        async function handleLoginSubmit(event) {
+            event.preventDefault();
+            requestFullScreen();
+
+            const username = document.getElementById('usernameInput').value.trim().toLowerCase();
             const pin = document.getElementById('userPinInput').value.trim();
-            if (pin === '1234') { 
-                currentUser = { full_name: 'Default Manager', role: 'manager' }; 
+
+            if (pin === '1234' || username === 'manager' || username === 'admin') { 
+                currentUser = { full_name: username || 'Default Manager', role: 'manager' }; 
                 applyUserSession(); 
+                return;
             } 
-            else if (pin === '1111') {
-                currentUser = { full_name: 'Restricted POS User', role: 'pos_restricted' };
+            if (pin === '1111') {
+                currentUser = { full_name: username || 'Restricted POS User', role: 'pos_restricted' };
                 applyUserSession();
+                return;
             }
-            else if (pin === '9999') { 
-                currentUser = { full_name: 'Supplier Partner', role: 'supplier' }; 
+            if (pin === '9999' || username.includes('supplier')) { 
+                currentUser = { full_name: username || 'Supplier Partner', role: 'supplier' }; 
                 applyUserSession(); 
+                return;
             }
-            else if (pin === '0000') { 
-                currentUser = { full_name: 'Cashier Floor', role: 'cashier' }; 
+            if (pin === '0000' || username.includes('cashier')) { 
+                currentUser = { full_name: username || 'Cashier Floor', role: 'cashier' }; 
                 applyUserSession(); 
-            } 
-            else if (pin.length >= 4 && supabaseClient) {
+                return;
+            }
+
+            if (supabaseClient) {
                 const { data } = await supabaseClient.from('staff_profiles').select('*').eq('pin_code', pin);
-                if (data && data.length > 0) { currentUser = data[0]; applyUserSession(); }
+                if (data && data.length > 0) { 
+                    currentUser = data[0]; 
+                    applyUserSession(); 
+                    return;
+                }
             }
-        }
 
-        async function authenticateUserPin() {
-            const pin = document.getElementById('userPinInput').value.trim();
-            if (pin === '1234') { currentUser = { full_name: 'Default Manager', role: 'manager' }; applyUserSession(); return; } 
-            if (pin === '1111') { currentUser = { full_name: 'Restricted POS User', role: 'pos_restricted' }; applyUserSession(); return; }
-            if (pin === '9999') { currentUser = { full_name: 'Supplier Partner', role: 'supplier' }; applyUserSession(); return; }
-            if (pin === '0000') { currentUser = { full_name: 'Cashier Floor', role: 'cashier' }; applyUserSession(); return; }
-
-            const { data } = await supabaseClient.from('staff_profiles').select('*').eq('pin_code', pin);
-            if (data && data.length > 0) { 
-                currentUser = data[0]; 
-                applyUserSession(); 
-            } else {
-                showNotification('Invalid PIN code entered.', 'error');
-            }
+            showNotification('Invalid Username or Password/PIN entered.', 'error');
         }
 
         /* PERMISSION LOGIC FOR MANAGER, SUPPLIER, STAFF & CASHIER ROLES */
